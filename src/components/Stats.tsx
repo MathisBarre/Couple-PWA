@@ -52,7 +52,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
           value={s.prediction.nextStart ? formatDM(s.prediction.nextStart) : '—'}
           hint={s.prediction.basedOn ? `sur ${s.prediction.basedOn} cycle${s.prediction.basedOn > 1 ? 's' : ''}` : `estimation ${s.prediction.cycleLength} j`}
         />
-        <Tile label="Jours abondants" value={s.heavyDaysPerPeriod != null ? `${s.heavyDaysPerPeriod}` : '—'} hint="par période" />
+        <Tile label="Jours abondants" value={s.heavyDaysPerPeriod != null ? s.heavyDaysPerPeriod.toLocaleString('fr-FR') : '—'} hint="par période" />
         <Tile label="Jours douloureux" value={s.painfulDaysShare != null ? `${s.painfulDaysShare} %` : '—'} hint="douleur ≥ modérée" />
         <Tile label="Spotting hors règles" value={`${s.spottingOutsidePeriods} j`} hint="sur 12 mois" />
       </div>
