@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- Image de partage (Open Graph / Twitter) 1200×630 : `node scripts/og/render.mjs` → public/og-image.png -->
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #FBF7F2;
+    color: #18181B;
+    position: relative;
+    overflow: hidden;
+  }
+  .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+  .b1 { width: 620px; height: 620px; right: -170px; top: -210px; background: radial-gradient(circle, #F06882 0%, rgba(240,104,130,0) 68%); opacity: .30; }
+  .b2 { width: 620px; height: 620px; right: 40px; bottom: -330px; background: radial-gradient(circle, #5DBB73 0%, rgba(93,187,115,0) 68%); opacity: .28; }
+  .wrap { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 96px; gap: 72px; }
+  .logo { width: 300px; height: 300px; flex: none; filter: drop-shadow(0 24px 48px rgba(24,24,27,.28)); }
+  h1 { font-size: 128px; font-weight: 800; letter-spacing: -5px; line-height: 1; }
+  p { margin-top: 22px; font-size: 38px; font-weight: 500; color: #52525B; line-height: 1.25; letter-spacing: -.5px; }
+  .chips { margin-top: 40px; display: flex; gap: 14px; }
+  .chip { font-size: 26px; font-weight: 600; padding: 12px 24px; border-radius: 999px; display: flex; align-items: center; gap: 12px; }
+  .chip i { width: 16px; height: 16px; border-radius: 50%; display: block; }
+  .pink { background: #FDE4E9; color: #B52F4A; } .pink i { background: #F06882; }
+  .green { background: #DDF2E2; color: #2E7A43; } .green i { background: #5DBB73; }
+  .grey { background: #EEEBE7; color: #52525B; } .grey i { background: #A1A1AA; }
+</style>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="wrap">
+    <img class="logo" src="../../public/logo.svg" alt="" />
+    <div>
+      <h1>À deux</h1>
+      <p>Notre app de couple,<br />rien qu’à nous deux.</p>
+      <div class="chips">
+        <span class="chip pink"><i></i>Cycle</span>
+        <span class="chip green"><i></i>Courses</span>
+        <span class="chip grey"><i></i>et plus</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

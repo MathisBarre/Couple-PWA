@@ -11,8 +11,26 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="À deux" />
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Aperçu des liens partagés (Messages, WhatsApp, réseaux…), dont le lien d'invitation /join.
+         Image : scripts/og/og-image.html → public/og-image.png (node scripts/og/render.mjs). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="À deux" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="À deux" />
+    <meta property="og:description" content="Notre app de couple, rien qu’à nous deux : cycle, courses et plus." />
+    <meta property="og:url" content="https://couple-pwa-mymy.vercel.app/" />
+    <meta property="og:image" content="https://couple-pwa-mymy.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo À deux : deux cercles rose et vert qui se rejoignent." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="À deux" />
+    <meta name="twitter:description" content="Notre app de couple, rien qu’à nous deux : cycle, courses et plus." />
+    <meta name="twitter:image" content="https://couple-pwa-mymy.vercel.app/og-image.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <!--
       Écrans de démarrage iOS (npm run icons). iOS n'affiche une image que si sa taille correspond
