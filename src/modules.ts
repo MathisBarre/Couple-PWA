@@ -3,13 +3,23 @@ import { syncStatusBar } from './lib/scheme'
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
 // 1. une entrée ici (avec son thème de couleur, voir src/index.css),
 // 2. son écran dans le `switch` de `render` (App.tsx).
+// S'il a ses propres réglages (`settings`), ils apparaissent tout seuls en raccourci
+// dans les réglages globaux.
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
 
 export const MODULES = [
-  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose' },
-  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure' },
-] as const satisfies readonly { id: string; label: string; icon: string; description: string; theme: Theme }[]
+  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels' },
+  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', settings: 'Notifications des courses' },
+] as const satisfies readonly {
+  id: string
+  label: string
+  icon: string
+  description: string
+  theme: Theme
+  /** Si l'espace a son propre onglet « Réglages » (en haut) : ce qu'on y trouve, affiché dans les réglages globaux. */
+  settings?: string
+}[]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
 export type Theme = 'rose' | 'verdure' | 'neutre'
@@ -48,3 +58,6 @@ export function applyTheme(theme: Theme) {
   else root.dataset.theme = theme
   syncStatusBar()
 }
+
+/** Espaces qui ont leur propre onglet « Réglages », listés en raccourci dans les réglages globaux. */
+export const SPACES_WITH_SETTINGS = MODULES.filter((m) => 'settings' in m && m.settings)

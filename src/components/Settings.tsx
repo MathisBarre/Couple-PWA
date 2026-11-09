@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
+import { SPACES_WITH_SETTINGS, type ModuleId } from '../modules'
 import { AppUpdate } from './AppUpdate'
 import { SchemePicker } from './SchemePicker'
 import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
@@ -10,9 +11,10 @@ interface Props {
   profile: Me['user']
   members: Member[]
   onChange: () => void
+  onOpenSpace: (id: ModuleId) => void
 }
 
-export function Settings({ couple, profile, members, onChange }: Props) {
+export function Settings({ couple, profile, members, onChange, onOpenSpace }: Props) {
   const [pushOn, setPushOn] = useState(false)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
@@ -38,6 +40,35 @@ export function Settings({ couple, profile, members, onChange }: Props) {
   return (
     <div className="flex flex-col gap-3.5">
       <h2 className="text-xl font-bold">Réglages</h2>
+
+      {SPACES_WITH_SETTINGS.length > 0 && (
+        <section>
+          <SectionTitle>Réglages des espaces</SectionTitle>
+          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+            {SPACES_WITH_SETTINGS.map((m) => (
+              <li key={m.id} className="border-b border-line last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => onOpenSpace(m.id)}
+                  className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors outline-none select-none focus-visible:bg-surface-2 active:bg-surface-2"
+                >
+                  {/* Pastille aux couleurs de l'espace (son thème s'applique à elle seule). */}
+                  <span data-theme={m.theme} aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-lg">
+                    {m.icon}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{m.label}</span>
+                    <span className="block truncate text-sm text-ink-2">{m.settings}</span>
+                  </span>
+                  <span aria-hidden className="text-xl text-ink-2/60">
+                    ›
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <Card>
         <SectionTitle>Apparence</SectionTitle>
