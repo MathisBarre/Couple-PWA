@@ -13,6 +13,7 @@ import { useTabMenu, type MenuItem } from './components/TabMenu'
 import { cx } from './components/ui'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
+import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
@@ -27,6 +28,8 @@ export default function App() {
   const reload = useCallback(async () => {
     try {
       const data = await fetchMe()
+      // Déjà dans un espace : un éventuel lien d'invitation ouvert ne sert plus.
+      if (data?.couple) clearInvite()
       setMe(data)
       try {
         if (data) localStorage.setItem(ME_CACHE, JSON.stringify(data))

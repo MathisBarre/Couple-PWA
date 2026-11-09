@@ -3,6 +3,7 @@ import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, push
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { SPACES_WITH_SETTINGS, type ModuleId } from '../modules'
 import { AppUpdate } from './AppUpdate'
+import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
 import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
 
@@ -127,10 +128,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
             Partagé avec <strong>{partner.display_name}</strong>.
           </p>
         ) : (
-          <p className="py-2">
-            Code à donner à votre partenaire :{' '}
-            <strong className="font-mono text-xl tracking-[0.15em] text-accent select-all">{couple.invite_code}</strong>
-          </p>
+          <InviteLink code={couple.invite_code} from={profile.display_name} />
         )}
       </Card>
 
