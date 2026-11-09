@@ -1,6 +1,7 @@
+import { Tabs } from '@base-ui/react/tabs'
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
-import { Auth } from './components/Auth'
+import { Auth, CenterLayout } from './components/Auth'
 import { Calendar } from './components/Calendar'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
@@ -21,12 +22,12 @@ export default function App() {
 
   if (!isConfigured)
     return (
-      <div className="center">
-        <h1>Configuration manquante</h1>
-        <p className="muted">Renseignez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY (voir le README).</p>
-      </div>
+      <CenterLayout>
+        <h1 className="text-2xl font-bold">Configuration manquante</h1>
+        <p className="text-ink-2">Connectez Supabase au projet Vercel ou renseignez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY (voir le README).</p>
+      </CenterLayout>
     )
-  if (session === undefined) return <div className="center"><img src="/logo.svg" alt="" className="logo pulse" /></div>
+  if (session === undefined) return <Splash />
   if (!session) return <Auth />
   return <Signed userId={session.user.id} />
 }
@@ -53,7 +54,7 @@ function Signed({ userId }: { userId: string }) {
     })()
   }, [userId, couple?.id])
 
-  if (!loaded || !profile) return <div className="center"><img src="/logo.svg" alt="" className="logo pulse" /></div>
+  if (!loaded || !profile) return <Splash />
   if (!couple) return <Setup onDone={setCouple} />
   return <Main couple={couple} profile={profile} members={members} setCouple={setCouple} setProfile={setProfile} />
 }
@@ -90,31 +91,55 @@ function Main({
   const common = { today, logs, defaultCycle: couple.default_cycle_length }
 
   return (
-    <div className="app">
-      {pending > 0 && <div className="offline">Hors ligne · {pending} saisie(s) en attente de synchronisation</div>}
-      <main>
-        {tab === 'today' && <Today key={today} {...common} names={names} onSave={save} onDelete={remove} />}
-        {tab === 'calendar' && <Calendar {...common} names={names} onSave={save} onDelete={remove} />}
-        {tab === 'stats' && <Stats {...common} iudInsertedOn={couple.iud_inserted_on} />}
-        {tab === 'settings' && (
+    <Tabs.Root value={tab} onValueChange={(v) => setTab(v as Tab)} className="flex min-h-dvh flex-col">
+      {pending > 0 && (
+        <div className="sticky top-0 z-10 bg-soon px-2 pt-[calc(env(safe-area-inset-top)+4px)] pb-1 text-center text-xs text-on-soon">
+          Hors ligne · {pending} saisie(s) en attente de synchronisation
+        </div>
+      )}
+      <main className="mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+88px)]">
+        <Tabs.Panel value="today">
+          <Today key={today} {...common} names={names} onSave={save} onDelete={remove} />
+        </Tabs.Panel>
+        <Tabs.Panel value="calendar">
+          <Calendar {...common} names={names} onSave={save} onDelete={remove} />
+        </Tabs.Panel>
+        <Tabs.Panel value="stats">
+          <Stats {...common} iudInsertedOn={couple.iud_inserted_on} />
+        </Tabs.Panel>
+        <Tabs.Panel value="settings">
           <Settings couple={couple} profile={profile} members={members} onCoupleChange={setCouple} onProfileChange={setProfile} />
-        )}
+        </Tabs.Panel>
       </main>
-      <nav className="tabs">
-        {(
-          [
-            ['today', 'Aujourd’hui', '💧'],
-            ['calendar', 'Calendrier', '🗓️'],
-            ['stats', 'Analyse', '📊'],
-            ['settings', 'Réglages', '⚙️'],
-          ] as const
-        ).map(([id, label, icon]) => (
-          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
-            <span className="tab-icon" aria-hidden>{icon}</span>
+      <Tabs.List className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md">
+        {TABS.map(([id, label, icon]) => (
+          <Tabs.Tab
+            key={id}
+            value={id}
+            className="group flex flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none focus-visible:text-accent data-active:font-semibold data-active:text-accent"
+          >
+            <span aria-hidden className="text-xl opacity-70 grayscale group-data-active:opacity-100 group-data-active:grayscale-0">
+              {icon}
+            </span>
             {label}
-          </button>
+          </Tabs.Tab>
         ))}
-      </nav>
-    </div>
+      </Tabs.List>
+    </Tabs.Root>
+  )
+}
+
+const TABS = [
+  ['today', 'Aujourd’hui', '💧'],
+  ['calendar', 'Calendrier', '🗓️'],
+  ['stats', 'Analyse', '📊'],
+  ['settings', 'Réglages', '⚙️'],
+] as const
+
+function Splash() {
+  return (
+    <CenterLayout>
+      <img src="/logo.svg" alt="" className="size-24 animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
+    </CenterLayout>
   )
 }

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { Button, inputClass } from './ui'
 
 export function Auth() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -9,7 +10,7 @@ export function Auth() {
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setMsg('')
@@ -23,13 +24,14 @@ export function Auth() {
   }
 
   return (
-    <div className="center">
-      <img src="/logo.svg" alt="" className="logo" />
-      <h1>Cycle à deux</h1>
-      <form onSubmit={submit} className="form">
-        {mode === 'signup' && <input placeholder="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
-        <input type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <CenterLayout>
+      <img src="/logo.svg" alt="" className="size-24" />
+      <h1 className="text-2xl font-bold">Cycle à deux</h1>
+      <form onSubmit={submit} className="flex w-full flex-col gap-2.5">
+        {mode === 'signup' && <input className={inputClass} placeholder="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
+        <input className={inputClass} type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input
+          className={inputClass}
           type="password"
           placeholder="Mot de passe"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -38,14 +40,18 @@ export function Auth() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className="primary" disabled={busy}>
+        <Button type="submit" disabled={busy}>
           {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
-        </button>
+        </Button>
       </form>
-      {msg && <p className="small accent">{msg}</p>}
-      <button className="link" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+      {msg && <p className="text-sm text-accent">{msg}</p>}
+      <Button variant="link" className="self-center" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
         {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
-      </button>
-    </div>
+      </Button>
+    </CenterLayout>
   )
+}
+
+export function CenterLayout({ children }: { children: React.ReactNode }) {
+  return <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-4 py-6 text-center">{children}</div>
 }
