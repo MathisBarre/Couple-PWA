@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { api } from './api'
 
 const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 
@@ -22,7 +22,7 @@ export async function currentSubscription() {
   return (await reg?.pushManager.getSubscription()) ?? null
 }
 
-export async function enablePush(userId: string) {
+export async function enablePush() {
   if (!vapidKey) throw new Error('VITE_VAPID_PUBLIC_KEY manquante')
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') throw new Error('Notifications refusées dans les réglages du téléphone')
@@ -30,25 +30,16 @@ export async function enablePush(userId: string) {
   const sub =
     (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) }))
-  const json = sub.toJSON()
-  const { error } = await supabase.from('push_subscriptions').upsert({
-    endpoint: sub.endpoint,
-    user_id: userId,
-    p256dh: json.keys!.p256dh,
-    auth: json.keys!.auth,
-  })
-  if (error) throw error
+  await api('push', { method: 'POST', body: sub.toJSON() })
 }
 
 export async function disablePush() {
   const sub = await currentSubscription()
   if (!sub) return
-  await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+  await api('push', { method: 'DELETE', body: { endpoint: sub.endpoint } })
   await sub.unsubscribe()
 }
 
 export async function sendTestPush() {
-  const { data, error } = await supabase.functions.invoke('send-reminders', { body: { test: true } })
-  if (error) throw error
-  return data as { sent: number }
+  return api<{ sent: number }>('push', { method: 'POST', body: { test: true } })
 }

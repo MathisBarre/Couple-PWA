@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../supabase/functions/_shared/cycles'
+import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
 import { DayEditor } from './DayEditor'
 import { cx, flowBg, flowText, IconButton, Sheet } from './ui'

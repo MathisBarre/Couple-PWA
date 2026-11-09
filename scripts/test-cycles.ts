@@ -1,6 +1,6 @@
 // Tests rapides de la logique de cycle : node --experimental-strip-types scripts/test-cycles.ts
 import assert from 'node:assert/strict'
-import { addDays, computeStats, computeStatus, detectPeriods, predict, reminderFor, type DayLog, type Flow } from '../supabase/functions/_shared/cycles.ts'
+import { addDays, computeStats, computeStatus, detectPeriods, predict, reminderFor, type DayLog, type Flow } from '../shared/cycles.ts'
 
 const mk = (start: string, flows: number[], pain = 0): DayLog[] =>
   flows.map((f, i) => ({ day: addDays(start, i), flow: f as Flow, pain, symptoms: [], note: null }))

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FLOW_LABELS, PAIN_LABELS, type DayLog, type Flow } from '../../supabase/functions/_shared/cycles'
+import { FLOW_LABELS, PAIN_LABELS, type DayLog, type Flow } from '../../shared/cycles'
 import { SYMPTOMS } from '../lib/symptoms'
 import { Button, cx, inputClass, MultiChoice, SectionTitle, SingleChoice } from './ui'
 

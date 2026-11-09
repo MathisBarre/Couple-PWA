@@ -1,14 +1,17 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { apiDev } from './vite-api-dev.ts'
 
-export default defineConfig({
-  // NEXT_PUBLIC_SUPABASE_* : variables publiques injectées par l'intégration Supabase de Vercel.
-  envPrefix: ['VITE_', 'NEXT_PUBLIC_SUPABASE_'],
+export default defineConfig(({ mode }) => {
+  // Rend les variables de .env.local visibles par l'API locale (process.env).
+  Object.assign(process.env, { ...loadEnv(mode, process.cwd(), ''), ...process.env })
+  return {
   plugins: [
     react(),
     tailwindcss(),
+    apiDev(),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -41,4 +44,5 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+}
 })

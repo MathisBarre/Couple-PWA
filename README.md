@@ -5,16 +5,25 @@ PWA de suivi des règles partagée entre deux comptes. On l'installe sur l'écra
 - **Aujourd'hui** : où en est le cycle, et la saisie rapide (« Ça continue » / « C'est fini » en un appui, aujourd'hui, hier ou avant-hier en un geste).
 - **Calendrier** : historique, règles prévues en pointillés, modifier n'importe quel jour passé.
 - **Analyse** : durée du cycle et des règles, prochaines règles, jours abondants et douloureux, spotting, symptômes fréquents, points à surveiller, export CSV.
-- **Réglages** : notifications, heure des rappels, date de pose du stérilet, code d'invitation.
+- **Réglages** : notifications, date de pose du stérilet, durée de cycle par défaut, code d'invitation.
 
 Le pourquoi de ces choix (effets du stérilet au cuivre, fonctions des autres applis) est dans [docs/RECHERCHE.md](docs/RECHERCHE.md).
 
 ## Architecture
 
-- **Front** : React + Vite + `vite-plugin-pwa` (manifeste, service worker, cache hors ligne, icônes, écrans de démarrage iOS).
-- **Données et comptes** : [Supabase](https://supabase.com) (offre gratuite) : comptes e-mail / mot de passe, base Postgres, sécurité par lignes (chacun ne voit que les données de son couple), temps réel (la saisie de l'autre apparaît tout de suite).
-- **Notifications** : Web Push. Une fonction Supabase (`supabase/functions/send-reminders`) tourne toutes les heures et envoie au plus un rappel par jour, à l'heure choisie, aux deux téléphones.
-- **Logique de cycle** : un seul fichier, `supabase/functions/_shared/cycles.ts`, utilisé par l'app et par la fonction de rappels.
+Tout tourne sur **Vercel**, la base est un **SQLite hébergé chez Turso** (offre gratuite).
+
+- **Front** : React, TypeScript, Vite, Tailwind CSS v4, [Base UI](https://base-ui.com), `vite-plugin-pwa` (manifeste, service worker, cache hors ligne, icônes, écrans de démarrage iOS).
+- **API** : fonctions Vercel dans `api/` (format Web `Request`/`Response`).
+  - `auth` : comptes e-mail + mot de passe (scrypt), session par cookie signé valable un an.
+  - `couple` : créer l'espace, le rejoindre avec un code, réglages.
+  - `logs` : lire, enregistrer, effacer les journées.
+  - `push` : abonner un appareil aux notifications, envoyer un test.
+  - `cron` : rappels quotidiens.
+- **Base** : SQLite (libSQL / Turso). Les tables sont créées automatiquement au premier appel, il n'y a pas de migration à lancer.
+- **Notifications** : Web Push. Une tâche planifiée Vercel appelle `/api/cron` une fois par jour vers 19 h (heure de Paris en hiver, 20 h en été) et envoie au plus un rappel aux deux téléphones.
+- **Hors ligne** : l'app s'ouvre sans réseau, affiche les dernières données et met les saisies en attente jusqu'au retour du réseau. Les saisies de l'autre apparaissent à l'ouverture de l'app (et toutes les minutes tant qu'elle est ouverte).
+- **Logique de cycle** : un seul fichier, `shared/cycles.ts`, utilisé par l'app et par la tâche de rappels, testé par `npm test`.
 
 Les rappels envoyés :
 
@@ -26,71 +35,37 @@ Les rappels envoyés :
 | Jour prévu | « Règles prévues aujourd'hui » |
 | Retard de 2, 5 et 8 jours | « Règles en retard de N jours » |
 
-## Mise en place (une seule fois, ~20 minutes)
+## Mise en place (une seule fois, ~10 minutes)
 
-### 1. Créer le projet Supabase
+### 1. Importer le projet dans Vercel
 
-1. Créer un compte sur [supabase.com](https://supabase.com) puis un projet (région Europe, ex. Paris).
-2. **SQL Editor** → coller le contenu de `supabase/migrations/20261109000000_init.sql` → Run.
-3. **Authentication → Sign In / Providers → Email** : laisser activé. Pour aller plus vite, vous pouvez désactiver « Confirm email » (sinon il faut cliquer le lien reçu avant de se connecter).
-4. **Project Settings → API** : noter l'URL du projet et la clé `anon` (publique).
+Sur [vercel.com/new](https://vercel.com/new), importer le dépôt GitHub `Couple-PWA`. Vercel détecte Vite tout seul : ne rien changer et déployer (le premier déploiement affichera une erreur de connexion tant que la base n'est pas branchée, c'est normal).
 
-### 2. Générer les clés de notification (VAPID)
+### 2. Brancher la base Turso
+
+Dans le projet Vercel : **Storage → Create Database → Turso** (ou **Integrations → Marketplace → Turso**), offre gratuite, région Europe. Relier la base au projet : Vercel ajoute tout seul `TURSO_DATABASE_URL` et `TURSO_AUTH_TOKEN`.
+
+### 3. Ajouter les autres variables
+
+Générer les clés de notification :
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-Garder la clé publique et la clé privée.
+Puis dans **Settings → Environment Variables** du projet Vercel :
 
-### 3. Déployer la fonction de rappels
+| Variable | Valeur |
+|---|---|
+| `AUTH_SECRET` | une longue chaîne aléatoire (`openssl rand -hex 32`) |
+| `VITE_VAPID_PUBLIC_KEY` | la clé publique générée |
+| `VAPID_PRIVATE_KEY` | la clé privée générée |
+| `VAPID_SUBJECT` | `mailto:` suivi de votre e-mail |
+| `CRON_SECRET` | une autre chaîne aléatoire (Vercel l'utilise pour appeler `/api/cron`) |
 
-Avec la [CLI Supabase](https://supabase.com/docs/guides/cli) :
+Redéployer (**Deployments → … → Redeploy**). La tâche planifiée est déclarée dans `vercel.json` et apparaît dans **Settings → Cron Jobs**.
 
-```bash
-npx supabase login
-npx supabase link --project-ref <ref-du-projet>
-npx supabase secrets set \
-  VAPID_PUBLIC_KEY=<clé publique> \
-  VAPID_PRIVATE_KEY=<clé privée> \
-  VAPID_SUBJECT=mailto:<votre e-mail> \
-  CRON_SECRET=<une longue chaîne aléatoire>
-npx supabase functions deploy send-reminders --no-verify-jwt
-```
-
-### 4. Planifier les rappels (toutes les heures)
-
-Dans **Database → Extensions**, activer `pg_cron` et `pg_net`, puis dans le SQL Editor :
-
-```sql
-select cron.schedule(
-  'send-reminders',
-  '0 * * * *',
-  $$
-  select net.http_post(
-    url := 'https://<ref-du-projet>.supabase.co/functions/v1/send-reminders',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', '<CRON_SECRET>'),
-    body := '{}'::jsonb
-  );
-  $$
-);
-```
-
-La fonction vérifie elle-même l'heure de rappel de chaque couple (réglable dans l'app, 20 h par défaut, heure de Paris).
-
-### 5. Héberger l'app (HTTPS obligatoire)
-
-Le plus simple : [Vercel](https://vercel.com) (gratuit). Importer le dépôt GitHub, laisser les réglages Vite par défaut et ajouter les variables d'environnement :
-
-```
-VITE_SUPABASE_URL=https://<ref-du-projet>.supabase.co
-VITE_SUPABASE_ANON_KEY=<clé anon>
-VITE_VAPID_PUBLIC_KEY=<clé publique VAPID>
-```
-
-Netlify ou Cloudflare Pages marchent aussi (commande `npm run build`, dossier `dist`).
-
-### 6. Installer sur les téléphones
+### 4. Installer sur les téléphones
 
 1. **iPhone** : ouvrir le site dans **Safari** → bouton Partager → **Sur l'écran d'accueil**. Ouvrir l'app depuis l'icône (les notifications ne marchent sur iPhone que depuis l'app installée, iOS 16.4 ou plus).
 2. **Android** : ouvrir dans Chrome → menu → **Installer l'application**.
@@ -100,19 +75,18 @@ Netlify ou Cloudflare Pages marchent aussi (commande `npm run build`, dossier `d
 ## Développement
 
 ```bash
-cp .env.example .env.local   # puis remplir les valeurs
+cp .env.example .env.local   # facultatif : sans Turso, une base locale local.db est utilisée
 npm install
-npm run dev                  # app en local
+npm run dev                  # app + API en local sur http://localhost:5173
 npm test                     # tests de la logique de cycle
-npm run build                # build de production (dist/)
+npm run build                # vérification des types + build de production (dist/)
 npm run icons                # régénère icônes et écrans de démarrage depuis public/logo.svg
 ```
 
-Pour forcer l'envoi des rappels sans attendre l'heure :
+Pour déclencher les rappels à la main (en local ou en production) :
 
 ```bash
-curl -X POST https://<ref>.supabase.co/functions/v1/send-reminders \
-  -H "x-cron-secret: <CRON_SECRET>" -H "Content-Type: application/json" -d '{"force":true}'
+curl -H "Authorization: Bearer <CRON_SECRET>" https://<votre-app>.vercel.app/api/cron
 ```
 
 Cette application n'est pas un dispositif médical : les prévisions et alertes sont indicatives.

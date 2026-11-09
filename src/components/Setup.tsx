@@ -1,22 +1,24 @@
 import { useState, type FormEvent } from 'react'
-import { supabase, type Couple } from '../lib/supabase'
+import { api, logout } from '../lib/api'
 import { CenterLayout } from './Auth'
 import { Button, inputClass } from './ui'
 
-export function Setup({ onDone }: { onDone: (c: Couple) => void }) {
+export function Setup({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState('')
   const [msg, setMsg] = useState('')
 
-  const create = async () => {
-    const { data, error } = await supabase.rpc('create_couple')
-    if (error) setMsg(error.message)
-    else onDone(data as Couple)
+  const run = async (payload: object) => {
+    try {
+      await api('couple', { method: 'POST', body: payload })
+      onDone()
+    } catch (e) {
+      setMsg((e as Error).message)
+    }
   }
-  const join = async (e: FormEvent) => {
+  const create = () => run({ action: 'create' })
+  const join = (e: FormEvent) => {
     e.preventDefault()
-    const { data, error } = await supabase.rpc('join_couple', { code })
-    if (error) setMsg(error.message)
-    else onDone(data as Couple)
+    run({ action: 'join', code })
   }
 
   return (
@@ -34,7 +36,7 @@ export function Setup({ onDone }: { onDone: (c: Couple) => void }) {
         </Button>
       </form>
       {msg && <p className="text-sm text-accent">{msg}</p>}
-      <Button variant="link" className="self-center" onClick={() => supabase.auth.signOut()}>
+      <Button variant="link" className="self-center" onClick={() => logout().then(onDone)}>
         Se déconnecter
       </Button>
     </CenterLayout>

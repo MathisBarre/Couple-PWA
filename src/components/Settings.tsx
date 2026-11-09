@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
-import { supabase, type Couple, type Profile } from '../lib/supabase'
+import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { Button, Card, cx, inputClass, SectionTitle, Select, Switch } from './ui'
 
 interface Props {
   couple: Couple
-  profile: Profile
-  members: Profile[]
-  onCoupleChange: (c: Couple) => void
-  onProfileChange: (p: Profile) => void
+  profile: Me['user']
+  members: Member[]
+  onChange: () => void
 }
 
-const HOURS = Array.from({ length: 24 }, (_, h) => ({ value: h, label: `${h} h` }))
 const CYCLES = Array.from({ length: 26 }, (_, i) => ({ value: i + 20, label: `${i + 20} jours` }))
 
-export function Settings({ couple, profile, members, onCoupleChange, onProfileChange }: Props) {
+export function Settings({ couple, profile, members, onChange }: Props) {
   const [pushOn, setPushOn] = useState(false)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
@@ -25,16 +23,19 @@ export function Settings({ couple, profile, members, onCoupleChange, onProfileCh
   }, [])
 
   const updateCouple = async (patch: Partial<Couple>) => {
-    const { data, error } = await supabase.from('couples').update(patch).eq('id', couple.id).select().single()
-    if (error) setMsg(error.message)
-    else onCoupleChange(data as Couple)
+    try {
+      await api('couple', { method: 'PATCH', body: patch })
+      onChange()
+    } catch (e) {
+      setMsg((e as Error).message)
+    }
   }
 
   const togglePush = async (on: boolean) => {
     setMsg('')
     try {
       if (on) {
-        await enablePush(profile.id)
+        await enablePush()
         setMsg('Notifications activées sur cet appareil.')
       } else await disablePush()
       setPushOn(on)
@@ -72,9 +73,8 @@ export function Settings({ couple, profile, members, onCoupleChange, onProfileCh
             )}
           </>
         )}
-        <Select label="Heure des rappels" value={couple.reminder_hour} items={HOURS} onChange={(reminder_hour) => updateCouple({ reminder_hour })} />
-        <p className="text-sm text-ink-2">
-          Un rappel par jour maximum : chaque jour de règles non noté, quand ça semble fini, 2 jours avant les prochaines règles, le jour prévu
+        <p className="mt-2 text-sm text-ink-2">
+          Un rappel par jour, vers 19 h : chaque jour de règles non noté, quand ça semble fini, 2 jours avant les prochaines règles, le jour prévu
           et en cas de retard. Il part sur les téléphones de vous deux.
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
@@ -109,8 +109,7 @@ export function Settings({ couple, profile, members, onCoupleChange, onProfileCh
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={async () => {
-              const { data } = await supabase.from('profiles').update({ display_name: name }).eq('id', profile.id).select().single()
-              if (data) onProfileChange(data as Profile)
+              if (name.trim() && name !== profile.display_name) await api('auth', { method: 'PATCH', body: { display_name: name } }).then(onChange, () => {})
             }}
           />
         </label>
@@ -126,7 +125,7 @@ export function Settings({ couple, profile, members, onCoupleChange, onProfileCh
         )}
       </Card>
 
-      <Button variant="secondary" onClick={() => supabase.auth.signOut()}>
+      <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter
       </Button>
     </div>

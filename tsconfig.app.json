@@ -22,6 +22,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "supabase/functions/_shared"],
+  "include": ["src", "shared"],
   "exclude": ["src/sw.ts"]
 }

@@ -13,7 +13,7 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 self.skipWaiting()
 clientsClaim()
 
-// Réception d'un rappel envoyé par la fonction Supabase.
+// Réception d'un rappel envoyé par la tâche planifiée (api/cron).
 self.addEventListener('push', (event) => {
   const data = (() => {
     try {

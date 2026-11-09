@@ -1,8 +1,8 @@
-// Données du couple : lecture depuis Supabase avec cache local (consultation
+// Données du couple : lecture via l’API avec cache local (consultation
 // hors ligne) et file d'attente des saisies faites sans réseau.
 import { useCallback, useEffect, useState } from 'react'
-import type { DayLog } from '../../supabase/functions/_shared/cycles'
-import { supabase } from './supabase'
+import type { DayLog } from '../../shared/cycles'
+import { api } from './api'
 
 const cacheKey = (coupleId: string) => `logs:${coupleId}`
 const queueKey = (coupleId: string) => `queue:${coupleId}`
@@ -23,13 +23,19 @@ function write(key: string, value: unknown) {
   }
 }
 
-type Row = DayLog & { couple_id: string }
+type Row = DayLog
 
 async function flushQueue(coupleId: string) {
   const queue = read<Row[]>(queueKey(coupleId), [])
   if (!queue.length || !navigator.onLine) return
-  const { error } = await supabase.from('day_logs').upsert(queue)
-  if (!error) write(queueKey(coupleId), [])
+  try {
+    await api('logs', { method: 'PUT', body: queue })
+    // Ne retire que ce qui a été envoyé (une saisie a pu arriver entre-temps).
+    const sent = new Map(queue.map((q) => [q.day, q.updated_at]))
+    write(queueKey(coupleId), read<Row[]>(queueKey(coupleId), []).filter((q) => sent.get(q.day) !== q.updated_at))
+  } catch {
+    /* hors ligne ou erreur serveur : on réessaiera */
+  }
 }
 
 export function useDayLogs(coupleId: string, userId: string) {
@@ -56,12 +62,11 @@ export function useDayLogs(coupleId: string, userId: string) {
     setSyncing(true)
     await flushQueue(coupleId)
     setPending(read<Row[]>(queueKey(coupleId), []).length)
-    const { data, error } = await supabase
-      .from('day_logs')
-      .select('day, flow, pain, symptoms, note, updated_by, updated_at')
-      .eq('couple_id', coupleId)
-      .order('day')
-    if (!error && data) merge(data as DayLog[], true)
+    try {
+      merge(await api<DayLog[]>('logs'), true)
+    } catch {
+      /* hors ligne : on garde le cache local */
+    }
     setSyncing(false)
   }, [coupleId, merge])
 
@@ -71,26 +76,18 @@ export function useDayLogs(coupleId: string, userId: string) {
     const onVisible = () => document.visibilityState === 'visible' && refresh()
     window.addEventListener('online', onOnline)
     document.addEventListener('visibilitychange', onVisible)
-    // Temps réel : la saisie de l'autre apparaît instantanément.
-    const channel = supabase
-      .channel(`logs-${coupleId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_logs', filter: `couple_id=eq.${coupleId}` }, (p) => {
-        if (p.eventType === 'DELETE') {
-          const day = (p.old as { day?: string }).day
-          if (day) setLogs((prev) => prev.filter((l) => l.day !== day))
-        } else merge([p.new as DayLog])
-      })
-      .subscribe()
+    // Pas de temps réel : on resynchronise à l'ouverture et toutes les minutes.
+    const timer = setInterval(() => document.visibilityState === 'visible' && refresh(), 60_000)
     return () => {
       window.removeEventListener('online', onOnline)
       document.removeEventListener('visibilitychange', onVisible)
-      supabase.removeChannel(channel)
+      clearInterval(timer)
     }
   }, [coupleId, refresh, merge])
 
   const save = useCallback(
     async (log: DayLog) => {
-      const row: Row = { ...log, couple_id: coupleId, updated_by: userId, updated_at: new Date().toISOString() }
+      const row: Row = { ...log, updated_by: userId, updated_at: new Date().toISOString() }
       const queue = read<Row[]>(queueKey(coupleId), []).filter((q) => q.day !== log.day)
       queue.push(row)
       write(queueKey(coupleId), queue)
@@ -110,7 +107,7 @@ export function useDayLogs(coupleId: string, userId: string) {
         write(cacheKey(coupleId), next)
         return next
       })
-      await supabase.from('day_logs').delete().eq('couple_id', coupleId).eq('day', day)
+      await api(`logs?day=${day}`, { method: 'DELETE' }).catch(() => {})
     },
     [coupleId],
   )

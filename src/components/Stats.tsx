@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { addDays, computeStats, diffDays, FLOW_LABELS, PAIN_LABELS, type DayLog } from '../../supabase/functions/_shared/cycles'
+import { addDays, computeStats, diffDays, FLOW_LABELS, PAIN_LABELS, type DayLog } from '../../shared/cycles'
 import { formatDM, formatLong } from '../lib/dates'
 import { Button, Card, cx, flowBg, SectionTitle } from './ui'
 

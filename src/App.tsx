@@ -1,79 +1,55 @@
 import { Tabs } from '@base-ui/react/tabs'
-import type { Session } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Auth, CenterLayout } from './components/Auth'
 import { Calendar } from './components/Calendar'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stats } from './components/Stats'
 import { Today } from './components/Today'
+import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { useDayLogs } from './lib/store'
-import { isConfigured, supabase, type Couple, type Profile } from './lib/supabase'
+
+const ME_CACHE = 'me'
 
 export default function App() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined)
+  // undefined = chargement, null = non connecté
+  const [me, setMe] = useState<Me | null | undefined>(undefined)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
-    return () => data.subscription.unsubscribe()
+  const reload = useCallback(async () => {
+    try {
+      const data = await fetchMe()
+      setMe(data)
+      try {
+        if (data) localStorage.setItem(ME_CACHE, JSON.stringify(data))
+        else localStorage.removeItem(ME_CACHE)
+      } catch {
+        /* stockage indisponible */
+      }
+    } catch {
+      // Hors ligne : on ouvre l'app avec le dernier profil connu.
+      try {
+        setMe(JSON.parse(localStorage.getItem(ME_CACHE) ?? 'null'))
+      } catch {
+        setMe(null)
+      }
+    }
   }, [])
 
-  if (!isConfigured)
-    return (
-      <CenterLayout>
-        <h1 className="text-2xl font-bold">Configuration manquante</h1>
-        <p className="text-ink-2">Connectez Supabase au projet Vercel ou renseignez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY (voir le README).</p>
-      </CenterLayout>
-    )
-  if (session === undefined) return <Splash />
-  if (!session) return <Auth />
-  return <Signed userId={session.user.id} />
-}
-
-function Signed({ userId }: { userId: string }) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [couple, setCouple] = useState<Couple | null>(null)
-  const [members, setMembers] = useState<Profile[]>([])
-  const [loaded, setLoaded] = useState(false)
-
   useEffect(() => {
-    ;(async () => {
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      setProfile(p as Profile)
-      if (p?.couple_id) {
-        const [{ data: c }, { data: m }] = await Promise.all([
-          supabase.from('couples').select('*').eq('id', p.couple_id).single(),
-          supabase.from('profiles').select('*').eq('couple_id', p.couple_id),
-        ])
-        setCouple(c as Couple)
-        setMembers((m ?? []) as Profile[])
-      }
-      setLoaded(true)
-    })()
-  }, [userId, couple?.id])
+    reload()
+  }, [reload])
 
-  if (!loaded || !profile) return <Splash />
-  if (!couple) return <Setup onDone={setCouple} />
-  return <Main couple={couple} profile={profile} members={members} setCouple={setCouple} setProfile={setProfile} />
+  if (me === undefined) return <Splash />
+  if (!me) return <Auth onDone={reload} />
+  if (!me.couple) return <Setup onDone={reload} />
+  return <Main me={me as Me & { couple: NonNullable<Me['couple']> }} reload={reload} />
 }
 
 type Tab = 'today' | 'calendar' | 'stats' | 'settings'
 
-function Main({
-  couple,
-  profile,
-  members,
-  setCouple,
-  setProfile,
-}: {
-  couple: Couple
-  profile: Profile
-  members: Profile[]
-  setCouple: (c: Couple) => void
-  setProfile: (p: Profile) => void
-}) {
+function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => void }) {
+  const { couple, user: profile, members } = me
   const [tab, setTab] = useState<Tab>('today')
   const [today, setToday] = useState(localToday())
   const { logs, save, remove, pending } = useDayLogs(couple.id, profile.id)
@@ -108,7 +84,7 @@ function Main({
           <Stats {...common} iudInsertedOn={couple.iud_inserted_on} />
         </Tabs.Panel>
         <Tabs.Panel value="settings">
-          <Settings couple={couple} profile={profile} members={members} onCoupleChange={setCouple} onProfileChange={setProfile} />
+          <Settings couple={couple} profile={profile} members={members} onChange={reload} />
         </Tabs.Panel>
       </main>
       <Tabs.List className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md">

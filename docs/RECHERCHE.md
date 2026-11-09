@@ -41,4 +41,4 @@ Fonctions courantes, et ce qu'on en a gardé :
 | Fenêtre de fertilité / ovulation, mode grossesse | ❌ peu utile avec un stérilet, à ajouter plus tard si besoin |
 | Humeur, sommeil, activité sexuelle, température, poids | ❌ volontairement laissé de côté pour rester simple (« Humeur » existe en symptôme) |
 | Contenus éducatifs, communauté, IA | ❌ |
-| Confidentialité | ✅ données dans votre propre projet Supabase, accès limité à vous deux |
+| Confidentialité | ✅ données dans votre propre base SQLite (Turso), accès limité à vous deux |

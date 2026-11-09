@@ -1,7 +1,7 @@
 import { Toggle } from '@base-ui/react/toggle'
 import { ToggleGroup } from '@base-ui/react/toggle-group'
 import { useMemo, useState } from 'react'
-import { addDays, computeStatus, FLOW_LABELS, type DayLog, type Flow } from '../../supabase/functions/_shared/cycles'
+import { addDays, computeStatus, FLOW_LABELS, type DayLog, type Flow } from '../../shared/cycles'
 import { formatLong, formatShort } from '../lib/dates'
 import { DayEditor } from './DayEditor'
 import { Button, cx, flowBg } from './ui'

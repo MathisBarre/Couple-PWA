@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 import { Button, inputClass } from './ui'
 
-export function Auth() {
+export function Auth({ onDone }: { onDone: () => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,13 +14,13 @@ export function Auth() {
     e.preventDefault()
     setBusy(true)
     setMsg('')
-    const { data, error } =
-      mode === 'login'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password, options: { data: { display_name: name } } })
+    try {
+      await api('auth', { method: 'POST', body: { action: mode, email, password, name } })
+      onDone()
+    } catch (err) {
+      setMsg((err as Error).message)
+    }
     setBusy(false)
-    if (error) setMsg(error.message)
-    else if (mode === 'signup' && !data.session) setMsg('Compte créé. Confirmez votre e-mail puis connectez-vous ici.')
   }
 
   return (
@@ -35,7 +35,7 @@ export function Auth() {
           type="password"
           placeholder="Mot de passe"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          minLength={6}
+          minLength={mode === 'signup' ? 8 : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

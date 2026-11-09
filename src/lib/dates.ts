@@ -1,4 +1,4 @@
-import { toDate } from '../../supabase/functions/_shared/cycles'
+import { toDate } from '../../shared/cycles'
 
 /** Date du jour de l'appareil (YYYY-MM-DD, heure locale). */
 export function localToday(): string {
