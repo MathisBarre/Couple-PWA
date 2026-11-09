@@ -1,14 +1,15 @@
-import { Tabs } from '@base-ui/react/tabs'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Auth, CenterLayout } from './components/Auth'
-import { Calendar } from './components/Calendar'
+import { Cycle, type CycleTab } from './components/Cycle'
+import { Groceries } from './components/Groceries'
+import { More } from './components/More'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
-import { Stats } from './components/Stats'
-import { Today } from './components/Today'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
+import { useGroceries } from './lib/groceries'
 import { useDayLogs } from './lib/store'
+import { applyTheme, barItemFor, BAR, OVERFLOW, themeFor, type View } from './modules'
 
 const ME_CACHE = 'me'
 
@@ -46,71 +47,128 @@ export default function App() {
   return <Main me={me as Me & { couple: NonNullable<Me['couple']> }} reload={reload} />
 }
 
-type Tab = 'today' | 'calendar' | 'stats' | 'settings'
-
 function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => void }) {
   const { couple, user: profile, members } = me
-  const [tab, setTab] = useState<Tab>('today')
+  // À l'ouverture (et depuis une notification) : directement la saisie du jour.
+  const [view, setView] = useState<View>('cycle')
+  const [cycleTab, setCycleTab] = useState<CycleTab>('today')
   const [today, setToday] = useState(localToday())
-  const { logs, save, remove, pending } = useDayLogs(couple.id, profile.id)
+  const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
+  const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
+  const pending = pendingLogs + groceries.pending
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
 
+  // Petite pastille sur l'icône d'un espace (ex. nombre d'articles à acheter).
+  const badges: Partial<Record<View, number>> = { groceries: groceries.items.filter((i) => !i.done).length }
+
   useEffect(() => {
-    // Ouvert depuis une notification : aller directement à la saisie du jour.
-    // (l'onglet par défaut est déjà la saisie du jour)
     if (location.search) history.replaceState(null, '', '/')
     const onVisible = () => document.visibilityState === 'visible' && setToday(localToday())
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
-  const common = { today, logs, defaultCycle: couple.default_cycle_length }
+  // Chaque espace a sa couleur (rose pour le cycle, verdure pour les courses…).
+  useEffect(() => {
+    applyTheme(themeFor(view))
+  }, [view])
+  useEffect(() => () => applyTheme('rose'), [])
+
+  const open = (v: View) => {
+    // Retoucher l'onglet Cycle depuis un autre écran du cycle ramène à la saisie du jour.
+    if (v === 'cycle' && view === 'cycle') setCycleTab('today')
+    setView(v)
+    window.scrollTo(0, 0)
+  }
+
+  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
+
+  let screen: ReactNode
+  switch (view) {
+    case 'cycle':
+      screen = (
+        <Cycle
+          tab={cycleTab}
+          onTab={setCycleTab}
+          today={today}
+          logs={logs}
+          defaultCycle={couple.default_cycle_length}
+          iudInsertedOn={couple.iud_inserted_on}
+          names={names}
+          onSave={save}
+          onDelete={remove}
+        />
+      )
+      break
+    case 'groceries':
+      screen = (
+        <Groceries
+          items={groceries.items}
+          names={names}
+          onAdd={groceries.add}
+          onToggle={groceries.toggle}
+          onRemove={groceries.remove}
+          onClearDone={groceries.clearDone}
+        />
+      )
+      break
+    case 'settings':
+      screen = settings
+      break
+    case 'more':
+      screen = (
+        <More modules={OVERFLOW} onOpen={open}>
+          {settings}
+        </More>
+      )
+      break
+  }
+
+  const active = barItemFor(view)
 
   return (
-    <Tabs.Root value={tab} onValueChange={(v) => setTab(v as Tab)} className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col">
       {pending > 0 && (
         <div className="sticky top-0 z-10 bg-soon px-2 pt-[calc(env(safe-area-inset-top)+4px)] pb-1 text-center text-xs text-on-soon">
-          Hors ligne · {pending} saisie(s) en attente de synchronisation
+          Hors ligne · {pending} modification(s) en attente de synchronisation
         </div>
       )}
       <main className="mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+88px)]">
-        <Tabs.Panel value="today">
-          <Today key={today} {...common} names={names} onSave={save} onDelete={remove} />
-        </Tabs.Panel>
-        <Tabs.Panel value="calendar">
-          <Calendar {...common} names={names} onSave={save} onDelete={remove} />
-        </Tabs.Panel>
-        <Tabs.Panel value="stats">
-          <Stats {...common} iudInsertedOn={couple.iud_inserted_on} />
-        </Tabs.Panel>
-        <Tabs.Panel value="settings">
-          <Settings couple={couple} profile={profile} members={members} onChange={reload} />
-        </Tabs.Panel>
+        {screen}
       </main>
-      <Tabs.List className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md">
-        {TABS.map(([id, label, icon]) => (
-          <Tabs.Tab
-            key={id}
-            value={id}
-            className="group flex flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none focus-visible:text-accent data-active:font-semibold data-active:text-accent"
-          >
-            <span aria-hidden className="text-xl opacity-70 grayscale group-data-active:opacity-100 group-data-active:grayscale-0">
-              {icon}
-            </span>
-            {label}
-          </Tabs.Tab>
-        ))}
-      </Tabs.List>
-    </Tabs.Root>
+      <nav
+        aria-label="Navigation principale"
+        className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md"
+      >
+        <div className="mx-auto flex max-w-xl">
+          {BAR.map(({ id, label, icon }) => {
+            const badge = badges[id] ?? 0
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => open(id)}
+                aria-current={active === id ? 'page' : undefined}
+                className="group flex flex-1 flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none focus-visible:text-accent aria-[current=page]:font-semibold aria-[current=page]:text-accent"
+              >
+                <span aria-hidden className="relative text-xl">
+                  <span className="opacity-70 grayscale group-aria-[current=page]:opacity-100 group-aria-[current=page]:grayscale-0">{icon}</span>
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-2.5 min-w-4.5 rounded-full bg-accent px-1 text-center text-[0.65rem] leading-4.5 font-semibold text-on-accent">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
+                </span>
+                {label}
+                {badge > 0 && <span className="sr-only">({badge})</span>}
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+    </div>
   )
 }
-
-const TABS = [
-  ['today', 'Aujourd’hui', '💧'],
-  ['calendar', 'Calendrier', '🗓️'],
-  ['stats', 'Analyse', '📊'],
-  ['settings', 'Réglages', '⚙️'],
-] as const
 
 function Splash() {
   return (
