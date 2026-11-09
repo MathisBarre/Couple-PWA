@@ -8,9 +8,14 @@ declare const self: ServiceWorkerGlobalScope
 // Cache hors ligne de l'app (HTML, JS, CSS, icônes).
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
-registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
+// Toute navigation sert l'app en cache (hors ligne compris), sauf les routes de l'API.
+registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//] }))
 
-self.skipWaiting()
+// Une nouvelle version attend que la page l'active (voir src/lib/update.ts), pour ne jamais
+// recharger l'app en pleine saisie. Elle prend ensuite le contrôle de la page tout de suite.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting()
+})
 clientsClaim()
 
 // Réception d'un rappel envoyé par la tâche planifiée (api/cron).
@@ -26,7 +31,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title ?? 'Cycle à deux', {
       body: data.body,
       icon: '/pwa-192x192.png',
-      badge: '/pwa-64x64.png',
+      // Android n'affiche que la silhouette du badge (barre d'état) : il doit être monochrome.
+      badge: '/badge-96x96.png',
       tag: data.kind ?? 'reminder',
       data: { url: data.url ?? '/' },
     }),
@@ -38,14 +44,14 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = new URL(event.notification.data?.url ?? '/', self.location.origin).href
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const client of list) {
-        if ('focus' in client) {
-          client.navigate(url)
-          return client.focus()
-        }
-      }
-      return self.clients.openWindow(url)
-    }),
+    (async () => {
+      const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      const client = list.find((c) => c.visibilityState === 'visible') ?? list[0]
+      if (!client) return void (await self.clients.openWindow(url))
+      // focus() d'abord : il doit être appelé tant que le clic sur la notification compte
+      // comme une action de l'utilisateur. navigate() échoue sur une page non contrôlée.
+      const focused = await client.focus()
+      if (focused.url !== url) await focused.navigate(url).catch(() => undefined)
+    })(),
   )
 })

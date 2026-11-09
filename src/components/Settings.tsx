@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
+import { AppUpdate } from './AppUpdate'
 import { Button, Card, cx, inputClass, SectionTitle, Select, Switch } from './ui'
 
 interface Props {
@@ -52,9 +53,11 @@ export function Settings({ couple, profile, members, onChange }: Props) {
         <SectionTitle>Notifications</SectionTitle>
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
-            {isIOS
+            {isIOS && !isStandalone
               ? 'Sur iPhone, installez d’abord l’app : Safari → Partager → « Sur l’écran d’accueil », puis ouvrez-la depuis l’icône.'
-              : 'Ce navigateur ne gère pas les notifications push.'}
+              : isIOS
+                ? 'Les notifications demandent iOS 16.4 ou plus récent : mettez l’iPhone à jour (Réglages → Général → Mise à jour logicielle).'
+                : 'Ce navigateur ne gère pas les notifications push.'}
           </p>
         ) : (
           <>
@@ -124,6 +127,8 @@ export function Settings({ couple, profile, members, onChange }: Props) {
           </p>
         )}
       </Card>
+
+      <AppUpdate />
 
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter

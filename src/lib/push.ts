@@ -8,7 +8,8 @@ export const pushSupported = 'serviceWorker' in navigator && 'PushManager' in wi
 export const isStandalone =
   window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
 
-export const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+// Les iPad récents se présentent comme un Mac : on les repère à l'écran tactile.
+export const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (/macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
 
 function urlBase64ToUint8Array(base64: string) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)

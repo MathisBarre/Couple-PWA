@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "node --experimental-strip-types scripts/test-cycles.ts",
-    "icons": "pwa-assets-generator"
+    "icons": "pwa-assets-generator && pwa-assets-generator --config pwa-assets.full-bleed.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
