@@ -4,6 +4,8 @@ import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
 import { NotificationSwitches } from './components/NotificationSwitches'
+import { CycleSettings } from './components/CycleSettings'
+import { ScreenHeader } from './components/ScreenHeader'
 import { SpaceTabs } from './components/SpaceTabs'
 import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
@@ -17,7 +19,18 @@ import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
-import { applyTheme, BAR, labelFor, MODULES, OVERFLOW, SETTINGS_SECTIONS, themeFor, type ModuleId, type View } from './modules'
+import {
+  applyTheme,
+  BAR,
+  labelFor,
+  MODULES,
+  OVERFLOW,
+  SETTINGS_SECTIONS,
+  spaceSettings,
+  themeFor,
+  type ModuleId,
+  type View,
+} from './modules'
 
 const ME_CACHE = 'me'
 
@@ -67,9 +80,12 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   })
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
-  // Onglet affiché en haut de chaque espace ; « settings » = son onglet Réglages.
-  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; groceries: 'list' | 'settings' }>({ cycle: 'today', groceries: 'list' })
-  const setSubTab = <K extends keyof typeof subTabs>(id: K) => (t: (typeof subTabs)[K]) => setSubTabs((s) => ({ ...s, [id]: t }))
+  // Onglet affiché en haut de chaque espace.
+  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab }>({ cycle: 'today' })
+  const setSubTab =
+    <K extends keyof typeof subTabs>(id: K) =>
+    (t: (typeof subTabs)[K]) =>
+      setSubTabs((s) => ({ ...s, [id]: t }))
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
@@ -151,25 +167,43 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
     if (v === 'cycle') setSubTab('cycle')('today')
-    if (v === 'groceries') setSubTab('groceries')('list')
   }
 
-  // Raccourci depuis les réglages globaux : ouvre l'onglet Réglages de l'espace.
+  // Réglages d'un espace (⚙️ dans son en-tête, raccourci des réglages globaux, appui long) :
+  // écran empilé sur l'espace.
   const openSpaceSettings = (id: ModuleId) => {
-    setSubTabs((s) => ({ ...s, [id]: 'settings' }))
-    if (BAR.some((b) => b.id === id)) setTab(id)
-    else push(id)
+    const target = spaceSettings(id)
+    if (BAR.some((b) => b.id === id)) {
+      setTab(id)
+      if (stacks[id]?.at(-1) !== target) push(target, id)
+    } else {
+      setTab('more')
+      setStacks((s) => ({ ...s, more: [id, target] }))
+    }
   }
 
   // Appui long sur un onglet de la barre du bas : ses sous-écrans, pour y aller directement.
   const menuItems = (t: View): MenuItem[] => {
     if (t === 'settings')
       // Seulement les rubriques présentes à l'écran.
-      return SETTINGS_SECTIONS.filter((s) => document.getElementById(`reglages-${s.id}`)).map((s) => ({ key: s.id, label: s.label, icon: s.icon }))
+      return SETTINGS_SECTIONS.filter((s) => document.getElementById(`reglages-${s.id}`)).map((s) => ({
+        key: s.id,
+        label: s.label,
+        icon: s.icon,
+      }))
     if (t === 'more') return OVERFLOW.map((m) => ({ key: m.id, label: m.label, icon: m.icon, current: view === m.id }))
     const sections = MODULES.find((m) => m.id === t)?.sections ?? []
-    const current = (subTabs as Record<string, string>)[t]
-    return sections.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: view === t && current === s.id }))
+    const current =
+      tab !== t
+        ? null
+        : view === spaceSettings(t as ModuleId)
+          ? 'settings'
+          : view === t
+            ? t === 'cycle'
+              ? subTabs.cycle
+              : sections[0]?.id
+            : null
+    return sections.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: current === s.id }))
   }
   const pickMenu = (t: View, key: string) => {
     if (t !== tab) setTab(t)
@@ -177,13 +211,21 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       const el = document.getElementById(`reglages-${key}`)
       const scroller = el?.closest('[data-scroll]')
       if (el && scroller)
-        scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 16, behavior: 'smooth' })
+        scroller.scrollTo({
+          top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 16,
+          behavior: 'smooth',
+        })
     } else if (t === 'more') {
       if (view === key) return
       // Un autre espace déjà ouvert depuis « Plus » : on le remplace.
       if (stacks.more?.length) setStacks((s) => ({ ...s, more: [key as View] }))
       else push(key as View, 'more')
-    } else setSubTabs((s) => ({ ...s, [t]: key }))
+    } else if (key === 'settings') openSpaceSettings(t as ModuleId)
+    else {
+      // Un autre sous-écran : on revient à l'espace lui-même (sans ses réglages empilés).
+      if (stacks[t]?.length) stackRefs.current[t]?.pop(stacks[t]!.length)
+      if (t === 'cycle') setSubTab('cycle')(key as CycleTab)
+    }
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
 
@@ -199,8 +241,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             today={today}
             logs={logs}
             couple={couple}
-            onCoupleChange={reload}
-            other={other}
+            onSettings={() => openSpaceSettings('cycle')}
             names={names}
             onSave={save}
             onDelete={remove}
@@ -209,8 +250,10 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       case 'groceries':
         return (
           <SpaceTabs
-            tab={subTabs.groceries}
-            onTab={setSubTab('groceries')}
+            title="Courses"
+            onSettings={() => openSpaceSettings('groceries')}
+            tab="list"
+            onTab={() => {}}
             tabs={[
               {
                 id: 'list',
@@ -226,20 +269,29 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                   />
                 ),
               },
-              {
-                id: 'settings',
-                label: 'Réglages',
-                node: <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />,
-              },
             ]}
           />
+        )
+      case 'cycle:settings':
+        return (
+          <>
+            <ScreenHeader title="Réglages du cycle" />
+            <CycleSettings couple={couple} other={other} onChange={reload} />
+          </>
+        )
+      case 'groceries:settings':
+        return (
+          <>
+            <ScreenHeader title="Réglages des courses" />
+            <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />
+          </>
         )
       case 'settings':
         return settings
       case 'more':
         return (
           <More modules={OVERFLOW} onOpen={push}>
-            {settings}
+            <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} embedded />
           </More>
         )
     }

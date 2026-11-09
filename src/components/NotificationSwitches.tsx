@@ -5,7 +5,7 @@ import { Card, SectionTitle, Switch } from './ui'
 type Kind = keyof NotificationPrefs
 
 /**
- * Notifications propres à un espace, à placer dans son onglet Réglages.
+ * Notifications propres à un espace, à placer dans ses réglages (écran ⚙️).
  * Le choix vaut pour tous mes appareils ; l'activation sur ce téléphone se fait
  * dans les réglages globaux (barre du bas).
  */

@@ -3,6 +3,7 @@ import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, push
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { SPACES_WITH_SETTINGS, type ModuleId } from '../modules'
 import { AppUpdate } from './AppUpdate'
+import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
 import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
@@ -13,9 +14,11 @@ interface Props {
   members: Member[]
   onChange: () => void
   onOpenSpace: (id: ModuleId) => void
+  /** Affiché dans l'écran « Plus » (qui a déjà son en-tête) : simple titre de section. */
+  embedded?: boolean
 }
 
-export function Settings({ couple, profile, members, onChange, onOpenSpace }: Props) {
+export function Settings({ couple, profile, members, onChange, onOpenSpace, embedded }: Props) {
   const [pushOn, setPushOn] = useState(false)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
@@ -39,8 +42,10 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
   }
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <h2 className="text-xl font-bold">Réglages</h2>
+    <>
+      {!embedded && <ScreenHeader title="Réglages" />}
+      <div className="flex flex-col gap-3.5">
+      {embedded && <h2 className="text-xl font-bold">Réglages</h2>}
 
       {SPACES_WITH_SETTINGS.length > 0 && (
         <section id="reglages-espaces" className="scroll-mt-4">
@@ -104,8 +109,8 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
           </>
         )}
         <p className="mt-2 text-sm text-ink-2">
-          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans son propre onglet Réglages (ex. Cycle →
-          Réglages).
+          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans ses propres réglages (⚙️ en haut de
+          l’espace).
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
@@ -139,6 +144,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter
       </Button>
-    </div>
+      </div>
+    </>
   )
 }
