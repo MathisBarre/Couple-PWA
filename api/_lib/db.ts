@@ -43,6 +43,16 @@ const SCHEMA = [
     kind text not null,
     primary key (couple_id, day)
   )`,
+  `create table if not exists grocery_items (
+    id text primary key,
+    couple_id text not null references couples(id) on delete cascade,
+    name text not null,
+    done integer not null default 0,
+    added_by text,
+    created_at text not null default (datetime('now')),
+    updated_at text not null default (datetime('now'))
+  )`,
+  `create index if not exists grocery_items_couple on grocery_items (couple_id)`,
 ]
 
 /** Client prêt à l'emploi ; crée les tables au premier appel (aucune migration à lancer). */

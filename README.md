@@ -4,6 +4,7 @@ PWA de suivi des règles partagée entre deux comptes. On l'installe sur l'écra
 
 - **Aujourd'hui** : où en est le cycle, et la saisie rapide (« Ça continue » / « C'est fini » en un appui, aujourd'hui, hier ou avant-hier en un geste).
 - **Calendrier** : historique, règles prévues en pointillés, modifier n'importe quel jour passé.
+- **Courses** : liste de courses commune, ajout rapide (plusieurs articles d'un coup avec des virgules), cocher au magasin, vider le panier. Fonctionne hors ligne et se synchronise entre les deux téléphones.
 - **Analyse** : durée du cycle et des règles, prochaines règles, jours abondants et douloureux, spotting, symptômes fréquents, points à surveiller, export CSV.
 - **Réglages** : notifications, date de pose du stérilet, durée de cycle par défaut, code d'invitation.
 
@@ -18,6 +19,7 @@ Tout tourne sur **Vercel**, la base est un **SQLite hébergé chez Turso** (offr
   - `auth` : comptes e-mail + mot de passe (scrypt), session par cookie signé valable un an.
   - `couple` : créer l'espace, le rejoindre avec un code, réglages.
   - `logs` : lire, enregistrer, effacer les journées.
+  - `groceries` : lire et modifier la liste de courses.
   - `push` : abonner un appareil aux notifications, envoyer un test.
   - `cron` : rappels quotidiens.
 - **Base** : SQLite (libSQL / Turso). Les tables sont créées automatiquement au premier appel, il n'y a pas de migration à lancer.
