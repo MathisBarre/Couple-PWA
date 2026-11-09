@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     if (!reminder) continue
 
     const members = await conn.execute({ sql: 'select id from users where couple_id = ?', args: [c.id] })
-    const sent = await sendToUsers(members.rows.map((m) => String(m.id)), { ...reminder, url: '/?log=today' })
+    const sent = await sendToUsers(members.rows.map((m) => String(m.id)), { ...reminder, url: '/?log=today' }, 'reminders')
     await conn.execute({ sql: 'insert into reminder_log (couple_id, day, kind) values (?, ?, ?)', args: [c.id, today, reminder.kind] })
     report.push({ couple: c.id, kind: reminder.kind, sent })
   }

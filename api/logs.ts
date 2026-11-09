@@ -4,6 +4,7 @@
 import { requireCouple } from './_lib/auth.js'
 import { db } from './_lib/db.js'
 import { body, error, json } from './_lib/http.js'
+import { notifyActivity } from './_lib/activity.js'
 
 interface Incoming {
   day: string
@@ -42,6 +43,7 @@ export async function PUT(req: Request) {
     })),
     'write',
   )
+  notifyActivity(user, { kind: 'cycle', data: { saved: [...new Set(items.map((l) => l.day))] } })
   return json({ ok: true })
 }
 
@@ -50,6 +52,7 @@ export async function DELETE(req: Request) {
   if (user instanceof Response) return user
   const day = new URL(req.url).searchParams.get('day') ?? ''
   if (!DAY.test(day)) return error('Jour invalide')
-  await (await db()).execute({ sql: 'delete from day_logs where couple_id = ? and day = ?', args: [user.couple_id, day] })
+  const res = await (await db()).execute({ sql: 'delete from day_logs where couple_id = ? and day = ?', args: [user.couple_id, day] })
+  if (res.rowsAffected) notifyActivity(user, { kind: 'cycle', data: { deleted: [day] } })
   return json({ ok: true })
 }

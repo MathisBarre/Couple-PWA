@@ -1,5 +1,33 @@
 {
-  "crons": [{ "path": "/api/cron", "schedule": "0 18 * * *" }],
-  "rewrites": [{ "source": "/((?!api/|assets/|splash/|.*\\.).*)", "destination": "/index.html" }],
-  "headers": [{ "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }]
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 18 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/|assets/|splash/|.*\\.).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/logs.ts": {
+      "maxDuration": 60
+    },
+    "api/groceries.ts": {
+      "maxDuration": 60
+    }
+  }
 }

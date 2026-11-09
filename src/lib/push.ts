@@ -44,3 +44,11 @@ export async function disablePush() {
 export async function sendTestPush() {
   return api<{ sent: number }>('push', { method: 'POST', body: { test: true } })
 }
+
+/** Types de notifications reçus (réglage du compte, valable sur tous ses appareils). */
+export type NotificationPrefs = Record<'reminders' | 'cycle' | 'groceries', boolean>
+
+export const fetchNotificationPrefs = () => api<NotificationPrefs>('push')
+
+export const setNotificationPref = (kind: keyof NotificationPrefs, enabled: boolean) =>
+  api<NotificationPrefs>('push', { method: 'PATCH', body: { kind, enabled } })
