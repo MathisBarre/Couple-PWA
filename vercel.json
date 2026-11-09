@@ -7,6 +7,10 @@
   ],
   "rewrites": [
     {
+      "source": "/join",
+      "destination": "/api/join"
+    },
+    {
       "source": "/((?!api/|assets/|splash/|.*\\.).*)",
       "destination": "/index.html"
     }
