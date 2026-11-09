@@ -9,7 +9,7 @@ import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { useGroceries } from './lib/groceries'
 import { useDayLogs } from './lib/store'
-import { barItemFor, BAR, OVERFLOW, type View } from './modules'
+import { applyTheme, barItemFor, BAR, OVERFLOW, themeFor, type View } from './modules'
 
 const ME_CACHE = 'me'
 
@@ -67,6 +67,12 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
+
+  // Chaque espace a sa couleur (rose pour le cycle, verdure pour les courses…).
+  useEffect(() => {
+    applyTheme(themeFor(view))
+  }, [view])
+  useEffect(() => () => applyTheme('rose'), [])
 
   const open = (v: View) => {
     // Retoucher l'onglet Cycle depuis un autre écran du cycle ramène à la saisie du jour.

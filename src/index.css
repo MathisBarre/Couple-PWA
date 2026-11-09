@@ -47,10 +47,36 @@
   }
 }
 
+/* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème, appliqué
+   sur <html data-theme="…">. « rose » = les couleurs ci-dessus. Pour un nouveau
+   thème, copier un bloc ci-dessous (clair + sombre) et changer les teintes. */
+:root[data-theme='verdure'] {
+  --color-bg: #f3f8f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #e2eedb;
+  --color-ink: #1b2a1c;
+  --color-ink-2: #546a55;
+  --color-line: #d5e4ce;
+  --color-accent: #3c8a4b;
+  --color-on-accent: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='verdure'] {
+    --color-bg: #131b14;
+    --color-surface: #1b261c;
+    --color-surface-2: #243225;
+    --color-ink: #e7f1e5;
+    --color-ink-2: #a3b9a4;
+    --color-line: #2d3d2e;
+    --color-accent: #7cc98a;
+    --color-on-accent: #0e2313;
+  }
+}
+
 @layer base {
   html,
   body {
-    @apply min-h-full bg-bg text-ink antialiased;
+    @apply min-h-full bg-bg text-ink antialiased transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
