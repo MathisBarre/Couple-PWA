@@ -1,6 +1,6 @@
-# Cycle à deux
+# À deux
 
-PWA de suivi des règles partagée entre deux comptes. On l'installe sur l'écran d'accueil (iPhone et Android), on note le flux et la douleur en un appui, et on reçoit des rappels pour ne pas oublier le début, la suite et la fin des règles.
+PWA à deux comptes pour la vie de couple : suivi des règles, liste de courses, et d'autres espaces à venir. On l'installe sur l'écran d'accueil (iPhone et Android), on note les règles ou les courses en un appui, et on reçoit des rappels pour ne rien oublier.
 
 L'app est organisée en **espaces**, un par onglet dans la barre du bas :
 

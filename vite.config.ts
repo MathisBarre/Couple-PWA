@@ -42,16 +42,16 @@ export default defineConfig(({ mode }) => {
       manifest: {
         // Identifiant stable de l'app installée (sinon Chrome le déduit de start_url).
         id: '/',
-        name: 'Cycle à deux',
-        short_name: 'Cycle',
-        description: 'Suivi des règles partagé, simple et rapide.',
+        name: 'À deux',
+        short_name: 'À deux',
+        description: 'Notre app à deux : cycle, courses et plus.',
         lang: 'fr',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#FFF6F3',
-        theme_color: '#FFF6F3',
+        background_color: '#F5F5F4',
+        theme_color: '#F5F5F4',
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png', purpose: 'any' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
