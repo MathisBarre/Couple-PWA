@@ -19,10 +19,13 @@ export default defineConfig(({ mode }) => {
       registerType: 'autoUpdate',
       injectRegister: false,
       injectManifest: {
-        // Les écrans de démarrage iOS ne sont pas pré-cachés (inutiles hors ligne).
-        globPatterns: ['**/*.{js,css,html,svg,ico,woff2}', 'pwa-*.png', 'maskable-*.png', 'apple-touch-icon-*.png'],
+        // Les icônes du manifeste sont ajoutées automatiquement. Les écrans de démarrage iOS et
+        // l'icône iOS ne sont pas pré-cachés : iOS les télécharge une seule fois, à l'installation.
+        globPatterns: ['**/*.{js,css,html,ico,woff2}', 'logo.svg', 'favicon.svg', 'badge-*.png'],
       },
       manifest: {
+        // Identifiant stable de l'app installée (sinon Chrome le déduit de start_url).
+        id: '/',
         name: 'Cycle à deux',
         short_name: 'Cycle',
         description: 'Suivi des règles partagé, simple et rapide.',
@@ -34,12 +37,12 @@ export default defineConfig(({ mode }) => {
         background_color: '#FFF6F3',
         theme_color: '#FFF6F3',
         icons: [
-          { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-        shortcuts: [{ name: 'Noter aujourd’hui', url: '/?log=today', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] }],
+        shortcuts: [{ name: 'Noter aujourd’hui', url: '/?log=today', icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }] }],
       },
       devOptions: { enabled: false },
     }),

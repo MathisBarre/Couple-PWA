@@ -80,8 +80,10 @@ npm install
 npm run dev                  # app + API en local sur http://localhost:5173
 npm test                     # tests de la logique de cycle
 npm run build                # vérification des types + build de production (dist/)
-npm run icons                # régénère icônes et écrans de démarrage depuis public/logo.svg
+npm run icons                # régénère icônes et écrans de démarrage (public/logo.svg et public/logo-full-bleed.svg)
 ```
+
+Si vous changez le logo, les écrans de démarrage ou le thème : sur iPhone, l'icône et l'écran de démarrage sont copiés au moment de « Sur l'écran d'accueil ». Il faut supprimer l'app de l'écran d'accueil et la réajouter pour voir les nouveaux. Selon les versions d'iOS, l'écran de démarrage clair ou sombre peut aussi rester celui du thème actif au moment de l'ajout.
 
 Pour déclencher les rappels à la main (en local ou en production) :
 
