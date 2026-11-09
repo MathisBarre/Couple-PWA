@@ -3,6 +3,9 @@ import { Auth, CenterLayout } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
+import { NotificationSwitches } from './components/NotificationSwitches'
+import { SpaceTabs } from './components/SpaceTabs'
+import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
@@ -53,15 +56,22 @@ export default function App() {
 function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => void }) {
   const { couple, user: profile, members } = me
   // À l'ouverture (et depuis une notification) : directement la saisie du jour.
-  const [tab, setTab] = useState<View>('cycle')
+  // « ?open=groceries » (notification des courses) ouvre directement cet onglet.
+  const [tab, setTab] = useState<View>(() => {
+    const open = new URLSearchParams(location.search).get('open')
+    return BAR.find((i) => i.id === open)?.id ?? 'cycle'
+  })
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
   const [cycleTab, setCycleTab] = useState<CycleTab>('today')
+  const [groceriesTab, setGroceriesTab] = useState<'list' | 'settings'>('list')
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
   const pending = pendingLogs + groceries.pending
+  const partner = members.find((m) => m.id !== profile.id)
+  const other = partner?.display_name || 'votre partenaire'
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
   const stackRefs = useRef<Partial<Record<View, StackHandle | null>>>({})
   const tabEls = useRef<Partial<Record<View, HTMLElement | null>>>({})
@@ -80,7 +90,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   useEffect(() => {
     applyTheme(themeFor(view))
   }, [view])
-  useEffect(() => () => applyTheme('rose'), [])
+  useEffect(() => () => applyTheme('neutre'), [])
 
   // Changement d'onglet : l'écran glisse vers la gauche ou la droite selon la position dans la barre.
   const prevTab = useRef(tab)
@@ -136,6 +146,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
     if (v === 'cycle') setCycleTab('today')
+    if (v === 'groceries') setGroceriesTab('list')
   }
 
   const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
@@ -151,6 +162,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             logs={logs}
             couple={couple}
             onCoupleChange={reload}
+            other={other}
             names={names}
             onSave={save}
             onDelete={remove}
@@ -158,13 +170,30 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         )
       case 'groceries':
         return (
-          <Groceries
-            items={groceries.items}
-            names={names}
-            onAdd={groceries.add}
-            onToggle={groceries.toggle}
-            onRemove={groceries.remove}
-            onClearDone={groceries.clearDone}
+          <SpaceTabs
+            tab={groceriesTab}
+            onTab={setGroceriesTab}
+            tabs={[
+              {
+                id: 'list',
+                label: 'Liste',
+                node: (
+                  <Groceries
+                    items={groceries.items}
+                    names={names}
+                    onAdd={groceries.add}
+                    onToggle={groceries.toggle}
+                    onRemove={groceries.remove}
+                    onClearDone={groceries.clearDone}
+                  />
+                ),
+              },
+              {
+                id: 'settings',
+                label: 'Réglages',
+                node: <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />,
+              },
+            ]}
           />
         )
       case 'settings':
@@ -180,11 +209,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      {pending > 0 && (
-        <div className="relative z-10 bg-soon px-2 pt-[calc(env(safe-area-inset-top)+4px)] pb-1 text-center text-xs text-on-soon">
-          Hors ligne · {pending} modification(s) en attente de synchronisation
-        </div>
-      )}
+      <SyncIndicator pending={pending} />
       <div className="relative flex-1 overflow-hidden">
         {BAR.map(({ id }) => (
           <div

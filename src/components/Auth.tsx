@@ -26,7 +26,7 @@ export function Auth({ onDone }: { onDone: () => void }) {
   return (
     <CenterLayout>
       <img src="/logo.svg" alt="" className="size-24" />
-      <h1 className="text-2xl font-bold">Cycle à deux</h1>
+      <h1 className="text-2xl font-bold">À deux</h1>
       <form onSubmit={submit} className="flex w-full flex-col gap-2.5">
         {mode === 'signup' && <input className={inputClass} placeholder="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
         <input className={inputClass} type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

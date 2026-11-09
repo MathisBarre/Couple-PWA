@@ -53,6 +53,23 @@ const SCHEMA = [
     updated_at text not null default (datetime('now'))
   )`,
   `create index if not exists grocery_items_couple on grocery_items (couple_id)`,
+  // Choix de chaque membre : quels types de notifications il reçoit (absence de ligne = oui).
+  `create table if not exists notification_prefs (
+    user_id text not null references users(id) on delete cascade,
+    kind text not null,
+    enabled integer not null,
+    primary key (user_id, kind)
+  )`,
+  // Ce que chacun vient de saisir, pour prévenir les autres en une seule notification (voir _lib/activity.ts).
+  `create table if not exists activity_events (
+    id integer primary key autoincrement,
+    couple_id text not null,
+    author_id text not null,
+    kind text not null,
+    payload text not null,
+    created_at text not null default (datetime('now'))
+  )`,
+  `create index if not exists activity_events_key on activity_events (couple_id, author_id, kind, id)`,
 ]
 
 /** Client prêt à l'emploi ; crée les tables au premier appel (aucune migration à lancer). */

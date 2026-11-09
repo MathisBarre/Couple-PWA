@@ -15,13 +15,15 @@ interface Props {
   logs: DayLog[]
   couple: Couple
   onCoupleChange: () => void
+  /** Prénom de l'autre, pour les libellés de notifications. */
+  other: string
   names: Record<string, string>
   onSave: (log: DayLog) => void
   onDelete: (day: string) => void
 }
 
 /** Espace « Cycle » : saisie du jour, calendrier, analyse et réglages du suivi, avec ses onglets en haut. */
-export function Cycle({ tab, onTab, today, logs, couple, onCoupleChange, names, onSave, onDelete }: Props) {
+export function Cycle({ tab, onTab, today, logs, couple, onCoupleChange, other, names, onSave, onDelete }: Props) {
   const common = { today, logs, defaultCycle: couple.default_cycle_length }
   return (
     <SpaceTabs
@@ -31,7 +33,7 @@ export function Cycle({ tab, onTab, today, logs, couple, onCoupleChange, names, 
         { id: 'today', label: 'Aujourd’hui', node: <Today key={today} {...common} names={names} onSave={onSave} onDelete={onDelete} /> },
         { id: 'calendar', label: 'Calendrier', node: <Calendar {...common} names={names} onSave={onSave} onDelete={onDelete} /> },
         { id: 'stats', label: 'Analyse', node: <Stats {...common} iudInsertedOn={couple.iud_inserted_on} /> },
-        { id: 'settings', label: 'Réglages', node: <CycleSettings couple={couple} onChange={onCoupleChange} /> },
+        { id: 'settings', label: 'Réglages', node: <CycleSettings couple={couple} other={other} onChange={onCoupleChange} /> },
       ]}
     />
   )

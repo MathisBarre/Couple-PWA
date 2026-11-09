@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { api, type Couple } from '../lib/api'
+import { NotificationSwitches } from './NotificationSwitches'
 import { Card, cx, inputClass, SectionTitle, Select } from './ui'
 
 const CYCLES = Array.from({ length: 26 }, (_, i) => ({ value: i + 20, label: `${i + 20} jours` }))
 
 /** Réglages propres au suivi des règles (onglet « Réglages » de l'espace Cycle). */
-export function CycleSettings({ couple, onChange }: { couple: Couple; onChange: () => void }) {
+export function CycleSettings({ couple, other, onChange }: { couple: Couple; other: string; onChange: () => void }) {
   const [msg, setMsg] = useState('')
 
   const updateCouple = async (patch: Partial<Couple>) => {
@@ -41,14 +42,18 @@ export function CycleSettings({ couple, onChange }: { couple: Couple; onChange: 
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
 
-      <Card>
-        <SectionTitle>Rappels</SectionTitle>
-        <p className="text-sm">
-          Un rappel par jour, vers 19 h : chaque jour de règles non noté, quand ça semble fini, 2 jours avant les prochaines règles, le jour prévu
-          et en cas de retard. Il part sur les téléphones de vous deux.
+      <NotificationSwitches
+        items={[
+          { kind: 'reminders', label: 'Rappels du cycle' },
+          { kind: 'cycle', label: `Quand ${other} note le cycle` },
+        ]}
+      >
+        <p className="mt-1 text-sm text-ink-2">
+          Rappels : un par jour, vers 19 h (jour de règles non noté, fin probable, 2 jours avant les prochaines règles, jour prévu, retard), sur
+          les téléphones de vous deux. Quand {other} note le cycle, une seule notification résume ses saisies, environ 20 secondes après la
+          dernière.
         </p>
-        <p className="mt-2 text-sm text-ink-2">Pour les recevoir, activez les notifications sur ce téléphone dans l’onglet Réglages en bas.</p>
-      </Card>
+      </NotificationSwitches>
     </div>
   )
 }

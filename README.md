@@ -1,6 +1,6 @@
-# Cycle à deux
+# À deux
 
-PWA de suivi des règles partagée entre deux comptes. On l'installe sur l'écran d'accueil (iPhone et Android), on note le flux et la douleur en un appui, et on reçoit des rappels pour ne pas oublier le début, la suite et la fin des règles.
+PWA à deux comptes pour la vie de couple : suivi des règles, liste de courses, et d'autres espaces à venir. On l'installe sur l'écran d'accueil (iPhone et Android), on note les règles ou les courses en un appui, et on reçoit des rappels pour ne rien oublier.
 
 L'app est organisée en **espaces**, un par onglet dans la barre du bas :
 
@@ -9,7 +9,7 @@ L'app est organisée en **espaces**, un par onglet dans la barre du bas :
   - **Calendrier** : historique, règles prévues en pointillés, modifier n'importe quel jour passé.
   - **Analyse** : durée du cycle et des règles, prochaines règles, jours abondants et douloureux, traces hors règles, symptômes fréquents, points à surveiller, export CSV.
 - **Courses** 🛒 : liste de courses commune, ajout rapide (plusieurs articles d'un coup avec des virgules), cocher au magasin, vider le panier. Fonctionne hors ligne et se synchronise entre les deux téléphones.
-- **Réglages** ⚙️ : notifications, date de pose du stérilet, durée de cycle par défaut, code d'invitation.
+- **Réglages** ⚙️ (réglages communs : apparence Système / Clair / Sombre, notifications sur ce téléphone, couple, mise à jour). Chaque espace a en plus son propre onglet Réglages en haut (Cycle : stérilet, durée de cycle, rappels ; Courses : notifications).
 
 Chaque espace a sa couleur : rose pour le cycle, verdure pour les courses, neutre pour les réglages. Pour ajouter un espace (par exemple les séances de sport) : une entrée dans `src/modules.ts` (avec son thème, défini dans `src/index.css`) et son écran dans `src/App.tsx`. Au-delà de trois espaces, la barre du bas range automatiquement les suivants et les réglages dans un onglet « Plus ».
 
