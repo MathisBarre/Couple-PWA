@@ -200,6 +200,7 @@
   top: 0;
   z-index: 30;
   height: calc(env(safe-area-inset-top) + 8px);
+  /* Couleur posée aussi en dur par syncStatusBar() (src/lib/scheme.ts), sans transition :
+     iOS doit lire la couleur finale tout de suite. */
   background-color: var(--color-bg);
-  transition: background-color 300ms;
 }
