@@ -29,8 +29,6 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
 
   return (
     <div className="flex flex-col gap-3.5">
-      <h2 className="text-xl font-bold">Courses</h2>
-
       <form onSubmit={submit} className="flex gap-2">
         <input
           ref={input}

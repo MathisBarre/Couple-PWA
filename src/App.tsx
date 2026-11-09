@@ -3,6 +3,8 @@ import { Auth, CenterLayout } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
+import { NotificationSwitches } from './components/NotificationSwitches'
+import { SpaceTabs } from './components/SpaceTabs'
 import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
@@ -14,7 +16,7 @@ import { localToday } from './lib/dates'
 import { useGroceries } from './lib/groceries'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
-import { applyTheme, BAR, CYCLE_SECTIONS, labelFor, OVERFLOW, SETTINGS_SECTIONS, themeFor, type View } from './modules'
+import { applyTheme, BAR, labelFor, MODULES, OVERFLOW, SETTINGS_SECTIONS, themeFor, type ModuleId, type View } from './modules'
 
 const ME_CACHE = 'me'
 
@@ -62,12 +64,16 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   })
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
-  const [cycleTab, setCycleTab] = useState<CycleTab>('today')
+  // Onglet affiché en haut de chaque espace ; « settings » = son onglet Réglages.
+  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; groceries: 'list' | 'settings' }>({ cycle: 'today', groceries: 'list' })
+  const setSubTab = <K extends keyof typeof subTabs>(id: K) => (t: (typeof subTabs)[K]) => setSubTabs((s) => ({ ...s, [id]: t }))
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
   const pending = pendingLogs + groceries.pending
+  const partner = members.find((m) => m.id !== profile.id)
+  const other = partner?.display_name || 'votre partenaire'
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
   const stackRefs = useRef<Partial<Record<View, StackHandle | null>>>({})
   const tabEls = useRef<Partial<Record<View, HTMLElement | null>>>({})
@@ -141,52 +147,57 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     const depth = stacks[v]?.length ?? 0
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
-    if (v === 'cycle') setCycleTab('today')
+    if (v === 'cycle') setSubTab('cycle')('today')
+    if (v === 'groceries') setSubTab('groceries')('list')
   }
 
-  // Appui long sur un onglet : ses sous-écrans, pour y aller directement.
+  // Raccourci depuis les réglages globaux : ouvre l'onglet Réglages de l'espace.
+  const openSpaceSettings = (id: ModuleId) => {
+    setSubTabs((s) => ({ ...s, [id]: 'settings' }))
+    if (BAR.some((b) => b.id === id)) setTab(id)
+    else push(id)
+  }
+
+  // Appui long sur un onglet de la barre du bas : ses sous-écrans, pour y aller directement.
   const menuItems = (t: View): MenuItem[] => {
-    switch (t) {
-      case 'cycle':
-        return CYCLE_SECTIONS.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: tab === 'cycle' && view === 'cycle' && cycleTab === s.id }))
-      case 'settings':
-        // Seulement les rubriques présentes (elles peuvent bouger d'un écran à l'autre).
-        return SETTINGS_SECTIONS.filter((s) => document.getElementById(`reglages-${s.id}`)).map((s) => ({ key: s.id, label: s.label, icon: s.icon }))
-      case 'more':
-        return OVERFLOW.map((m) => ({ key: m.id, label: m.label, icon: m.icon, current: view === m.id }))
-      default:
-        return []
-    }
+    if (t === 'settings')
+      // Seulement les rubriques présentes à l'écran.
+      return SETTINGS_SECTIONS.filter((s) => document.getElementById(`reglages-${s.id}`)).map((s) => ({ key: s.id, label: s.label, icon: s.icon }))
+    if (t === 'more') return OVERFLOW.map((m) => ({ key: m.id, label: m.label, icon: m.icon, current: view === m.id }))
+    const sections = MODULES.find((m) => m.id === t)?.sections ?? []
+    const current = (subTabs as Record<string, string>)[t]
+    return sections.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: view === t && current === s.id }))
   }
   const pickMenu = (t: View, key: string) => {
     if (t !== tab) setTab(t)
-    if (t === 'cycle') setCycleTab(key as CycleTab)
-    else if (t === 'settings') {
+    if (t === 'settings') {
       const el = document.getElementById(`reglages-${key}`)
       const scroller = el?.closest('[data-scroll]')
       if (el && scroller)
         scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 16, behavior: 'smooth' })
-    } else if (t === 'more' && view !== key) {
+    } else if (t === 'more') {
+      if (view === key) return
       // Un autre espace déjà ouvert depuis « Plus » : on le remplace.
       if (stacks.more?.length) setStacks((s) => ({ ...s, more: [key as View] }))
       else push(key as View, 'more')
-    }
+    } else setSubTabs((s) => ({ ...s, [t]: key }))
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
 
-  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
+  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
 
   const render = (v: View): ReactNode => {
     switch (v) {
       case 'cycle':
         return (
           <Cycle
-            tab={cycleTab}
-            onTab={setCycleTab}
+            tab={subTabs.cycle}
+            onTab={setSubTab('cycle')}
             today={today}
             logs={logs}
-            defaultCycle={couple.default_cycle_length}
-            iudInsertedOn={couple.iud_inserted_on}
+            couple={couple}
+            onCoupleChange={reload}
+            other={other}
             names={names}
             onSave={save}
             onDelete={remove}
@@ -194,20 +205,37 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         )
       case 'groceries':
         return (
-          <Groceries
-            items={groceries.items}
-            names={names}
-            onAdd={groceries.add}
-            onToggle={groceries.toggle}
-            onRemove={groceries.remove}
-            onClearDone={groceries.clearDone}
+          <SpaceTabs
+            tab={subTabs.groceries}
+            onTab={setSubTab('groceries')}
+            tabs={[
+              {
+                id: 'list',
+                label: 'Liste',
+                node: (
+                  <Groceries
+                    items={groceries.items}
+                    names={names}
+                    onAdd={groceries.add}
+                    onToggle={groceries.toggle}
+                    onRemove={groceries.remove}
+                    onClearDone={groceries.clearDone}
+                  />
+                ),
+              },
+              {
+                id: 'settings',
+                label: 'Réglages',
+                node: <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />,
+              },
+            ]}
           />
         )
       case 'settings':
         return settings
       case 'more':
         return (
-          <More modules={OVERFLOW} onOpen={(m) => push(m)}>
+          <More modules={OVERFLOW} onOpen={push}>
             {settings}
           </More>
         )

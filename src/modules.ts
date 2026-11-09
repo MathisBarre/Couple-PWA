@@ -1,26 +1,40 @@
+import { syncStatusBar } from './lib/scheme'
+
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
 // 1. une entrée ici (avec son thème de couleur, voir src/index.css),
 // 2. son écran dans le `switch` de `render` (App.tsx).
+// S'il a ses propres réglages (`settings`), ils apparaissent tout seuls en raccourci
+// dans les réglages globaux.
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
-// `sections` : les sous-écrans de l'espace, proposés en restant appuyé sur son
-// onglet dans la barre du bas (et, pour le cycle, ses onglets du haut).
+// `sections` : ses onglets du haut, proposés aussi en restant appuyé sur son onglet
+// dans la barre du bas (garder les mêmes id que dans son écran).
 
 export const MODULES = [
-  {
-    id: 'cycle',
-    label: 'Cycle',
-    icon: '💧',
-    description: 'Suivi des règles, calendrier et analyse',
-    theme: 'rose',
+  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels',
     sections: [
       { id: 'today', label: 'Aujourd’hui', icon: '✏️' },
       { id: 'calendar', label: 'Calendrier', icon: '📅' },
       { id: 'stats', label: 'Analyse', icon: '📊' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
-  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', sections: [] },
-] as const satisfies readonly { id: string; label: string; icon: string; description: string; theme: Theme; sections: readonly Section[] }[]
+  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', settings: 'Notifications des courses',
+    sections: [
+      { id: 'list', label: 'Liste', icon: '📝' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    ],
+  },
+] as const satisfies readonly {
+  id: string
+  label: string
+  icon: string
+  description: string
+  theme: Theme
+  /** Si l'espace a son propre onglet « Réglages » (en haut) : ce qu'on y trouve, affiché dans les réglages globaux. */
+  settings?: string
+  sections?: readonly Section[]
+}[]
 
 export interface Section {
   id: string
@@ -28,14 +42,11 @@ export interface Section {
   icon: string
 }
 
-/** Sous-écrans du cycle (ses onglets du haut). */
-export const CYCLE_SECTIONS = MODULES[0].sections
-export type CycleTab = (typeof CYCLE_SECTIONS)[number]['id']
-
-/** Rubriques des réglages : chacune est une carte avec l'id `reglages-<id>` (src/components/Settings.tsx). */
+/** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
+  { id: 'espaces', label: 'Réglages des espaces', icon: '🧩' },
+  { id: 'apparence', label: 'Apparence', icon: '🎨' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
-  { id: 'cycle', label: 'Cycle', icon: '💧' },
   { id: 'couple', label: 'Couple', icon: '💞' },
   { id: 'app', label: 'Application', icon: '📲' },
 ]
@@ -75,6 +86,8 @@ export function applyTheme(theme: Theme) {
   const root = document.documentElement
   if (theme === 'rose') delete root.dataset.theme
   else root.dataset.theme = theme
-  const bg = getComputedStyle(root).getPropertyValue('--color-bg').trim()
-  if (bg) document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = bg))
+  syncStatusBar()
 }
+
+/** Espaces qui ont leur propre onglet « Réglages », listés en raccourci dans les réglages globaux. */
+export const SPACES_WITH_SETTINGS = MODULES.filter((m) => 'settings' in m && m.settings)
