@@ -115,6 +115,30 @@
   }
 }
 
+/* Neutre : réglages et « Plus », qui n'appartiennent à aucun espace. */
+[data-theme='neutre'] {
+  --color-bg: #f5f5f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #ebebea;
+  --color-ink: #1c1c1e;
+  --color-ink-2: #6b6b70;
+  --color-line: #e2e2e0;
+  --color-accent: #3f3f46;
+  --color-on-accent: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme='neutre'] {
+    --color-bg: #161618;
+    --color-surface: #1f1f22;
+    --color-surface-2: #2a2a2e;
+    --color-ink: #f2f2f3;
+    --color-ink-2: #a1a1a8;
+    --color-line: #323236;
+    --color-accent: #d4d4d8;
+    --color-on-accent: #18181b;
+  }
+}
+
 @layer base {
   html,
   body {
