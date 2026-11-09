@@ -1,4 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { cx } from './ui'
 
 /** Fourni par la pile d'écrans (Stack) à un écran empilé : de quoi afficher « ‹ Précédent ». */
@@ -7,7 +7,7 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
 /**
  * En-tête d'écran façon iOS :
  * - une barre fine collée en haut (retour « ‹ » à gauche, action à droite, ex. ⚙️) ;
- * - un grand titre qui, au défilement, rétrécit et glisse jusqu'au centre de la barre (un seul texte, pas de fondu) ;
+ * - un grand titre qui part avec le défilement, sans petit titre à sa place ;
  * - `sticky` (ex. les onglets de l'espace) reste collé juste sous la barre, en compact.
  * Il se place tout en haut de l'écran : il annule la marge haute du <main> de la pile.
  * La barre commence 8 px sous la zone sûre, sous le bandeau #top-edge, qui sinon masquerait
@@ -20,53 +20,20 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
  */
 export function ScreenHeader({ title, action, sticky }: { title: string; action?: ReactNode; sticky?: ReactNode }) {
   const back = useContext(BackContext)
-  const rowRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
-  const spaceRef = useRef<HTMLDivElement>(null)
   const [collapsed, setCollapsed] = useState(false)
 
-  // Un seul titre qui se transforme : il suit le contenu en défilant, et pendant qu'il monte vers la
-  // barre il rétrécit (grand titre → 17 px), s'allège et glisse au centre, où il s'arrête.
-  // Piloté directement par le défilement (pas d'animation à durée fixe) : on peut s'arrêter à mi-chemin.
-  useLayoutEffect(() => {
-    const row = rowRef.current
+  // Le grand titre part simplement avec le défilement, sous la barre opaque ; rien ne le remplace.
+  // `collapsed` sert seulement à afficher le filet sous la barre une fois le contenu passé dessous.
+  useEffect(() => {
     const h = titleRef.current
-    const space = spaceRef.current
-    const scroller = space?.closest('[data-scroll]')
-    if (!row || !h || !space || !scroller) return
-    const SMALL = 17 // px, petit titre iOS
-    let frame = 0
-    let last = false
-    const update = () => {
-      frame = 0
-      const big = parseFloat(getComputedStyle(space).fontSize)
-      const k = SMALL / big
-      // Position actuelle de l'emplacement du grand titre, par rapport à la ligne de la barre.
-      const y = space.getBoundingClientRect().top - row.getBoundingClientRect().top
-      const lineH = space.offsetHeight
-      const endY = (row.offsetHeight - lineH * k) / 2
-      const startY = y + scroller.scrollTop
-      const p = Math.min(Math.max((startY - y) / Math.max(startY - endY, 1), 0), 1)
-      const scale = 1 + (k - 1) * p
-      h.style.fontWeight = String(Math.round(700 - 100 * p))
-      const x = ((row.offsetWidth - h.offsetWidth * scale) / 2) * p
-      h.style.transform = `translate3d(${x}px, ${Math.max(y, endY)}px, 0) scale(${scale})`
-      const done = p >= 1
-      if (done !== last) setCollapsed((last = done))
-    }
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update)
-    }
+    const scroller = h?.closest('[data-scroll]')
+    if (!h || !scroller) return
+    const update = () => setCollapsed(scroller.scrollTop > h.offsetTop + h.offsetHeight - 52)
     update()
-    scroller.addEventListener('scroll', onScroll, { passive: true })
-    const ro = new ResizeObserver(onScroll)
-    ro.observe(row)
-    return () => {
-      cancelAnimationFrame(frame)
-      ro.disconnect()
-      scroller.removeEventListener('scroll', onScroll)
-    }
-  }, [title])
+    scroller.addEventListener('scroll', update, { passive: true })
+    return () => scroller.removeEventListener('scroll', update)
+  }, [])
 
   // Même fond et même transition que l'écran (Stack) : aucune différence de teinte possible.
   const bar = 'sticky z-20 -mx-4 px-4 bg-bg transition-[background-color,box-shadow] duration-300'
@@ -75,7 +42,7 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
   return (
     <>
       <div className={cx(bar, 'top-0 -mt-[calc(env(safe-area-inset-top)+12px)] pt-[calc(env(safe-area-inset-top)+8px)]', hairline(collapsed && !sticky))}>
-        <div ref={rowRef} className="relative flex h-10 items-center justify-center">
+        <div className="relative flex h-10 items-center">
           {back && (
             <button
               type="button"
@@ -88,19 +55,12 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
               <span className="ml-1 truncate">{back.label}</span>
             </button>
           )}
-          <h1
-            ref={titleRef}
-            className="pointer-events-none absolute top-0 left-0 max-w-none origin-top-left text-[1.75rem] leading-tight font-bold tracking-tight whitespace-nowrap will-change-transform"
-          >
-            {title}
-          </h1>
           {action && <div className="absolute right-0 flex items-center gap-2">{action}</div>}
         </div>
       </div>
-      {/* Emplacement du grand titre (le titre lui-même est dessiné dans la barre, au-dessus). */}
-      <div ref={spaceRef} aria-hidden className="invisible mb-2.5 text-[1.75rem] leading-tight font-bold tracking-tight whitespace-nowrap">
+      <h1 ref={titleRef} className="mb-2.5 text-[1.75rem] leading-tight font-bold tracking-tight">
         {title}
-      </div>
+      </h1>
       {sticky && (
         <div className={cx(bar, 'top-[calc(env(safe-area-inset-top)+3rem)] mb-3 pb-2', hairline(collapsed))}>{sticky}</div>
       )}
