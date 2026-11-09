@@ -15,7 +15,7 @@ import { localToday } from './lib/dates'
 import { useGroceries } from './lib/groceries'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
-import { applyTheme, BAR, labelFor, OVERFLOW, themeFor, type View } from './modules'
+import { applyTheme, BAR, labelFor, OVERFLOW, themeFor, type View, type ModuleId } from './modules'
 
 const ME_CACHE = 'me'
 
@@ -63,8 +63,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   })
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
-  const [cycleTab, setCycleTab] = useState<CycleTab>('today')
-  const [groceriesTab, setGroceriesTab] = useState<'list' | 'settings'>('list')
+  // Onglet affiché en haut de chaque espace ; « settings » = son onglet Réglages.
+  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; groceries: 'list' | 'settings' }>({ cycle: 'today', groceries: 'list' })
+  const setSubTab = <K extends keyof typeof subTabs>(id: K) => (t: (typeof subTabs)[K]) => setSubTabs((s) => ({ ...s, [id]: t }))
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
@@ -145,19 +146,26 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     const depth = stacks[v]?.length ?? 0
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
-    if (v === 'cycle') setCycleTab('today')
-    if (v === 'groceries') setGroceriesTab('list')
+    if (v === 'cycle') setSubTab('cycle')('today')
+    if (v === 'groceries') setSubTab('groceries')('list')
   }
 
-  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
+  // Raccourci depuis les réglages globaux : ouvre l'onglet Réglages de l'espace.
+  const openSpaceSettings = (id: ModuleId) => {
+    setSubTabs((s) => ({ ...s, [id]: 'settings' }))
+    if (BAR.some((b) => b.id === id)) setTab(id)
+    else push(id)
+  }
+
+  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
 
   const render = (v: View): ReactNode => {
     switch (v) {
       case 'cycle':
         return (
           <Cycle
-            tab={cycleTab}
-            onTab={setCycleTab}
+            tab={subTabs.cycle}
+            onTab={setSubTab('cycle')}
             today={today}
             logs={logs}
             couple={couple}
@@ -171,8 +179,8 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       case 'groceries':
         return (
           <SpaceTabs
-            tab={groceriesTab}
-            onTab={setGroceriesTab}
+            tab={subTabs.groceries}
+            onTab={setSubTab('groceries')}
             tabs={[
               {
                 id: 'list',
