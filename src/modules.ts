@@ -7,10 +7,24 @@ import { syncStatusBar } from './lib/scheme'
 // dans les réglages globaux.
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
+// `sections` : ses onglets du haut, proposés aussi en restant appuyé sur son onglet
+// dans la barre du bas (garder les mêmes id que dans son écran).
 
 export const MODULES = [
-  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels' },
-  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', settings: 'Notifications des courses' },
+  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels',
+    sections: [
+      { id: 'today', label: 'Aujourd’hui', icon: '✏️' },
+      { id: 'calendar', label: 'Calendrier', icon: '📅' },
+      { id: 'stats', label: 'Analyse', icon: '📊' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    ],
+  },
+  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', settings: 'Notifications des courses',
+    sections: [
+      { id: 'list', label: 'Liste', icon: '📝' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    ],
+  },
 ] as const satisfies readonly {
   id: string
   label: string
@@ -19,7 +33,23 @@ export const MODULES = [
   theme: Theme
   /** Si l'espace a son propre onglet « Réglages » (en haut) : ce qu'on y trouve, affiché dans les réglages globaux. */
   settings?: string
+  sections?: readonly Section[]
 }[]
+
+export interface Section {
+  id: string
+  label: string
+  icon: string
+}
+
+/** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
+export const SETTINGS_SECTIONS: Section[] = [
+  { id: 'espaces', label: 'Réglages des espaces', icon: '🧩' },
+  { id: 'apparence', label: 'Apparence', icon: '🎨' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'couple', label: 'Couple', icon: '💞' },
+  { id: 'app', label: 'Application', icon: '📲' },
+]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
 export type Theme = 'rose' | 'verdure' | 'neutre'

@@ -42,7 +42,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
       <h2 className="text-xl font-bold">Réglages</h2>
 
       {SPACES_WITH_SETTINGS.length > 0 && (
-        <section>
+        <section id="reglages-espaces" className="scroll-mt-4">
           <SectionTitle>Réglages des espaces</SectionTitle>
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {SPACES_WITH_SETTINGS.map((m) => (
@@ -70,12 +70,12 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
         </section>
       )}
 
-      <Card>
+      <Card id="reglages-apparence" className="scroll-mt-4">
         <SectionTitle>Apparence</SectionTitle>
         <SchemePicker />
       </Card>
 
-      <Card>
+      <Card id="reglages-notifications" className="scroll-mt-4">
         <SectionTitle>Notifications</SectionTitle>
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
@@ -109,7 +109,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
 
-      <Card>
+      <Card id="reglages-couple" className="scroll-mt-4">
         <SectionTitle>Couple</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
           <span className="shrink-0">Mon prénom</span>
@@ -134,7 +134,9 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace }: Pr
         )}
       </Card>
 
-      <AppUpdate />
+      <div id="reglages-app" className="scroll-mt-4">
+        <AppUpdate />
+      </div>
 
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter
