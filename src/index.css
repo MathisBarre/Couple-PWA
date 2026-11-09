@@ -187,3 +187,19 @@
     opacity: 0;
   }
 }
+
+/* Haut de l'écran sur iPhone (iOS 26+) : une app installée reçoit un flou système sous la
+   barre d'état (« scroll edge effect »). WebKit le remplace par une couleur unie seulement
+   s'il trouve, à quelques pixels du bord haut, un élément fixe, opaque et sur toute la
+   largeur. Ce bandeau aux couleurs du thème joue ce rôle. Il doit rester « touchable »
+   (pas de pointer-events: none) : WebKit le repère par hit-test. Le contenu commence
+   12 px sous la zone sûre, donc rien d'utile n'est masqué. */
+#top-edge {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 30;
+  height: calc(env(safe-area-inset-top) + 8px);
+  background-color: var(--color-bg);
+  transition: background-color 300ms;
+}
