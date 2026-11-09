@@ -13,8 +13,7 @@ import { syncStatusBar } from './lib/scheme'
 export const MODULES = [
   { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels',
     sections: [
-      { id: 'today', label: 'Aujourd’hui', icon: '✏️' },
-      { id: 'calendar', label: 'Calendrier', icon: '📅' },
+      { id: 'today', label: 'Suivi', icon: '📅' },
       { id: 'stats', label: 'Analyse', icon: '📊' },
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
