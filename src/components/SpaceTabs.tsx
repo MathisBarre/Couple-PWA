@@ -1,7 +1,7 @@
 import { Tabs } from '@base-ui/react/tabs'
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { slideTabs } from '../lib/motion'
-import { HeaderButton, ScreenHeader } from './ScreenHeader'
+import { GearIcon, HeaderButton, ScreenHeader } from './ScreenHeader'
 import { cx } from './ui'
 
 export interface SpaceTab<T extends string> {
@@ -48,7 +48,7 @@ export function SpaceTabs<T extends string>({
 
   const action = onSettings && (
     <HeaderButton label={`Réglages : ${title}`} onClick={onSettings}>
-      ⚙️
+      <GearIcon />
     </HeaderButton>
   )
   if (tabs.length === 1)
