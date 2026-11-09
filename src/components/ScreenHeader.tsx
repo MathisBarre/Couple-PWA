@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { cx } from './ui'
 
 /** Fourni par la pile d'écrans (Stack) à un écran empilé : de quoi afficher « ‹ Précédent ». */
@@ -7,7 +7,7 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
 /**
  * En-tête d'écran façon iOS :
  * - une barre fine collée en haut (retour « ‹ » à gauche, action à droite, ex. ⚙️) ;
- * - un grand titre qui part avec le défilement, et dont la version courte apparaît alors dans la barre ;
+ * - un grand titre qui, au défilement, rétrécit et glisse jusqu'au centre de la barre (un seul texte, pas de fondu) ;
  * - `sticky` (ex. les onglets de l'espace) reste collé juste sous la barre, en compact.
  * Il se place tout en haut de l'écran : il annule la marge haute du <main> de la pile.
  * La barre commence 8 px sous la zone sûre, sous le bandeau #top-edge, qui sinon masquerait
@@ -20,19 +20,53 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
  */
 export function ScreenHeader({ title, action, sticky }: { title: string; action?: ReactNode; sticky?: ReactNode }) {
   const back = useContext(BackContext)
+  const rowRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const spaceRef = useRef<HTMLDivElement>(null)
   const [collapsed, setCollapsed] = useState(false)
 
-  useEffect(() => {
+  // Un seul titre qui se transforme : il suit le contenu en défilant, et pendant qu'il monte vers la
+  // barre il rétrécit (grand titre → 17 px), s'allège et glisse au centre, où il s'arrête.
+  // Piloté directement par le défilement (pas d'animation à durée fixe) : on peut s'arrêter à mi-chemin.
+  useLayoutEffect(() => {
+    const row = rowRef.current
     const h = titleRef.current
-    const scroller = h?.closest('[data-scroll]')
-    if (!h || !scroller) return
-    // Le grand titre est passé sous la barre : on affiche le petit.
-    const update = () => setCollapsed(scroller.scrollTop > h.offsetTop + h.offsetHeight - 52)
+    const space = spaceRef.current
+    const scroller = space?.closest('[data-scroll]')
+    if (!row || !h || !space || !scroller) return
+    const SMALL = 17 // px, petit titre iOS
+    let frame = 0
+    let last = false
+    const update = () => {
+      frame = 0
+      const big = parseFloat(getComputedStyle(space).fontSize)
+      const k = SMALL / big
+      // Position actuelle de l'emplacement du grand titre, par rapport à la ligne de la barre.
+      const y = space.getBoundingClientRect().top - row.getBoundingClientRect().top
+      const lineH = space.offsetHeight
+      const endY = (row.offsetHeight - lineH * k) / 2
+      const startY = y + scroller.scrollTop
+      const p = Math.min(Math.max((startY - y) / Math.max(startY - endY, 1), 0), 1)
+      const scale = 1 + (k - 1) * p
+      h.style.fontWeight = String(Math.round(700 - 100 * p))
+      const x = ((row.offsetWidth - h.offsetWidth * scale) / 2) * p
+      h.style.transform = `translate3d(${x}px, ${Math.max(y, endY)}px, 0) scale(${scale})`
+      const done = p >= 1
+      if (done !== last) setCollapsed((last = done))
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
     update()
-    scroller.addEventListener('scroll', update, { passive: true })
-    return () => scroller.removeEventListener('scroll', update)
-  }, [])
+    scroller.addEventListener('scroll', onScroll, { passive: true })
+    const ro = new ResizeObserver(onScroll)
+    ro.observe(row)
+    return () => {
+      cancelAnimationFrame(frame)
+      ro.disconnect()
+      scroller.removeEventListener('scroll', onScroll)
+    }
+  }, [title])
 
   // Même fond et même transition que l'écran (Stack) : aucune différence de teinte possible.
   const bar = 'sticky z-20 -mx-4 px-4 bg-bg transition-[background-color,box-shadow] duration-300'
@@ -41,12 +75,12 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
   return (
     <>
       <div className={cx(bar, 'top-0 -mt-[calc(env(safe-area-inset-top)+12px)] pt-[calc(env(safe-area-inset-top)+8px)]', hairline(collapsed && !sticky))}>
-        <div className="relative flex h-10 items-center justify-center">
+        <div ref={rowRef} className="relative flex h-10 items-center justify-center">
           {back && (
             <button
               type="button"
               onClick={back.onBack}
-              className="absolute left-0 -ml-2 flex max-w-[40%] items-center gap-0.5 py-2 pr-2 text-[17px] text-accent outline-none focus-visible:underline active:opacity-50"
+              className="absolute left-0 flex max-w-[40%] items-center gap-0.5 py-2 pr-2 text-[17px] text-accent outline-none focus-visible:underline active:opacity-50"
             >
               <svg aria-hidden viewBox="0 0 12 21" className="h-[21px] w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 2 2 10.5 10 19" />
@@ -54,21 +88,19 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
               <span className="ml-1 truncate">{back.label}</span>
             </button>
           )}
-          <span
-            aria-hidden={!collapsed}
-            className={cx(
-              'max-w-[50%] truncate text-[17px] font-semibold transition-[opacity,translate] duration-200',
-              collapsed ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
-            )}
+          <h1
+            ref={titleRef}
+            className="pointer-events-none absolute top-0 left-0 max-w-none origin-top-left text-[1.75rem] leading-tight font-bold tracking-tight whitespace-nowrap will-change-transform"
           >
             {title}
-          </span>
+          </h1>
           {action && <div className="absolute right-0 flex items-center gap-2">{action}</div>}
         </div>
       </div>
-      <h1 ref={titleRef} className="mb-2.5 text-[2.1rem] leading-tight font-extrabold tracking-tight">
+      {/* Emplacement du grand titre (le titre lui-même est dessiné dans la barre, au-dessus). */}
+      <div ref={spaceRef} aria-hidden className="invisible mb-2.5 text-[1.75rem] leading-tight font-bold tracking-tight whitespace-nowrap">
         {title}
-      </h1>
+      </div>
       {sticky && (
         <div className={cx(bar, 'top-[calc(env(safe-area-inset-top)+3rem)] mb-3 pb-2', hairline(collapsed))}>{sticky}</div>
       )}
