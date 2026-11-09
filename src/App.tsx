@@ -3,6 +3,8 @@ import { Auth, CenterLayout } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
+import { NotificationSwitches } from './components/NotificationSwitches'
+import { SpaceTabs } from './components/SpaceTabs'
 import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
@@ -62,11 +64,14 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
   const [cycleTab, setCycleTab] = useState<CycleTab>('today')
+  const [groceriesTab, setGroceriesTab] = useState<'list' | 'settings'>('list')
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
   const pending = pendingLogs + groceries.pending
+  const partner = members.find((m) => m.id !== profile.id)
+  const other = partner?.display_name || 'votre partenaire'
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
   const stackRefs = useRef<Partial<Record<View, StackHandle | null>>>({})
   const tabEls = useRef<Partial<Record<View, HTMLElement | null>>>({})
@@ -141,6 +146,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
     if (v === 'cycle') setCycleTab('today')
+    if (v === 'groceries') setGroceriesTab('list')
   }
 
   const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
@@ -154,8 +160,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             onTab={setCycleTab}
             today={today}
             logs={logs}
-            defaultCycle={couple.default_cycle_length}
-            iudInsertedOn={couple.iud_inserted_on}
+            couple={couple}
+            onCoupleChange={reload}
+            other={other}
             names={names}
             onSave={save}
             onDelete={remove}
@@ -163,13 +170,30 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         )
       case 'groceries':
         return (
-          <Groceries
-            items={groceries.items}
-            names={names}
-            onAdd={groceries.add}
-            onToggle={groceries.toggle}
-            onRemove={groceries.remove}
-            onClearDone={groceries.clearDone}
+          <SpaceTabs
+            tab={groceriesTab}
+            onTab={setGroceriesTab}
+            tabs={[
+              {
+                id: 'list',
+                label: 'Liste',
+                node: (
+                  <Groceries
+                    items={groceries.items}
+                    names={names}
+                    onAdd={groceries.add}
+                    onToggle={groceries.toggle}
+                    onRemove={groceries.remove}
+                    onClearDone={groceries.clearDone}
+                  />
+                ),
+              },
+              {
+                id: 'settings',
+                label: 'Réglages',
+                node: <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />,
+              },
+            ]}
           />
         )
       case 'settings':

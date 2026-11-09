@@ -1,19 +1,9 @@
 import { useEffect, useState } from 'react'
-import {
-  currentSubscription,
-  disablePush,
-  enablePush,
-  fetchNotificationPrefs,
-  isIOS,
-  isStandalone,
-  pushSupported,
-  sendTestPush,
-  setNotificationPref,
-  type NotificationPrefs,
-} from '../lib/push'
+import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { AppUpdate } from './AppUpdate'
-import { Button, Card, cx, inputClass, SectionTitle, Select, Switch } from './ui'
+import { SchemePicker } from './SchemePicker'
+import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
 
 interface Props {
   couple: Couple
@@ -22,37 +12,15 @@ interface Props {
   onChange: () => void
 }
 
-const CYCLES = Array.from({ length: 26 }, (_, i) => ({ value: i + 20, label: `${i + 20} jours` }))
-
 export function Settings({ couple, profile, members, onChange }: Props) {
   const [pushOn, setPushOn] = useState(false)
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
   const partner = members.find((m) => m.id !== profile.id)
 
   useEffect(() => {
     currentSubscription().then((s) => setPushOn(Boolean(s)))
-    fetchNotificationPrefs().then(setPrefs, () => {})
   }, [])
-
-  const togglePref = (kind: keyof NotificationPrefs, enabled: boolean) => {
-    setPrefs((p) => p && { ...p, [kind]: enabled })
-    setNotificationPref(kind, enabled).then(setPrefs, (e: Error) => {
-      setPrefs((p) => p && { ...p, [kind]: !enabled })
-      setMsg(e.message)
-    })
-  }
-  const other = partner?.display_name || (members.length > 2 ? 'les autres' : 'votre partenaire')
-
-  const updateCouple = async (patch: Partial<Couple>) => {
-    try {
-      await api('couple', { method: 'PATCH', body: patch })
-      onChange()
-    } catch (e) {
-      setMsg((e as Error).message)
-    }
-  }
 
   const togglePush = async (on: boolean) => {
     setMsg('')
@@ -72,6 +40,11 @@ export function Settings({ couple, profile, members, onChange }: Props) {
       <h2 className="text-xl font-bold">Réglages</h2>
 
       <Card>
+        <SectionTitle>Apparence</SectionTitle>
+        <SchemePicker />
+      </Card>
+
+      <Card>
         <SectionTitle>Notifications</SectionTitle>
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
@@ -84,13 +57,6 @@ export function Settings({ couple, profile, members, onChange }: Props) {
         ) : (
           <>
             <Switch label="Notifications sur cet appareil" checked={pushOn} onChange={togglePush} />
-            {pushOn && prefs && (
-              <div className="mt-1 border-t border-line pt-1">
-                <Switch label="Rappels du cycle" checked={prefs.reminders} onChange={(v) => togglePref('reminders', v)} />
-                <Switch label={`Quand ${other} note le cycle`} checked={prefs.cycle} onChange={(v) => togglePref('cycle', v)} />
-                <Switch label={`Quand ${other} modifie les courses`} checked={prefs.groceries} onChange={(v) => togglePref('groceries', v)} />
-              </div>
-            )}
             {pushOn && (
               <Button
                 variant="link"
@@ -106,31 +72,10 @@ export function Settings({ couple, profile, members, onChange }: Props) {
           </>
         )}
         <p className="mt-2 text-sm text-ink-2">
-          Rappels : un par jour, vers 19 h (jour de règles non noté, fin probable, 2 jours avant les prochaines règles, jour prévu, retard), sur
-          les téléphones de vous deux. Nouveautés : quand {other} saisit quelque chose, une seule notification résume ses saisies, environ 20
-          secondes après la dernière. Vous n’êtes jamais prévenu de vos propres saisies.
+          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans son propre onglet Réglages (ex. Cycle →
+          Réglages).
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
-      </Card>
-
-      <Card>
-        <SectionTitle>Cycle</SectionTitle>
-        <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0">Pose du stérilet</span>
-          <input
-            type="date"
-            className={cx(inputClass, 'max-w-[55%] py-2.5')}
-            value={couple.iud_inserted_on ?? ''}
-            onChange={(e) => updateCouple({ iud_inserted_on: e.target.value || null })}
-          />
-        </label>
-        <Select
-          label="Cycle par défaut"
-          value={couple.default_cycle_length}
-          items={CYCLES}
-          onChange={(default_cycle_length) => updateCouple({ default_cycle_length })}
-        />
-        <p className="text-sm text-ink-2">Utilisé tant qu’il n’y a pas deux cycles complets notés.</p>
       </Card>
 
       <Card>

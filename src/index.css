@@ -24,25 +24,32 @@
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts selon le choix
+   fait dans Réglages (Système / Clair / Sombre). */
+:root[data-scheme='dark'] {
+  --color-bg: #1e1416;
+  --color-surface: #2a1d20;
+  --color-surface-2: #362529;
+  --color-ink: #f6e9eb;
+  --color-ink-2: #bfa5aa;
+  --color-line: #3f2c30;
+  --color-accent: #ff7a95;
+  --color-on-accent: #2b0d15;
+  --color-soon: #3d2c12;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2a17;
+  --color-flow-1: #5a3a41;
+  --color-flow-2: #8a4656;
+  --color-flow-3: #c25270;
+  --color-flow-4: #e66d8b;
+  --color-flow-5: #ffa3b8;
+  --color-on-flow: #2b0d15;
+  color-scheme: dark;
+}
+/* Avant le chargement du script : suivre le téléphone, pour éviter un flash blanc. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-scheme]) {
     --color-bg: #1e1416;
-    --color-surface: #2a1d20;
-    --color-surface-2: #362529;
-    --color-ink: #f6e9eb;
-    --color-ink-2: #bfa5aa;
-    --color-line: #3f2c30;
-    --color-accent: #ff7a95;
-    --color-on-accent: #2b0d15;
-    --color-soon: #3d2c12;
-    --color-on-soon: #ffd699;
-    --color-warn: #3a2a17;
-    --color-flow-1: #5a3a41;
-    --color-flow-2: #8a4656;
-    --color-flow-3: #c25270;
-    --color-flow-4: #e66d8b;
-    --color-flow-5: #ffa3b8;
-    --color-on-flow: #2b0d15;
     color-scheme: dark;
   }
 }
@@ -71,26 +78,25 @@
   --color-flow-5: #8a1d3b;
   --color-on-flow: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  [data-theme='rose'] {
-    --color-bg: #1e1416;
-    --color-surface: #2a1d20;
-    --color-surface-2: #362529;
-    --color-ink: #f6e9eb;
-    --color-ink-2: #bfa5aa;
-    --color-line: #3f2c30;
-    --color-accent: #ff7a95;
-    --color-on-accent: #2b0d15;
-    --color-soon: #3d2c12;
-    --color-on-soon: #ffd699;
-    --color-warn: #3a2a17;
-    --color-flow-1: #5a3a41;
-    --color-flow-2: #8a4656;
-    --color-flow-3: #c25270;
-    --color-flow-4: #e66d8b;
-    --color-flow-5: #ffa3b8;
-    --color-on-flow: #2b0d15;
-  }
+[data-scheme='dark'] [data-theme='rose'],
+[data-scheme='dark'][data-theme='rose'] {
+  --color-bg: #1e1416;
+  --color-surface: #2a1d20;
+  --color-surface-2: #362529;
+  --color-ink: #f6e9eb;
+  --color-ink-2: #bfa5aa;
+  --color-line: #3f2c30;
+  --color-accent: #ff7a95;
+  --color-on-accent: #2b0d15;
+  --color-soon: #3d2c12;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2a17;
+  --color-flow-1: #5a3a41;
+  --color-flow-2: #8a4656;
+  --color-flow-3: #c25270;
+  --color-flow-4: #e66d8b;
+  --color-flow-5: #ffa3b8;
+  --color-on-flow: #2b0d15;
 }
 [data-theme='verdure'] {
   --color-bg: #f3f8f0;
@@ -102,17 +108,16 @@
   --color-accent: #3c8a4b;
   --color-on-accent: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  [data-theme='verdure'] {
-    --color-bg: #131b14;
-    --color-surface: #1b261c;
-    --color-surface-2: #243225;
-    --color-ink: #e7f1e5;
-    --color-ink-2: #a3b9a4;
-    --color-line: #2d3d2e;
-    --color-accent: #7cc98a;
-    --color-on-accent: #0e2313;
-  }
+[data-scheme='dark'] [data-theme='verdure'],
+[data-scheme='dark'][data-theme='verdure'] {
+  --color-bg: #131b14;
+  --color-surface: #1b261c;
+  --color-surface-2: #243225;
+  --color-ink: #e7f1e5;
+  --color-ink-2: #a3b9a4;
+  --color-line: #2d3d2e;
+  --color-accent: #7cc98a;
+  --color-on-accent: #0e2313;
 }
 
 /* Neutre : réglages et « Plus », qui n'appartiennent à aucun espace. */
@@ -126,17 +131,16 @@
   --color-accent: #3f3f46;
   --color-on-accent: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  [data-theme='neutre'] {
-    --color-bg: #161618;
-    --color-surface: #1f1f22;
-    --color-surface-2: #2a2a2e;
-    --color-ink: #f2f2f3;
-    --color-ink-2: #a1a1a8;
-    --color-line: #323236;
-    --color-accent: #d4d4d8;
-    --color-on-accent: #18181b;
-  }
+[data-scheme='dark'] [data-theme='neutre'],
+[data-scheme='dark'][data-theme='neutre'] {
+  --color-bg: #161618;
+  --color-surface: #1f1f22;
+  --color-surface-2: #2a2a2e;
+  --color-ink: #f2f2f3;
+  --color-ink-2: #a1a1a8;
+  --color-line: #323236;
+  --color-accent: #d4d4d8;
+  --color-on-accent: #18181b;
 }
 
 @layer base {

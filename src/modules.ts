@@ -1,3 +1,5 @@
+import { syncStatusBar } from './lib/scheme'
+
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
 // 1. une entrée ici (avec son thème de couleur, voir src/index.css),
 // 2. son écran dans le `switch` de `render` (App.tsx).
@@ -44,6 +46,5 @@ export function applyTheme(theme: Theme) {
   const root = document.documentElement
   if (theme === 'rose') delete root.dataset.theme
   else root.dataset.theme = theme
-  const bg = getComputedStyle(root).getPropertyValue('--color-bg').trim()
-  if (bg) document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = bg))
+  syncStatusBar()
 }

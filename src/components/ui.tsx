@@ -125,9 +125,13 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
       <BaseSwitch.Root
         checked={checked}
         onCheckedChange={onChange}
-        className={cx('relative h-7.5 w-12.5 shrink-0 rounded-full bg-line transition-colors data-checked:bg-accent', focus)}
+        className={cx(
+          // Pouce centré : 3 px de marge tout autour, il glisse de 50 − 2×3 − 24 = 20 px.
+          'relative inline-flex h-7.5 w-12.5 shrink-0 items-center rounded-full bg-line p-0.75 transition-colors data-checked:bg-accent',
+          focus,
+        )}
       >
-        <BaseSwitch.Thumb className="block size-6 translate-x-0.75 rounded-full bg-white shadow transition-transform data-checked:translate-x-5.75" />
+        <BaseSwitch.Thumb className="block size-6 rounded-full bg-white shadow transition-transform duration-200 ease-out data-checked:translate-x-5" />
       </BaseSwitch.Root>
     </label>
   )
