@@ -11,7 +11,7 @@ L'app est organisée en **espaces**, un par onglet dans la barre du bas :
 - **Courses** 🛒 : liste de courses commune, ajout rapide (plusieurs articles d'un coup avec des virgules), cocher au magasin, vider le panier. Fonctionne hors ligne et se synchronise entre les deux téléphones.
 - **Réglages** ⚙️ : notifications, date de pose du stérilet, durée de cycle par défaut, code d'invitation.
 
-Chaque espace a sa couleur : rose pour le cycle, verdure pour les courses. Pour ajouter un espace (par exemple les séances de sport) : une entrée dans `src/modules.ts` (avec son thème, défini dans `src/index.css`) et son écran dans `src/App.tsx`. Au-delà de trois espaces, la barre du bas range automatiquement les suivants et les réglages dans un onglet « Plus ».
+Chaque espace a sa couleur : rose pour le cycle, verdure pour les courses, neutre pour les réglages. Pour ajouter un espace (par exemple les séances de sport) : une entrée dans `src/modules.ts` (avec son thème, défini dans `src/index.css`) et son écran dans `src/App.tsx`. Au-delà de trois espaces, la barre du bas range automatiquement les suivants et les réglages dans un onglet « Plus ».
 
 Le pourquoi de ces choix (effets du stérilet au cuivre, fonctions des autres applis) est dans [docs/RECHERCHE.md](docs/RECHERCHE.md).
 

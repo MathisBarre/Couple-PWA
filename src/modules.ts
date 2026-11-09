@@ -9,8 +9,8 @@ export const MODULES = [
   { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure' },
 ] as const satisfies readonly { id: string; label: string; icon: string; description: string; theme: Theme }[]
 
-/** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut). */
-export type Theme = 'rose' | 'verdure'
+/** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
+export type Theme = 'rose' | 'verdure' | 'neutre'
 
 export type ModuleId = (typeof MODULES)[number]['id']
 export type View = ModuleId | 'settings' | 'more'
@@ -35,8 +35,9 @@ export const OVERFLOW = fitsInBar ? [] : MODULES.slice(IN_BAR)
 /** Nom d'un écran (affiché dans le bouton retour « ‹ Plus »). */
 export const labelFor = (view: View): string => [...MODULES, SETTINGS_ITEM, MORE_ITEM].find((m) => m.id === view)?.label ?? ''
 
-/** Thème de l'écran affiché : celui de l'espace, rose par défaut (réglages, « Plus »). */
-export const themeFor = (view: View): Theme => MODULES.find((m) => m.id === view)?.theme ?? 'rose'
+/** Thème de l'écran affiché : celui de l'espace ; neutre pour les réglages et « Plus ». */
+export const themeFor = (view: View): Theme =>
+  view === 'settings' || view === 'more' ? 'neutre' : (MODULES.find((m) => m.id === view)?.theme ?? 'rose')
 
 /** Applique le thème à toute la page, barre d'état du téléphone comprise. */
 export function applyTheme(theme: Theme) {
