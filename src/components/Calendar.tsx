@@ -88,7 +88,7 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
       </div>
 
       <div className="flex flex-wrap gap-3.5 text-xs text-ink-2">
-        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-flow-1" /> Spotting</span>
+        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-flow-1" /> Traces</span>
         <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-flow-3" /> Règles</span>
         <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full border-2 border-dashed border-flow-3" /> Prévu</span>
         <span className="inline-flex items-center gap-1.5"><i className="size-1.5 rounded-full bg-ink" /> Douleur</span>

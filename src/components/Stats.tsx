@@ -54,7 +54,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
         />
         <Tile label="Jours abondants" value={s.heavyDaysPerPeriod != null ? s.heavyDaysPerPeriod.toLocaleString('fr-FR') : '—'} hint="par période" />
         <Tile label="Jours douloureux" value={s.painfulDaysShare != null ? `${s.painfulDaysShare} %` : '—'} hint="douleur ≥ modérée" />
-        <Tile label="Spotting hors règles" value={`${s.spottingOutsidePeriods} j`} hint="sur 12 mois" />
+        <Tile label="Traces hors règles" value={`${s.spottingOutsidePeriods} j`} hint="petites pertes, sur 12 mois" />
       </div>
 
       {s.flags.length > 0 && (
@@ -71,7 +71,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
 
       <Card>
         <SectionTitle>Derniers cycles</SectionTitle>
-        <p className="mt-2 text-sm text-ink-2">Chaque ligne = un cycle. Les cases colorées = jours de règles, du plus clair (spotting) au plus foncé (très abondant).</p>
+        <p className="mt-2 text-sm text-ink-2">Chaque ligne = un cycle. Les cases colorées = jours de règles, du plus clair (traces) au plus foncé (très abondant).</p>
         <div className="mt-3 flex flex-col gap-2">
           {recent.map((c) => {
             const len = c.length ?? diffDays(today, c.start) + 1
@@ -120,12 +120,12 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
         {iudMonths != null && (
           <p>
             Posé il y a <strong>{iudMonths} mois</strong>.{' '}
-            {iudMonths < 12 ? 'Pendant la première année, des règles plus longues, plus abondantes et du spotting sont fréquents.' : 'Après un an, les règles se stabilisent en général.'}
+            {iudMonths < 12 ? 'Pendant la première année, des règles plus longues, plus abondantes et des traces (petites pertes) entre les règles sont fréquentes.' : 'Après un an, les règles se stabilisent en général.'}
           </p>
         )}
         <p className="mt-2 text-sm leading-relaxed">
           Le stérilet au cuivre ne bloque pas l’ovulation : le cycle reste naturel et prévisible. Il rend souvent les règles plus abondantes,
-          plus longues et plus douloureuses, surtout les 3 à 12 premiers mois, avec du spotting entre les règles. Signes à signaler : une
+          plus longues et plus douloureuses, surtout les 3 à 12 premiers mois, avec des traces (petites pertes de sang) entre les règles. Signes à signaler : une
           protection traversée en moins d’une heure, de gros caillots, des règles de plus de 7–8 jours, une fatigue ou un essoufflement
           inhabituels (anémie), une douleur persistante, ou un retard de règles.
         </p>
