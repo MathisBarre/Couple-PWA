@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
+import { AppUpdate } from './AppUpdate'
 import { Button, Card, cx, inputClass, SectionTitle, Select, Switch } from './ui'
 
 interface Props {
@@ -126,6 +127,8 @@ export function Settings({ couple, profile, members, onChange }: Props) {
           </p>
         )}
       </Card>
+
+      <AppUpdate />
 
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter

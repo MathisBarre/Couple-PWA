@@ -11,7 +11,11 @@ cleanupOutdatedCaches()
 // Toute navigation sert l'app en cache (hors ligne compris), sauf les routes de l'API.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//] }))
 
-self.skipWaiting()
+// Une nouvelle version attend que la page l'active (voir src/lib/update.ts), pour ne jamais
+// recharger l'app en pleine saisie. Elle prend ensuite le contrôle de la page tout de suite.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting()
+})
 clientsClaim()
 
 // Réception d'un rappel envoyé par la tâche planifiée (api/cron).
