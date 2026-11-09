@@ -53,7 +53,11 @@ export default function App() {
 function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => void }) {
   const { couple, user: profile, members } = me
   // À l'ouverture (et depuis une notification) : directement la saisie du jour.
-  const [tab, setTab] = useState<View>('cycle')
+  // « ?open=groceries » (notification des courses) ouvre directement cet onglet.
+  const [tab, setTab] = useState<View>(() => {
+    const open = new URLSearchParams(location.search).get('open')
+    return BAR.find((i) => i.id === open)?.id ?? 'cycle'
+  })
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
   const [cycleTab, setCycleTab] = useState<CycleTab>('today')

@@ -18,7 +18,7 @@ self.addEventListener('message', (event) => {
 })
 clientsClaim()
 
-// Réception d'un rappel envoyé par la tâche planifiée (api/cron).
+// Réception d'un rappel (api/cron) ou d'une nouveauté saisie par l'autre (api/_lib/activity.ts).
 self.addEventListener('push', (event) => {
   const data = (() => {
     try {
@@ -33,13 +33,15 @@ self.addEventListener('push', (event) => {
       icon: '/pwa-192x192.png',
       // Android n'affiche que la silhouette du badge (barre d'état) : il doit être monochrome.
       badge: '/badge-96x96.png',
-      tag: data.kind ?? 'reminder',
+      tag: data.tag ?? data.kind ?? 'reminder',
+      // Une nouveauté qui remplace la précédente (même tag) fait quand même sonner.
+      renotify: Boolean(data.tag),
       data: { url: data.url ?? '/' },
-    }),
+    } as NotificationOptions),
   )
 })
 
-// Toucher la notification ouvre l'app directement sur la saisie du jour.
+// Toucher la notification ouvre l'app au bon endroit (saisie du jour, courses…).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = new URL(event.notification.data?.url ?? '/', self.location.origin).href

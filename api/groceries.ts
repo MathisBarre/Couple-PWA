@@ -5,6 +5,7 @@
 import { requireCouple } from './_lib/auth.js'
 import { db } from './_lib/db.js'
 import { body, error, json } from './_lib/http.js'
+import { notifyActivity, type GroceryActivity } from './_lib/activity.js'
 
 export type GroceryOp =
   | { op: 'add'; id: string; name: string }
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
   const { ops } = await body<{ ops?: GroceryOp[] }>(req)
   if (!Array.isArray(ops) || !ops.length || ops.length > 500) return error('Données invalides')
   const statements = []
+  const valid: GroceryOp[] = []
   for (const o of ops) {
     if (!o || typeof o.id !== 'string' || !ID.test(o.id)) return error('Article invalide')
     if (o.op === 'add') {
@@ -47,13 +49,25 @@ export async function POST(req: Request) {
     } else if (o.op === 'check') {
       statements.push({
         // Un article supprimé entre-temps par l'autre n'est pas recréé.
-        sql: "update grocery_items set done = ?, updated_at = datetime('now') where id = ? and couple_id = ?",
-        args: [o.done ? 1 : 0, o.id, user.couple_id],
+        // « done != ? » : recocher un article déjà coché (opération rejouée) ne compte pas comme un changement.
+        sql: "update grocery_items set done = ?, updated_at = datetime('now') where id = ? and couple_id = ? and done != ?",
+        args: [o.done ? 1 : 0, o.id, user.couple_id, o.done ? 1 : 0],
       })
     } else if (o.op === 'delete') {
       statements.push({ sql: 'delete from grocery_items where id = ? and couple_id = ?', args: [o.id, user.couple_id] })
     } else return error('Opération inconnue')
+    valid.push(o)
   }
-  await (await db()).batch(statements, 'write')
+  const results = await (await db()).batch(statements, 'write')
+
+  // Ce qui a vraiment changé (un ajout rejoué ou un article déjà supprimé ne compte pas).
+  const activity: Required<GroceryActivity> = { added: [], checked: 0, removed: 0 }
+  valid.forEach((o, i) => {
+    if (!results[i].rowsAffected) return
+    if (o.op === 'add') activity.added.push(o.name.trim().slice(0, MAX_NAME))
+    else if (o.op === 'check' && o.done) activity.checked++
+    else if (o.op === 'delete') activity.removed++
+  })
+  if (activity.added.length || activity.checked || activity.removed) notifyActivity(user, { kind: 'groceries', data: activity })
   return json(await list(user.couple_id))
 }
