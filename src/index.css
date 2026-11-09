@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+/* Jetons de couleur : redéfinis en mode sombre, utilisables en classes Tailwind
+   (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…). */
+@theme {
+  --color-bg: #fff6f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbeae6;
+  --color-ink: #2b1a1d;
+  --color-ink-2: #6e5559;
+  --color-line: #f0dcd8;
+  --color-accent: #d9416a;
+  --color-on-accent: #ffffff;
+  --color-soon: #fff0d9;
+  --color-on-soon: #7a4a00;
+  --color-warn: #fff4e5;
+  /* Intensité du flux : une seule teinte, du clair au foncé */
+  --color-flow-1: #f7cdd3;
+  --color-flow-2: #f0a3b0;
+  --color-flow-3: #e3687e;
+  --color-flow-4: #c43a5a;
+  --color-flow-5: #8a1d3b;
+  --color-on-flow: #ffffff;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1e1416;
+    --color-surface: #2a1d20;
+    --color-surface-2: #362529;
+    --color-ink: #f6e9eb;
+    --color-ink-2: #bfa5aa;
+    --color-line: #3f2c30;
+    --color-accent: #ff7a95;
+    --color-on-accent: #2b0d15;
+    --color-soon: #3d2c12;
+    --color-on-soon: #ffd699;
+    --color-warn: #3a2a17;
+    --color-flow-1: #5a3a41;
+    --color-flow-2: #8a4656;
+    --color-flow-3: #c25270;
+    --color-flow-4: #e66d8b;
+    --color-flow-5: #ffa3b8;
+    --color-on-flow: #2b0d15;
+    color-scheme: dark;
+  }
+}
+
+/* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème, appliqué
+   sur <html data-theme="…">. « rose » = les couleurs ci-dessus. Pour un nouveau
+   thème, copier un bloc ci-dessous (clair + sombre) et changer les teintes. */
+:root[data-theme='verdure'] {
+  --color-bg: #f3f8f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #e2eedb;
+  --color-ink: #1b2a1c;
+  --color-ink-2: #546a55;
+  --color-line: #d5e4ce;
+  --color-accent: #3c8a4b;
+  --color-on-accent: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='verdure'] {
+    --color-bg: #131b14;
+    --color-surface: #1b261c;
+    --color-surface-2: #243225;
+    --color-ink: #e7f1e5;
+    --color-ink-2: #a3b9a4;
+    --color-line: #2d3d2e;
+    --color-accent: #7cc98a;
+    --color-on-accent: #0e2313;
+  }
+}
+
+@layer base {
+  html,
+  body {
+    @apply min-h-full bg-bg text-ink antialiased transition-colors duration-300;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+@keyframes pulse-soft {
+  50% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+}
