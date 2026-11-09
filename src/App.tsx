@@ -7,13 +7,14 @@ import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
+import { useTabMenu, type MenuItem } from './components/TabMenu'
 import { cx } from './components/ui'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { useGroceries } from './lib/groceries'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
-import { applyTheme, BAR, labelFor, OVERFLOW, themeFor, type View } from './modules'
+import { applyTheme, BAR, CYCLE_SECTIONS, labelFor, OVERFLOW, SETTINGS_SECTIONS, themeFor, type View } from './modules'
 
 const ME_CACHE = 'me'
 
@@ -119,8 +120,8 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     return () => removeEventListener('popstate', onPopstate)
   }, [])
 
-  const push = (v: View) => {
-    setStacks((s) => ({ ...s, [tab]: [...(s[tab] ?? []), v] }))
+  const push = (v: View, t: View = tab) => {
+    setStacks((s) => ({ ...s, [t]: [...(s[t] ?? []), v] }))
     history.pushState({ stack: true }, '')
   }
 
@@ -142,6 +143,36 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     stackRefs.current[v]?.scrollToTop()
     if (v === 'cycle') setCycleTab('today')
   }
+
+  // Appui long sur un onglet : ses sous-écrans, pour y aller directement.
+  const menuItems = (t: View): MenuItem[] => {
+    switch (t) {
+      case 'cycle':
+        return CYCLE_SECTIONS.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: tab === 'cycle' && view === 'cycle' && cycleTab === s.id }))
+      case 'settings':
+        // Seulement les rubriques présentes (elles peuvent bouger d'un écran à l'autre).
+        return SETTINGS_SECTIONS.filter((s) => document.getElementById(`reglages-${s.id}`)).map((s) => ({ key: s.id, label: s.label, icon: s.icon }))
+      case 'more':
+        return OVERFLOW.map((m) => ({ key: m.id, label: m.label, icon: m.icon, current: view === m.id }))
+      default:
+        return []
+    }
+  }
+  const pickMenu = (t: View, key: string) => {
+    if (t !== tab) setTab(t)
+    if (t === 'cycle') setCycleTab(key as CycleTab)
+    else if (t === 'settings') {
+      const el = document.getElementById(`reglages-${key}`)
+      const scroller = el?.closest('[data-scroll]')
+      if (el && scroller)
+        scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 16, behavior: 'smooth' })
+    } else if (t === 'more' && view !== key) {
+      // Un autre espace déjà ouvert depuis « Plus » : on le remplace.
+      if (stacks.more?.length) setStacks((s) => ({ ...s, more: [key as View] }))
+      else push(key as View, 'more')
+    }
+  }
+  const tabMenu = useTabMenu(menuItems, pickMenu)
 
   const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} />
 
@@ -176,7 +207,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         return settings
       case 'more':
         return (
-          <More modules={OVERFLOW} onOpen={push}>
+          <More modules={OVERFLOW} onOpen={(m) => push(m)}>
             {settings}
           </More>
         )
@@ -218,8 +249,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                 key={id}
                 type="button"
                 onClick={() => openTab(id)}
+                {...tabMenu.bind(id)}
                 aria-current={tab === id ? 'page' : undefined}
-                className="group flex flex-1 flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none select-none focus-visible:text-accent aria-[current=page]:font-semibold aria-[current=page]:text-accent"
+                className="group flex touch-none [-webkit-touch-callout:none] flex-1 flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none select-none focus-visible:text-accent aria-[current=page]:font-semibold aria-[current=page]:text-accent"
               >
                 <span
                   aria-hidden
@@ -241,6 +273,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           })}
         </div>
       </nav>
+      {tabMenu.menu}
     </div>
   )
 }

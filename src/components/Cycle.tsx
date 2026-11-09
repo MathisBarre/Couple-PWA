@@ -2,18 +2,15 @@ import { Tabs } from '@base-ui/react/tabs'
 import { useLayoutEffect, useRef } from 'react'
 import type { DayLog } from '../../shared/cycles'
 import { slideTabs } from '../lib/motion'
+import { CYCLE_SECTIONS, type CycleTab } from '../modules'
 import { Calendar } from './Calendar'
 import { Stats } from './Stats'
 import { Today } from './Today'
 import { cx } from './ui'
 
-export type CycleTab = 'today' | 'calendar' | 'stats'
+export type { CycleTab }
 
-const TABS: [CycleTab, string][] = [
-  ['today', 'Aujourd’hui'],
-  ['calendar', 'Calendrier'],
-  ['stats', 'Analyse'],
-]
+const TABS = CYCLE_SECTIONS.map((s) => [s.id, s.label] as [CycleTab, string])
 
 interface Props {
   tab: CycleTab

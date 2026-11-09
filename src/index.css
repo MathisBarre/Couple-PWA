@@ -157,3 +157,16 @@
     opacity: 0.7;
   }
 }
+
+/* Menu rapide de la barre du bas (appui long sur un onglet). */
+@keyframes menu-in {
+  from {
+    transform: scale(0.6) translateY(12px);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

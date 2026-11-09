@@ -71,7 +71,7 @@ export function Settings({ couple, profile, members, onChange }: Props) {
     <div className="flex flex-col gap-3.5">
       <h2 className="text-xl font-bold">Réglages</h2>
 
-      <Card>
+      <Card id="reglages-notifications" className="scroll-mt-4">
         <SectionTitle>Notifications</SectionTitle>
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
@@ -113,7 +113,7 @@ export function Settings({ couple, profile, members, onChange }: Props) {
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
 
-      <Card>
+      <Card id="reglages-cycle" className="scroll-mt-4">
         <SectionTitle>Cycle</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
           <span className="shrink-0">Pose du stérilet</span>
@@ -133,7 +133,7 @@ export function Settings({ couple, profile, members, onChange }: Props) {
         <p className="text-sm text-ink-2">Utilisé tant qu’il n’y a pas deux cycles complets notés.</p>
       </Card>
 
-      <Card>
+      <Card id="reglages-couple" className="scroll-mt-4">
         <SectionTitle>Couple</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
           <span className="shrink-0">Mon prénom</span>
@@ -158,7 +158,9 @@ export function Settings({ couple, profile, members, onChange }: Props) {
         )}
       </Card>
 
-      <AppUpdate />
+      <div id="reglages-app" className="scroll-mt-4">
+        <AppUpdate />
+      </div>
 
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter

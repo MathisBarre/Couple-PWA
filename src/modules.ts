@@ -3,11 +3,42 @@
 // 2. son écran dans le `switch` de `render` (App.tsx).
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
+// `sections` : les sous-écrans de l'espace, proposés en restant appuyé sur son
+// onglet dans la barre du bas (et, pour le cycle, ses onglets du haut).
 
 export const MODULES = [
-  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose' },
-  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure' },
-] as const satisfies readonly { id: string; label: string; icon: string; description: string; theme: Theme }[]
+  {
+    id: 'cycle',
+    label: 'Cycle',
+    icon: '💧',
+    description: 'Suivi des règles, calendrier et analyse',
+    theme: 'rose',
+    sections: [
+      { id: 'today', label: 'Aujourd’hui', icon: '✏️' },
+      { id: 'calendar', label: 'Calendrier', icon: '📅' },
+      { id: 'stats', label: 'Analyse', icon: '📊' },
+    ],
+  },
+  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', sections: [] },
+] as const satisfies readonly { id: string; label: string; icon: string; description: string; theme: Theme; sections: readonly Section[] }[]
+
+export interface Section {
+  id: string
+  label: string
+  icon: string
+}
+
+/** Sous-écrans du cycle (ses onglets du haut). */
+export const CYCLE_SECTIONS = MODULES[0].sections
+export type CycleTab = (typeof CYCLE_SECTIONS)[number]['id']
+
+/** Rubriques des réglages : chacune est une carte avec l'id `reglages-<id>` (src/components/Settings.tsx). */
+export const SETTINGS_SECTIONS: Section[] = [
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'cycle', label: 'Cycle', icon: '💧' },
+  { id: 'couple', label: 'Couple', icon: '💞' },
+  { id: 'app', label: 'Application', icon: '📲' },
+]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
 export type Theme = 'rose' | 'verdure' | 'neutre'
