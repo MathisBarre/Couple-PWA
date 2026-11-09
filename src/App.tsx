@@ -149,8 +149,8 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             onTab={setCycleTab}
             today={today}
             logs={logs}
-            defaultCycle={couple.default_cycle_length}
-            iudInsertedOn={couple.iud_inserted_on}
+            couple={couple}
+            onCoupleChange={reload}
             names={names}
             onSave={save}
             onDelete={remove}

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { AppUpdate } from './AppUpdate'
-import { Button, Card, cx, inputClass, SectionTitle, Select, Switch } from './ui'
+import { SchemePicker } from './SchemePicker'
+import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
 
 interface Props {
   couple: Couple
@@ -10,8 +11,6 @@ interface Props {
   members: Member[]
   onChange: () => void
 }
-
-const CYCLES = Array.from({ length: 26 }, (_, i) => ({ value: i + 20, label: `${i + 20} jours` }))
 
 export function Settings({ couple, profile, members, onChange }: Props) {
   const [pushOn, setPushOn] = useState(false)
@@ -22,15 +21,6 @@ export function Settings({ couple, profile, members, onChange }: Props) {
   useEffect(() => {
     currentSubscription().then((s) => setPushOn(Boolean(s)))
   }, [])
-
-  const updateCouple = async (patch: Partial<Couple>) => {
-    try {
-      await api('couple', { method: 'PATCH', body: patch })
-      onChange()
-    } catch (e) {
-      setMsg((e as Error).message)
-    }
-  }
 
   const togglePush = async (on: boolean) => {
     setMsg('')
@@ -50,6 +40,11 @@ export function Settings({ couple, profile, members, onChange }: Props) {
       <h2 className="text-xl font-bold">Réglages</h2>
 
       <Card>
+        <SectionTitle>Apparence</SectionTitle>
+        <SchemePicker />
+      </Card>
+
+      <Card>
         <SectionTitle>Notifications</SectionTitle>
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
@@ -61,7 +56,7 @@ export function Settings({ couple, profile, members, onChange }: Props) {
           </p>
         ) : (
           <>
-            <Switch label="Rappels sur cet appareil" checked={pushOn} onChange={togglePush} />
+            <Switch label="Notifications sur cet appareil" checked={pushOn} onChange={togglePush} />
             {pushOn && (
               <Button
                 variant="link"
@@ -77,30 +72,10 @@ export function Settings({ couple, profile, members, onChange }: Props) {
           </>
         )}
         <p className="mt-2 text-sm text-ink-2">
-          Un rappel par jour, vers 19 h : chaque jour de règles non noté, quand ça semble fini, 2 jours avant les prochaines règles, le jour prévu
-          et en cas de retard. Il part sur les téléphones de vous deux.
+          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans son propre onglet Réglages (ex. Cycle →
+          Réglages).
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
-      </Card>
-
-      <Card>
-        <SectionTitle>Cycle</SectionTitle>
-        <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0">Pose du stérilet</span>
-          <input
-            type="date"
-            className={cx(inputClass, 'max-w-[55%] py-2.5')}
-            value={couple.iud_inserted_on ?? ''}
-            onChange={(e) => updateCouple({ iud_inserted_on: e.target.value || null })}
-          />
-        </label>
-        <Select
-          label="Cycle par défaut"
-          value={couple.default_cycle_length}
-          items={CYCLES}
-          onChange={(default_cycle_length) => updateCouple({ default_cycle_length })}
-        />
-        <p className="text-sm text-ink-2">Utilisé tant qu’il n’y a pas deux cycles complets notés.</p>
       </Card>
 
       <Card>
