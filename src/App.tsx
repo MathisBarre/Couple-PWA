@@ -85,7 +85,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   useEffect(() => {
     applyTheme(themeFor(view))
   }, [view])
-  useEffect(() => () => applyTheme('rose'), [])
+  useEffect(() => () => applyTheme('neutre'), [])
 
   // Changement d'onglet : l'écran glisse vers la gauche ou la droite selon la position dans la barre.
   const prevTab = useRef(tab)

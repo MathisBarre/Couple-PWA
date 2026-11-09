@@ -24,11 +24,11 @@ self.addEventListener('push', (event) => {
     try {
       return event.data?.json() ?? {}
     } catch {
-      return { title: 'Cycle à deux', body: event.data?.text() }
+      return { title: 'À deux', body: event.data?.text() }
     }
   })()
   event.waitUntil(
-    self.registration.showNotification(data.title ?? 'Cycle à deux', {
+    self.registration.showNotification(data.title ?? 'À deux', {
       body: data.body,
       icon: '/pwa-192x192.png',
       // Android n'affiche que la silhouette du badge (barre d'état) : il doit être monochrome.
