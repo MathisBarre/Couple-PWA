@@ -1,6 +1,6 @@
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
 // 1. une entrée ici (avec son thème de couleur, voir src/index.css),
-// 2. son écran dans le `switch` de App.tsx.
+// 2. son écran dans le `switch` de `render` (App.tsx).
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
 
@@ -32,8 +32,8 @@ export const BAR: NavItem[] = fitsInBar ? [...MODULES, SETTINGS_ITEM] : [...MODU
 /** Espaces accessibles seulement depuis « Plus ». */
 export const OVERFLOW = fitsInBar ? [] : MODULES.slice(IN_BAR)
 
-/** Entrée de la barre à mettre en avant pour l'écran affiché. */
-export const barItemFor = (view: View): View => (BAR.some((b) => b.id === view) ? view : 'more')
+/** Nom d'un écran (affiché dans le bouton retour « ‹ Plus »). */
+export const labelFor = (view: View): string => [...MODULES, SETTINGS_ITEM, MORE_ITEM].find((m) => m.id === view)?.label ?? ''
 
 /** Thème de l'écran affiché : celui de l'espace, rose par défaut (réglages, « Plus »). */
 export const themeFor = (view: View): Theme => MODULES.find((m) => m.id === view)?.theme ?? 'rose'

@@ -47,10 +47,52 @@
   }
 }
 
-/* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème, appliqué
-   sur <html data-theme="…">. « rose » = les couleurs ci-dessus. Pour un nouveau
-   thème, copier un bloc ci-dessous (clair + sombre) et changer les teintes. */
-:root[data-theme='verdure'] {
+/* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème. Il est posé
+   sur <html data-theme="…"> (barre du bas, barre d'état) et sur chaque écran, pour
+   que deux espaces gardent chacun leurs couleurs pendant qu'ils glissent l'un sur
+   l'autre. « rose » = les couleurs ci-dessus, répétées ici pour un écran rose posé
+   dans une page verte. Pour un nouveau thème, copier un bloc (clair + sombre). */
+[data-theme='rose'] {
+  --color-bg: #fff6f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbeae6;
+  --color-ink: #2b1a1d;
+  --color-ink-2: #6e5559;
+  --color-line: #f0dcd8;
+  --color-accent: #d9416a;
+  --color-on-accent: #ffffff;
+  --color-soon: #fff0d9;
+  --color-on-soon: #7a4a00;
+  --color-warn: #fff4e5;
+  --color-flow-1: #f7cdd3;
+  --color-flow-2: #f0a3b0;
+  --color-flow-3: #e3687e;
+  --color-flow-4: #c43a5a;
+  --color-flow-5: #8a1d3b;
+  --color-on-flow: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme='rose'] {
+    --color-bg: #1e1416;
+    --color-surface: #2a1d20;
+    --color-surface-2: #362529;
+    --color-ink: #f6e9eb;
+    --color-ink-2: #bfa5aa;
+    --color-line: #3f2c30;
+    --color-accent: #ff7a95;
+    --color-on-accent: #2b0d15;
+    --color-soon: #3d2c12;
+    --color-on-soon: #ffd699;
+    --color-warn: #3a2a17;
+    --color-flow-1: #5a3a41;
+    --color-flow-2: #8a4656;
+    --color-flow-3: #c25270;
+    --color-flow-4: #e66d8b;
+    --color-flow-5: #ffa3b8;
+    --color-on-flow: #2b0d15;
+  }
+}
+[data-theme='verdure'] {
   --color-bg: #f3f8f0;
   --color-surface: #ffffff;
   --color-surface-2: #e2eedb;
@@ -61,7 +103,7 @@
   --color-on-accent: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='verdure'] {
+  [data-theme='verdure'] {
     --color-bg: #131b14;
     --color-surface: #1b261c;
     --color-surface-2: #243225;
