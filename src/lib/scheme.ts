@@ -19,7 +19,17 @@ export function getSchemeChoice(): SchemeChoice {
 /** Couleur de la barre d'état du téléphone = fond de l'écran affiché. */
 export function syncStatusBar() {
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim()
-  if (bg) document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = bg))
+  if (!bg) return
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = bg))
+  // iOS 26 colore la barre d'état d'après le bandeau #top-edge (voir src/index.css), mais ne
+  // relit sa couleur que lorsqu'il le (re)découvre : un simple changement de couleur ne suffit
+  // pas. On remplace donc le bandeau par une copie à la nouvelle couleur.
+  const edge = document.getElementById('top-edge')
+  if (edge && edge.style.backgroundColor !== bg) {
+    const fresh = edge.cloneNode() as HTMLElement
+    fresh.style.backgroundColor = bg
+    edge.replaceWith(fresh)
+  }
 }
 
 function apply() {
