@@ -149,6 +149,19 @@
     @apply min-h-full bg-bg text-ink antialiased transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
+    /* Comme une app native : pas de sélection de texte ni de bulle « Copier » sur un appui
+       long (sinon iOS sélectionne toute la page en restant appuyé sur la barre du bas). */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Les champs de saisie restent sélectionnables, ainsi que ce qu'on a voulu copier (select-all, select-text). */
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
   }
   button {
     @apply cursor-pointer;

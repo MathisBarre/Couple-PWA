@@ -35,6 +35,7 @@ export function useTabMenu(itemsFor: (tab: View) => MenuItem[], onPick: (tab: Vi
   const show = (tab: View, el: HTMLElement) => {
     const items = itemsFor(tab)
     if (!items.length) return false
+    getSelection()?.removeAllRanges()
     setOpen({ tab, rect: el.getBoundingClientRect(), items })
     setHover((hoverRef.current = null))
     haptic()
@@ -53,6 +54,19 @@ export function useTabMenu(itemsFor: (tab: View) => MenuItem[], onPick: (tab: Vi
     if (press.current) clearTimeout(press.current.timer)
     press.current = null
   }
+
+  // Pendant l'appui (et menu ouvert), iOS ne doit rien sélectionner ni afficher de menu système.
+  useEffect(() => {
+    const block = (e: Event) => {
+      if (press.current || open) e.preventDefault()
+    }
+    document.addEventListener('selectstart', block)
+    document.addEventListener('contextmenu', block)
+    return () => {
+      document.removeEventListener('selectstart', block)
+      document.removeEventListener('contextmenu', block)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -129,7 +143,7 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
   const center = rect.left + rect.width / 2
   const left = Math.min(Math.max(center - WIDTH / 2, 12), innerWidth - WIDTH - 12)
   return (
-    <div className="fixed inset-0 z-30">
+    <div className="fixed inset-0 z-30 touch-none select-none [-webkit-touch-callout:none]">
       <div
         aria-hidden
         onClick={onClose}
