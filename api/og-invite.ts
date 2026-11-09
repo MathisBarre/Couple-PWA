@@ -1,4 +1,5 @@
 // GET /api/og-invite?code=… : image de partage 1200×630 du lien d'invitation, avec le prénom de qui invite.
+import { readFile } from 'node:fs/promises'
 import { Resvg } from '@resvg/resvg-js'
 import satori from 'satori'
 import { cleanCode, inviterName } from './_lib/invite.js'
@@ -13,10 +14,9 @@ const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><def
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
-  const origin = `${url.protocol}//${url.host}`
   const name = await inviterName(cleanCode(url.searchParams.get('code')))
   const [extraBold, semiBold, medium] = await Promise.all(
-    ['ExtraBold', 'SemiBold', 'Medium'].map((w) => fetch(`${origin}/og/Inter-${w}.otf`).then((r) => r.arrayBuffer())),
+    ['ExtraBold', 'SemiBold', 'Medium'].map((w) => readFile(new URL(`./_fonts/Inter-${w}.otf`, import.meta.url))),
   )
 
   const headline = name ? `${name} t’invite` : 'Tu es invité·e'

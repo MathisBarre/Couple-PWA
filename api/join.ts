@@ -2,6 +2,7 @@
 // Les aperçus de liens (Messages, WhatsApp…) n'exécutent pas le JavaScript : on sert la page de l'app
 // avec des balises Open Graph propres à l'invitation (« Mathis t'invite sur À deux » + image dédiée).
 // Le navigateur, lui, charge l'app normalement : src/lib/invite.ts lit le code dans l'adresse.
+import { readFile } from 'node:fs/promises'
 import { cleanCode, inviterName } from './_lib/invite.js'
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
@@ -12,12 +13,21 @@ function setMeta(html: string, key: string, value: string) {
   return html.replace(re, `$1${escape(value)}$2`)
 }
 
+/** La page de l'app construite (dist/index.html, embarquée via vercel.json), sinon celle servie en statique. */
+async function appPage(origin: string): Promise<string | null> {
+  try {
+    return await readFile(new URL('../dist/index.html', import.meta.url), 'utf8')
+  } catch {
+    const page = await fetch(`${origin}/index.html`).catch(() => null)
+    return page?.ok ? page.text() : null
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const origin = `${url.protocol}//${url.host}`
-  const page = await fetch(`${origin}/index.html`)
-  if (!page.ok) return Response.redirect(`${origin}/`, 302)
-  let html = await page.text()
+  let html = await appPage(origin)
+  if (!html) return Response.redirect(`${origin}/`, 302)
 
   const code = cleanCode(url.searchParams.get('code'))
   const name = await inviterName(code)

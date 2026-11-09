@@ -32,6 +32,12 @@
     },
     "api/groceries.ts": {
       "maxDuration": 60
+    },
+    "api/join.ts": {
+      "includeFiles": "dist/index.html"
+    },
+    "api/og-invite.ts": {
+      "includeFiles": "api/_fonts/**"
     }
   }
 }
