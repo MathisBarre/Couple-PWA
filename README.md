@@ -7,7 +7,7 @@ L'app est organisée en **espaces**, un par onglet dans la barre du bas :
 - **Cycle** 💧, avec trois onglets en haut :
   - **Aujourd'hui** : où en est le cycle, et la saisie rapide (« Ça continue » / « C'est fini » en un appui, aujourd'hui, hier ou avant-hier en un geste).
   - **Calendrier** : historique, règles prévues en pointillés, modifier n'importe quel jour passé.
-  - **Analyse** : durée du cycle et des règles, prochaines règles, jours abondants et douloureux, spotting, symptômes fréquents, points à surveiller, export CSV.
+  - **Analyse** : durée du cycle et des règles, prochaines règles, jours abondants et douloureux, traces hors règles, symptômes fréquents, points à surveiller, export CSV.
 - **Courses** 🛒 : liste de courses commune, ajout rapide (plusieurs articles d'un coup avec des virgules), cocher au magasin, vider le panier. Fonctionne hors ligne et se synchronise entre les deux téléphones.
 - **Réglages** ⚙️ : notifications, date de pose du stérilet, durée de cycle par défaut, code d'invitation.
 

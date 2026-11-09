@@ -47,6 +47,7 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
                   {i === 0 ? '—' : i === 1 ? '·' : '●'.repeat(i - 1)}
                 </span>
                 {label}
+                {i === 1 && <span className="text-[0.7rem] leading-tight font-normal opacity-75">quelques gouttes</span>}
               </>
             ),
           }))}

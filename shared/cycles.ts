@@ -2,7 +2,7 @@
 // Aucune dépendance : uniquement du TypeScript pur.
 
 export type Flow = 0 | 1 | 2 | 3 | 4 | 5
-// 0 rien · 1 spotting · 2 léger · 3 moyen · 4 abondant · 5 très abondant
+// 0 rien · 1 traces (quelques gouttes) · 2 léger · 3 moyen · 4 abondant · 5 très abondant
 
 export interface DayLog {
   day: string // YYYY-MM-DD (date locale)
@@ -27,7 +27,7 @@ export interface Cycle {
   period: Period
 }
 
-export const FLOW_LABELS = ['Rien', 'Spotting', 'Léger', 'Moyen', 'Abondant', 'Très abondant'] as const
+export const FLOW_LABELS = ['Rien', 'Traces', 'Léger', 'Moyen', 'Abondant', 'Très abondant'] as const
 export const PAIN_LABELS = ['Aucune', 'Légère', 'Modérée', 'Forte'] as const
 
 const DAY_MS = 86_400_000

@@ -5,7 +5,7 @@
 - **L'ovulation continue.** Le cuivre n'agit pas sur les hormones : le cycle reste naturel, donc la durée du cycle reste globalement prévisible. Un retard de règles n'est pas « normal » avec ce stérilet : il ne supprime pas les règles.
 - **Règles plus abondantes et plus longues**, surtout la première année. Après un an, environ 3 à 4 utilisatrices sur 10 ont encore des règles abondantes.
 - **Plus de crampes / douleurs**, en général atténuées au bout de 3 à 6 mois.
-- **Spotting entre les règles**, fréquent les 3 premiers mois et pendant la première année.
+- **Traces (petites pertes de sang) entre les règles**, ce qu’on appelle le « spotting », fréquentes les 3 premiers mois et pendant la première année.
 - **Cycles parfois irréguliers au début**, qui se régularisent en 3 à 6 mois.
 - **Signes à signaler à un médecin** : protection traversée en moins d'une heure, gros caillots, règles anormalement longues, fatigue / vertiges / essoufflement (anémie), douleur persistante (le stérilet peut s'être déplacé), retard de règles (faire un test).
 
@@ -13,8 +13,8 @@
 
 | Constat | Choix dans l'app |
 |---|---|
-| Flux très variable, parfois très abondant | 6 niveaux de flux (rien, spotting, léger, moyen, abondant, très abondant) |
-| Spotting entre les règles fréquent | Le spotting isolé n'est pas compté comme des règles (il ne fausse pas les prévisions) mais il est compté à part dans l'analyse |
+| Flux très variable, parfois très abondant | 6 niveaux de flux (rien, traces, léger, moyen, abondant, très abondant) |
+| Traces entre les règles fréquentes | Les traces isolées n'est pas compté comme des règles (il ne fausse pas les prévisions) mais il est compté à part dans l'analyse |
 | Règles longues | Pas de limite de durée ; alerte au-delà de 8 jours |
 | Risque d'anémie | Alerte si 3 jours « très abondant » ou plus sur une période |
 | Douleurs plus fortes | Douleur notée chaque jour (4 niveaux) + symptômes (crampes, caillots…) |
