@@ -2,6 +2,7 @@ import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type ReactNode
 import { flushSync } from 'react-dom'
 import { animateStack, setStackProgress } from '../lib/motion'
 import type { Theme } from '../modules'
+import { BackContext } from './ScreenHeader'
 import { cx } from './ui'
 
 export interface StackScreen {
@@ -167,19 +168,8 @@ export function Stack({ screens, onPop, ref }: { screens: StackScreen[]; onPop: 
           >
             <div data-scroll className="h-full overflow-x-hidden overflow-y-auto overscroll-contain">
               <main className="mx-auto w-full max-w-xl px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+88px)]">
-                {i > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => pop()}
-                    className="-ml-1.5 mb-2 flex items-center gap-0.5 py-1 pr-2 text-accent outline-none focus-visible:underline"
-                  >
-                    <span aria-hidden className="text-2xl leading-none">
-                      ‹
-                    </span>
-                    {screens[i - 1].title}
-                  </button>
-                )}
-                {s.node}
+                {/* Un écran empilé affiche « ‹ Précédent » dans son en-tête (ScreenHeader). */}
+                <BackContext value={i > 0 ? { label: screens[i - 1].title, onBack: () => pop() } : null}>{s.node}</BackContext>
               </main>
             </div>
             <div data-dim aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />

@@ -11,14 +11,26 @@ import { syncStatusBar } from './lib/scheme'
 // dans la barre du bas (garder les mêmes id que dans son écran).
 
 export const MODULES = [
-  { id: 'cycle', label: 'Cycle', icon: '💧', description: 'Suivi des règles, calendrier et analyse', theme: 'rose', settings: 'Stérilet, durée du cycle, rappels',
+  {
+    id: 'cycle',
+    label: 'Cycle',
+    icon: '💧',
+    description: 'Suivi des règles, calendrier et analyse',
+    theme: 'rose',
+    settings: 'Stérilet, durée du cycle, rappels',
     sections: [
       { id: 'today', label: 'Suivi', icon: '📅' },
       { id: 'stats', label: 'Analyse', icon: '📊' },
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
-  { id: 'groceries', label: 'Courses', icon: '🛒', description: 'La liste de courses commune', theme: 'verdure', settings: 'Notifications des courses',
+  {
+    id: 'groceries',
+    label: 'Courses',
+    icon: '🛒',
+    description: 'La liste de courses commune',
+    theme: 'verdure',
+    settings: 'Notifications des courses',
     sections: [
       { id: 'list', label: 'Liste', icon: '📝' },
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
@@ -54,7 +66,11 @@ export const SETTINGS_SECTIONS: Section[] = [
 export type Theme = 'rose' | 'verdure' | 'neutre'
 
 export type ModuleId = (typeof MODULES)[number]['id']
-export type View = ModuleId | 'settings' | 'more'
+/** Réglages propres à un espace (écran empilé, ouvert par ⚙️ dans son en-tête). */
+export type SpaceSettingsView = `${ModuleId}:settings`
+export type View = ModuleId | 'settings' | 'more' | SpaceSettingsView
+export const spaceSettings = (id: ModuleId): SpaceSettingsView => `${id}:settings`
+const spaceOf = (view: View) => view.split(':')[0]
 
 /** Nombre d'espaces affichés directement dans la barre du bas (le dernier emplacement sert à Réglages ou Plus). */
 const IN_BAR = 3
@@ -74,11 +90,12 @@ export const BAR: NavItem[] = fitsInBar ? [...MODULES, SETTINGS_ITEM] : [...MODU
 export const OVERFLOW = fitsInBar ? [] : MODULES.slice(IN_BAR)
 
 /** Nom d'un écran (affiché dans le bouton retour « ‹ Plus »). */
-export const labelFor = (view: View): string => [...MODULES, SETTINGS_ITEM, MORE_ITEM].find((m) => m.id === view)?.label ?? ''
+export const labelFor = (view: View): string =>
+  view.endsWith(':settings') ? 'Réglages' : ([...MODULES, SETTINGS_ITEM, MORE_ITEM].find((m) => m.id === view)?.label ?? '')
 
 /** Thème de l'écran affiché : celui de l'espace ; neutre pour les réglages et « Plus ». */
 export const themeFor = (view: View): Theme =>
-  view === 'settings' || view === 'more' ? 'neutre' : (MODULES.find((m) => m.id === view)?.theme ?? 'rose')
+  view === 'settings' || view === 'more' ? 'neutre' : (MODULES.find((m) => m.id === spaceOf(view))?.theme ?? 'rose')
 
 /** Applique le thème à toute la page, barre d'état du téléphone comprise. */
 export function applyTheme(theme: Theme) {
