@@ -1,12 +1,11 @@
 import type { DayLog } from '../../shared/cycles'
 import type { Couple } from '../lib/api'
-import { Calendar } from './Calendar'
 import { CycleSettings } from './CycleSettings'
 import { SpaceTabs } from './SpaceTabs'
 import { Stats } from './Stats'
 import { Today } from './Today'
 
-export type CycleTab = 'today' | 'calendar' | 'stats' | 'settings'
+export type CycleTab = 'today' | 'stats' | 'settings'
 
 interface Props {
   tab: CycleTab
@@ -22,7 +21,7 @@ interface Props {
   onDelete: (day: string) => void
 }
 
-/** Espace « Cycle » : saisie du jour, calendrier, analyse et réglages du suivi, avec ses onglets en haut. */
+/** Espace « Cycle » : suivi (saisie du jour + calendrier), analyse et réglages du suivi, avec ses onglets en haut. */
 export function Cycle({ tab, onTab, today, logs, couple, onCoupleChange, other, names, onSave, onDelete }: Props) {
   const common = { today, logs, defaultCycle: couple.default_cycle_length }
   return (
@@ -30,8 +29,7 @@ export function Cycle({ tab, onTab, today, logs, couple, onCoupleChange, other, 
       tab={tab}
       onTab={onTab}
       tabs={[
-        { id: 'today', label: 'Aujourd’hui', node: <Today key={today} {...common} names={names} onSave={onSave} onDelete={onDelete} /> },
-        { id: 'calendar', label: 'Calendrier', node: <Calendar {...common} names={names} onSave={onSave} onDelete={onDelete} /> },
+        { id: 'today', label: 'Suivi', node: <Today key={today} {...common} names={names} onSave={onSave} onDelete={onDelete} /> },
         { id: 'stats', label: 'Analyse', node: <Stats {...common} iudInsertedOn={couple.iud_inserted_on} /> },
         { id: 'settings', label: 'Réglages', node: <CycleSettings couple={couple} other={other} onChange={onCoupleChange} /> },
       ]}
