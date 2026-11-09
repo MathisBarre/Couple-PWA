@@ -3,6 +3,7 @@ import { Auth, CenterLayout } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
+import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
@@ -184,11 +185,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      {pending > 0 && (
-        <div className="relative z-10 bg-soon px-2 pt-[calc(env(safe-area-inset-top)+4px)] pb-1 text-center text-xs text-on-soon">
-          Hors ligne · {pending} modification(s) en attente de synchronisation
-        </div>
-      )}
+      <SyncIndicator pending={pending} />
       <div className="relative flex-1 overflow-hidden">
         {BAR.map(({ id }) => (
           <div
