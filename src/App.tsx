@@ -35,9 +35,21 @@ import {
 
 const ME_CACHE = 'me'
 
+function cachedMe(): Me | undefined {
+  try {
+    const raw = localStorage.getItem(ME_CACHE)
+    return raw ? (JSON.parse(raw) as Me) : undefined
+  } catch {
+    return undefined
+  }
+}
+
 export default function App() {
-  // undefined = chargement, null = non connecté
-  const [me, setMe] = useState<Me | null | undefined>(undefined)
+  // undefined = chargement, null = non connecté.
+  // Dernier profil connu affiché tout de suite : l'app s'ouvre sans attendre le serveur
+  // (une fonction Vercel « froide » peut mettre plusieurs secondes à répondre). Le profil
+  // est vérifié juste après, en arrière-plan.
+  const [me, setMe] = useState<Me | null | undefined>(cachedMe)
 
   const reload = useCallback(async () => {
     try {
@@ -52,12 +64,8 @@ export default function App() {
         /* stockage indisponible */
       }
     } catch {
-      // Hors ligne : on ouvre l'app avec le dernier profil connu.
-      try {
-        setMe(JSON.parse(localStorage.getItem(ME_CACHE) ?? 'null'))
-      } catch {
-        setMe(null)
-      }
+      // Hors ligne ou serveur indisponible : on garde le dernier profil connu.
+      setMe((prev) => (prev === undefined ? (cachedMe() ?? null) : prev))
     }
   }, [])
 

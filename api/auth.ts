@@ -12,8 +12,16 @@ export async function GET(req: Request) {
   let couple = null
   let members: unknown[] = []
   if (user.couple_id) {
-    couple = (await conn.execute({ sql: 'select * from couples where id = ?', args: [user.couple_id] })).rows[0] ?? null
-    members = (await conn.execute({ sql: 'select id, display_name from users where couple_id = ?', args: [user.couple_id] })).rows
+    // Un seul aller-retour vers la base pour les deux lectures.
+    const [c, m] = await conn.batch(
+      [
+        { sql: 'select * from couples where id = ?', args: [user.couple_id] },
+        { sql: 'select id, display_name from users where couple_id = ?', args: [user.couple_id] },
+      ],
+      'read',
+    )
+    couple = c.rows[0] ?? null
+    members = m.rows
   }
   return json({ user, couple, members })
 }

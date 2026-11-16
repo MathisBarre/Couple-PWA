@@ -1,15 +1,17 @@
-import webpush from 'web-push'
+import type webpushType from 'web-push'
 import type { Reminder } from '../../shared/cycles.js'
 import { db } from './db.js'
 
-let configured = false
-function configure() {
-  if (configured) return
+// Chargé seulement au premier envoi : les fonctions qui n'envoient rien démarrent plus vite.
+let webpush: typeof webpushType | undefined
+async function configure() {
+  if (webpush) return webpush
   const pub = process.env.VAPID_PUBLIC_KEY ?? process.env.VITE_VAPID_PUBLIC_KEY
   const priv = process.env.VAPID_PRIVATE_KEY
   if (!pub || !priv) throw new Error('Clés VAPID manquantes (VITE_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY)')
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT ?? 'mailto:admin@example.com', pub, priv)
-  configured = true
+  const mod = (await import('web-push')).default
+  mod.setVapidDetails(process.env.VAPID_SUBJECT ?? 'mailto:admin@example.com', pub, priv)
+  return (webpush = mod)
 }
 
 /** Types de notifications que chacun peut couper dans Réglages. */
@@ -27,8 +29,8 @@ export interface Payload extends Reminder {
  * ce type de notification (`pref`). Retourne le nombre d'envois réussis.
  */
 export async function sendToUsers(userIds: string[], payload: Payload, pref?: NotificationKind) {
-  configure()
   if (!userIds.length) return 0
+  const webpush = await configure()
   const conn = await db()
   const { rows } = await conn.execute({
     sql: `select endpoint, p256dh, auth from push_subscriptions where user_id in (${userIds.map(() => '?').join(',')})
