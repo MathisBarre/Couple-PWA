@@ -1,152 +1,239 @@
 @import 'tailwindcss';
+@import './textures.css';
+@import './skeuo.css';
 
-/* Jetons de couleur : redéfinis en mode sombre, utilisables en classes Tailwind
-   (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…). */
+/* Linéale embarquée (l'app marche hors ligne) : Geist, en police variable, latin seulement. */
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Direction visuelle : réalisme tactile d'aujourd'hui. Chaque espace reste un objet réel, mais
+   dessiné sobrement : Cycle = bloc calendrier de bureau en papier épais, Courses = bloc-notes de
+   papeterie, Réglages = panneau de contrôles physiques (interrupteurs usinés, panneaux mats).
+   Fonds presque neutres, une seule lumière venue du haut, ombres douces en plusieurs couches,
+   épaisseur visible des objets. Les composants sont dans src/skeuo.css.
+
+   Jetons de couleur : redéfinis par thème et en mode sombre, utilisables en classes Tailwind
+   (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…).
+   - bg : le plan de travail ; surface : un objet posé dessus (papier, panneau) ; surface-2 : un creux ;
+   - chrome : couleur unie de l'en-tête et de la barre d'état (= bg) ;
+   - btn / on-btn : boutons pleins ; accent : liens, encre de couleur ; signal : voyant « allumé ». */
 @theme {
-  --color-bg: #fff6f3;
-  --color-surface: #ffffff;
-  --color-surface-2: #fbeae6;
-  --color-ink: #2b1a1d;
-  --color-ink-2: #6e5559;
-  --color-line: #f0dcd8;
-  --color-accent: #d9416a;
+  --color-bg: #f6f2ef;
+  --color-surface: #fffdfb;
+  --color-surface-2: #ece5e1;
+  --color-ink: #231a1c;
+  --color-ink-2: #7c6d6f;
+  --color-line: #e8deda;
+  --color-accent: #c2335b;
   --color-on-accent: #ffffff;
-  --color-soon: #fff0d9;
-  --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
+  --color-btn: #c93a62;
+  --color-on-btn: #ffffff;
+  --color-signal: #c93a62;
+  --color-chrome: #f6f2ef;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
   /* Intensité du flux : une seule teinte, du clair au foncé */
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
+  --color-flow-1: #f6ccd3;
+  --color-flow-2: #efa2b0;
+  --color-flow-3: #e2667e;
   --color-flow-4: #c43a5a;
   --color-flow-5: #8a1d3b;
   --color-on-flow: #ffffff;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts selon le choix
-   fait dans Réglages (Système / Clair / Sombre). */
-:root[data-scheme='dark'] {
-  --color-bg: #1e1416;
-  --color-surface: #2a1d20;
-  --color-surface-2: #362529;
-  --color-ink: #f6e9eb;
-  --color-ink-2: #bfa5aa;
-  --color-line: #3f2c30;
-  --color-accent: #ff7a95;
-  --color-on-accent: #2b0d15;
-  --color-soon: #3d2c12;
-  --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-  --color-flow-1: #5a3a41;
-  --color-flow-2: #8a4656;
-  --color-flow-3: #c25270;
-  --color-flow-4: #e66d8b;
-  --color-flow-5: #ffa3b8;
-  --color-on-flow: #2b0d15;
-  color-scheme: dark;
-}
-/* Avant le chargement du script : suivre le téléphone, pour éviter un flash blanc. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-scheme]) {
-    --color-bg: #1e1416;
-    color-scheme: dark;
-  }
+  --font-sans: 'Geist Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème. Il est posé
    sur <html data-theme="…"> (barre du bas, barre d'état) et sur chaque écran, pour
    que deux espaces gardent chacun leurs couleurs pendant qu'ils glissent l'un sur
-   l'autre. « rose » = les couleurs ci-dessus, répétées ici pour un écran rose posé
-   dans une page verte. Pour un nouveau thème, copier un bloc (clair + sombre). */
+   l'autre. « rose » est aussi le thème par défaut (:root), répété pour un écran rose posé
+   dans une page verte. Chaque bloc définit TOUTES les variables.
+   Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts.
+   --shade : teinte des ombres portées (triplet RVB) ; --lift : force des ombres. */
+
+/* Rose (Cycle) : blanc cassé chaud à peine rosé, papier ivoire, encre framboise. */
+:root,
 [data-theme='rose'] {
-  --color-bg: #fff6f3;
-  --color-surface: #ffffff;
-  --color-surface-2: #fbeae6;
-  --color-ink: #2b1a1d;
-  --color-ink-2: #6e5559;
-  --color-line: #f0dcd8;
-  --color-accent: #d9416a;
+  --color-bg: #f6f2ef;
+  --color-surface: #fffdfb;
+  --color-surface-2: #ece5e1;
+  --color-ink: #231a1c;
+  --color-ink-2: #7c6d6f;
+  --color-line: #e8deda;
+  --color-accent: #c2335b;
   --color-on-accent: #ffffff;
-  --color-soon: #fff0d9;
-  --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
+  --color-btn: #c93a62;
+  --color-on-btn: #ffffff;
+  --color-signal: #c93a62;
+  --color-chrome: #f6f2ef;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --color-flow-1: #f6ccd3;
+  --color-flow-2: #efa2b0;
+  --color-flow-3: #e2667e;
   --color-flow-4: #c43a5a;
   --color-flow-5: #8a1d3b;
   --color-on-flow: #ffffff;
+  --shade: 74 44 44;
+  --lift: 1;
+  --paper-tex: var(--tex-paper);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #eeeae7);
 }
+:root[data-scheme='dark'],
 [data-scheme='dark'] [data-theme='rose'],
 [data-scheme='dark'][data-theme='rose'] {
-  --color-bg: #1e1416;
-  --color-surface: #2a1d20;
-  --color-surface-2: #362529;
-  --color-ink: #f6e9eb;
-  --color-ink-2: #bfa5aa;
-  --color-line: #3f2c30;
-  --color-accent: #ff7a95;
+  --color-bg: #171213;
+  --color-surface: #251d1f;
+  --color-surface-2: #110d0e;
+  --color-ink: #f4eaea;
+  --color-ink-2: #a89598;
+  --color-line: #382c2f;
+  --color-accent: #ff8ba5;
   --color-on-accent: #2b0d15;
-  --color-soon: #3d2c12;
-  --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-  --color-flow-1: #5a3a41;
-  --color-flow-2: #8a4656;
-  --color-flow-3: #c25270;
+  --color-btn: #d2456d;
+  --color-on-btn: #ffffff;
+  --color-signal: #e85a82;
+  --color-chrome: #171213;
+  --color-soon: #4a3d19;
+  --color-on-soon: #ffe2a3;
+  --color-warn: #463a18;
+  --color-flow-1: #5f3c43;
+  --color-flow-2: #8c4455;
+  --color-flow-3: #bf4f6d;
   --color-flow-4: #e66d8b;
   --color-flow-5: #ffa3b8;
   --color-on-flow: #2b0d15;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-paper-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#4a4043, #34292c);
+  color-scheme: dark;
 }
+
+/* Verdure (Courses) : blanc cassé à peine vert, papier blanc chaud, bande de toile verte. */
 [data-theme='verdure'] {
-  --color-bg: #f3f8f0;
-  --color-surface: #ffffff;
-  --color-surface-2: #e2eedb;
-  --color-ink: #1b2a1c;
-  --color-ink-2: #546a55;
-  --color-line: #d5e4ce;
-  --color-accent: #3c8a4b;
+  --color-bg: #f2f3ee;
+  --color-surface: #fffefb;
+  --color-surface-2: #e6e9e0;
+  --color-ink: #1a211c;
+  --color-ink-2: #6b756c;
+  --color-line: #e2e6dc;
+  --color-accent: #2c7a42;
   --color-on-accent: #ffffff;
+  --color-btn: #2f8448;
+  --color-on-btn: #ffffff;
+  --color-signal: #2f8448;
+  --color-chrome: #f2f3ee;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --shade: 40 56 44;
+  --lift: 1;
+  --paper-tex: var(--tex-paper);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #ebeee8);
 }
 [data-scheme='dark'] [data-theme='verdure'],
 [data-scheme='dark'][data-theme='verdure'] {
-  --color-bg: #131b14;
-  --color-surface: #1b261c;
-  --color-surface-2: #243225;
-  --color-ink: #e7f1e5;
-  --color-ink-2: #a3b9a4;
-  --color-line: #2d3d2e;
-  --color-accent: #7cc98a;
+  --color-bg: #111512;
+  --color-surface: #1c221d;
+  --color-surface-2: #0b0e0c;
+  --color-ink: #e9f0e8;
+  --color-ink-2: #95a397;
+  --color-line: #2b342d;
+  --color-accent: #86d298;
   --color-on-accent: #0e2313;
+  --color-btn: #37975a;
+  --color-on-btn: #ffffff;
+  --color-signal: #4bb46d;
+  --color-chrome: #111512;
+  --color-soon: #3d3212;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2f14;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-paper-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#3e4840, #2a322c);
 }
 
-/* Neutre : réglages et « Plus », qui n'appartiennent à aucun espace. */
+/* Neutre (réglages, « Plus », connexion) : gris chaud mat, graphite, un seul voyant orange. */
 [data-theme='neutre'] {
-  --color-bg: #f5f5f4;
-  --color-surface: #ffffff;
-  --color-surface-2: #ebebea;
+  --color-bg: #f0efec;
+  --color-surface: #fbfaf8;
+  --color-surface-2: #e3e2de;
   --color-ink: #1c1c1e;
-  --color-ink-2: #6b6b70;
-  --color-line: #e2e2e0;
-  --color-accent: #3f3f46;
+  --color-ink-2: #6f6f73;
+  --color-line: #e2e1dd;
+  --color-accent: #1c1c1e;
   --color-on-accent: #ffffff;
+  --color-btn: #29292c;
+  --color-on-btn: #ffffff;
+  --color-signal: #f0622a;
+  --color-chrome: #f0efec;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --shade: 40 38 34;
+  --lift: 1;
+  --paper-tex: none;
+  --hi: rgb(255 255 255 / 0.95);
+  --knob: linear-gradient(#ffffff, #e9e8e5);
 }
 [data-scheme='dark'] [data-theme='neutre'],
 [data-scheme='dark'][data-theme='neutre'] {
-  --color-bg: #161618;
-  --color-surface: #1f1f22;
-  --color-surface-2: #2a2a2e;
+  --color-bg: #131314;
+  --color-surface: #202022;
+  --color-surface-2: #0b0b0c;
   --color-ink: #f2f2f3;
-  --color-ink-2: #a1a1a8;
-  --color-line: #323236;
-  --color-accent: #d4d4d8;
+  --color-ink-2: #9c9ca3;
+  --color-line: #303033;
+  --color-accent: #f2f2f3;
   --color-on-accent: #18181b;
+  --color-btn: #ececee;
+  --color-on-btn: #18181b;
+  --color-signal: #ff7a45;
+  --color-chrome: #131314;
+  --color-soon: #3d3212;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2f14;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: none;
+  --hi: rgb(255 255 255 / 0.08);
+  --knob: linear-gradient(#56565b, #3a3a3e);
+}
+
+/* Avant le chargement du script : suivre le téléphone, pour éviter un flash clair. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme]) {
+    --color-bg: #131314;
+    --color-chrome: #131314;
+    color-scheme: dark;
+  }
 }
 
 @layer base {
   html,
   body {
-    @apply min-h-full bg-bg text-ink antialiased transition-colors duration-300;
+    @apply min-h-full bg-bg text-ink antialiased;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     /* Comme une app native : pas de sélection de texte ni de bulle « Copier » sur un appui
@@ -191,9 +278,9 @@
 /* Haut de l'écran sur iPhone (iOS 26+) : une app installée reçoit un flou système sous la
    barre d'état (« scroll edge effect »). WebKit le remplace par une couleur unie seulement
    s'il trouve, à quelques pixels du bord haut, un élément fixe, opaque et sur toute la
-   largeur. Ce bandeau aux couleurs du thème joue ce rôle. Il doit rester « touchable »
-   (pas de pointer-events: none) : WebKit le repère par hit-test. Le contenu commence
-   12 px sous la zone sûre, donc rien d'utile n'est masqué. */
+   largeur. Ce bandeau, de la couleur unie de l'en-tête (--color-chrome), joue ce rôle. Il doit
+   rester « touchable » (pas de pointer-events: none) : WebKit le repère par hit-test. Le contenu
+   commence 12 px sous la zone sûre, donc rien d'utile n'est masqué. */
 #top-edge {
   position: fixed;
   inset-inline: 0;
@@ -202,5 +289,5 @@
   height: calc(env(safe-area-inset-top) + 8px);
   /* Couleur posée aussi en dur par syncStatusBar() (src/lib/scheme.ts), sans transition :
      iOS doit lire la couleur finale tout de suite. */
-  background-color: var(--color-bg);
+  background-color: var(--color-chrome);
 }

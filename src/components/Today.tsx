@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { computeStatus, FLOW_LABELS, type DayLog, type Flow } from '../../shared/cycles'
-import { formatLong } from '../lib/dates'
+import { formatDM, formatLong } from '../lib/dates'
 import { Calendar } from './Calendar'
-import { DayEditor } from './DayEditor'
-import { Button, cx } from './ui'
+import { Button } from './ui'
 
 interface Props {
   today: string
@@ -14,55 +13,49 @@ interface Props {
   onDelete: (day: string) => void
 }
 
+/**
+ * Écran « Suivi » : une ligne de contexte (où en est le cycle), puis le calendrier, qui est l'écran.
+ * Rien à saisir avant d'avoir touché un jour : toucher aujourd'hui (ou un jour passé) ouvre sa saisie.
+ */
 export function Today({ today, logs, defaultCycle, names, onSave, onDelete }: Props) {
   const byDay = useMemo(() => new Map(logs.map((l) => [l.day, l])), [logs])
   const status = useMemo(() => computeStatus(logs, today, defaultCycle), [logs, today, defaultCycle])
-  const log = byDay.get(today)
 
   const lastFlow = (status.kind === 'in_period' || status.kind === 'maybe_ended' ? status.period.days.at(-1)?.flow : null) ?? 2
   const quick = (flow: Flow) => {
     onSave({ ...(byDay.get(today) ?? { day: today, pain: null, symptoms: [], note: null }), day: today, flow })
   }
 
+  // Raccourcis d'un geste, proposés en tête de la saisie d'aujourd'hui.
+  const shortcuts =
+    status.kind === 'in_period' && !status.loggedToday ? (
+      <div className="mb-4 grid grid-cols-[2fr_1fr] gap-2.5">
+        <Button onClick={() => quick(lastFlow as Flow)}>Ça continue ({FLOW_LABELS[lastFlow].toLowerCase()})</Button>
+        <Button variant="outline" onClick={() => quick(0)}>
+          C’est fini
+        </Button>
+      </div>
+    ) : status.kind === 'maybe_ended' ? (
+      <div className="mb-4 grid grid-cols-[2fr_1fr] gap-2.5">
+        <Button onClick={() => quick(0)}>Oui, c’est fini</Button>
+        <Button variant="outline" onClick={() => quick(lastFlow as Flow)}>
+          Non, ça continue
+        </Button>
+      </div>
+    ) : null
+
   return (
-    <div className="flex flex-col gap-3.5">
-      <StatusCard status={status} />
-
-      {status.kind === 'in_period' && !status.loggedToday && (
-        <div className="grid grid-cols-[2fr_1fr] gap-2.5">
-          <Button onClick={() => quick(lastFlow as Flow)}>Ça continue ({FLOW_LABELS[lastFlow].toLowerCase()})</Button>
-          <Button variant="outline" onClick={() => quick(0)}>
-            C’est fini
-          </Button>
-        </div>
-      )}
-      {status.kind === 'maybe_ended' && (
-        <div className="grid grid-cols-[2fr_1fr] gap-2.5">
-          <Button onClick={() => quick(0)}>Oui, c’est fini</Button>
-          <Button variant="outline" onClick={() => quick(lastFlow as Flow)}>
-            Non, ça continue
-          </Button>
-        </div>
-      )}
-
-      <h2 className="text-xl font-bold">Aujourd’hui</h2>
-      <DayEditor
-        day={today}
-        log={log}
-        onSave={onSave}
-        onDelete={onDelete}
-        authorName={log?.updated_by ? names[log.updated_by] : undefined}
-      />
-
-      {/* Calendrier juste en dessous : toucher un jour passé l'ouvre pour le modifier. */}
-      <section aria-label="Calendrier" className="mt-4 border-t border-line pt-5">
-        <Calendar today={today} logs={logs} defaultCycle={defaultCycle} names={names} onSave={onSave} onDelete={onDelete} />
+    <div className="flex flex-col gap-5">
+      <StatusLine status={status} today={today} />
+      <section aria-label="Calendrier">
+        <Calendar today={today} logs={logs} defaultCycle={defaultCycle} names={names} onSave={onSave} onDelete={onDelete} todayExtra={shortcuts} />
       </section>
     </div>
   )
 }
 
-function StatusCard({ status }: { status: ReturnType<typeof computeStatus> }) {
+/** Ligne de contexte : petit éphéméride à feuilles (jour du cycle) et, à côté, où on en est. */
+function StatusLine({ status, today }: { status: ReturnType<typeof computeStatus>; today: string }) {
   let title = ''
   let sub = ''
   let tone: 'calm' | 'period' | 'soon' = 'calm'
@@ -92,17 +85,18 @@ function StatusCard({ status }: { status: ReturnType<typeof computeStatus> }) {
       tone = 'soon'
       break
   }
+  // Éphéméride : le jour du cycle (ou des règles) quand on le connaît, sinon la date du jour.
+  const cycleDay = status.kind === 'in_period' ? status.dayNumber : status.kind === 'waiting' || status.kind === 'late' ? status.cycleDay : null
   return (
-    <div
-      className={cx(
-        'rounded-2xl p-4.5',
-        tone === 'calm' && 'border border-line bg-surface',
-        tone === 'period' && 'bg-accent text-on-accent',
-        tone === 'soon' && 'bg-soon text-on-soon',
-      )}
-    >
-      <div className="text-2xl font-bold">{title}</div>
-      <div className={cx('mt-1', tone === 'calm' ? 'text-ink-2' : 'opacity-85')}>{sub}</div>
+    <div className="sk-status" data-tone={tone}>
+      <div aria-hidden className="sk-ephem">
+        <div className="sk-ephem-band">{cycleDay != null ? 'Jour' : formatDM(today).replace(/^\d+\s*/, '')}</div>
+        <div className="sk-ephem-num">{cycleDay ?? Number(today.slice(8))}</div>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[1.12rem] leading-tight font-semibold tracking-tight">{title}</div>
+        <div className="mt-0.5 text-[0.88rem] leading-snug text-ink-2">{sub}</div>
+      </div>
     </div>
   )
 }

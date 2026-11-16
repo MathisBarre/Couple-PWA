@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchNotificationPrefs, setNotificationPref, type NotificationPrefs } from '../lib/push'
-import { Card, SectionTitle, Switch } from './ui'
+import { Group, Switch } from './ui'
 
 type Kind = keyof NotificationPrefs
 
@@ -27,8 +27,7 @@ export function NotificationSwitches({ items, children }: { items: { kind: Kind;
   }
 
   return (
-    <Card>
-      <SectionTitle>Notifications</SectionTitle>
+    <Group title="Notifications">
       {prefs && items.map((i) => <Switch key={i.kind} label={i.label} checked={prefs[i.kind]} onChange={(v) => toggle(i.kind, v)} />)}
       {children}
       <p className="mt-2 text-sm text-ink-2">
@@ -36,6 +35,6 @@ export function NotificationSwitches({ items, children }: { items: { kind: Kind;
         saisies.
       </p>
       {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
-    </Card>
+    </Group>
   )
 }

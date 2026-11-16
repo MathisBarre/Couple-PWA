@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { Auth, CenterLayout } from './components/Auth'
+import { Auth, CenterLayout, Logo } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
@@ -12,6 +12,7 @@ import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
 import { useTabMenu, type MenuItem } from './components/TabMenu'
+import { Glyph } from './components/icons'
 import { cx } from './components/ui'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
@@ -328,11 +329,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           </div>
         ))}
       </div>
-      <nav
-        aria-label="Navigation principale"
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md transition-colors duration-300"
-      >
-        <div className="mx-auto flex max-w-xl">
+      <nav aria-label="Navigation principale" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+        <div aria-hidden className="sk-tabbar-fade absolute inset-x-0 -top-7 bottom-0" />
+        <div className="sk-tabbar pointer-events-auto relative mx-auto max-w-md">
           {BAR.map(({ id, label, icon }) => {
             const badge = badges[id] ?? 0
             return (
@@ -342,22 +341,13 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                 onClick={() => openTab(id)}
                 {...tabMenu.bind(id)}
                 aria-current={tab === id ? 'page' : undefined}
-                className="group flex touch-none [-webkit-touch-callout:none] flex-1 flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none select-none focus-visible:text-accent aria-[current=page]:font-semibold aria-[current=page]:text-accent"
+                className="sk-tabbar-item group flex flex-1 touch-none flex-col items-center justify-center gap-0.5 select-none [-webkit-touch-callout:none]"
               >
-                <span
-                  aria-hidden
-                  className="relative text-xl transition-transform duration-200 ease-out group-active:scale-85 motion-reduce:transition-none"
-                >
-                  <span className="opacity-70 grayscale transition-[opacity,filter] duration-200 group-aria-[current=page]:opacity-100 group-aria-[current=page]:grayscale-0">
-                    {icon}
-                  </span>
-                  {badge > 0 && (
-                    <span className="absolute -top-1 -right-2.5 min-w-4.5 rounded-full bg-accent px-1 text-center text-[0.65rem] leading-4.5 font-semibold text-on-accent">
-                      {badge > 99 ? '99+' : badge}
-                    </span>
-                  )}
+                <span aria-hidden className="relative transition-transform duration-200 ease-out group-active:scale-90 motion-reduce:transition-none">
+                  <Glyph icon={icon} />
+                  {badge > 0 && <span className="sk-badge">{badge > 99 ? '99+' : badge}</span>}
                 </span>
-                {label}
+                <span className="relative">{label}</span>
                 {badge > 0 && <span className="sr-only">({badge})</span>}
               </button>
             )
@@ -372,7 +362,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 function Splash() {
   return (
     <CenterLayout>
-      <img src="/logo.svg" alt="" className="size-24 animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
+      <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
     </CenterLayout>
   )
 }

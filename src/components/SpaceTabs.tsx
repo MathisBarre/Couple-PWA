@@ -2,7 +2,6 @@ import { Tabs } from '@base-ui/react/tabs'
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { slideTabs } from '../lib/motion'
 import { GearIcon, HeaderButton, ScreenHeader } from './ScreenHeader'
-import { cx } from './ui'
 
 export interface SpaceTab<T extends string> {
   id: T
@@ -60,21 +59,11 @@ export function SpaceTabs<T extends string>({
     )
 
   const list = (
-    <Tabs.List
-      className="relative grid gap-1 rounded-2xl bg-surface-2 p-1"
-      style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
-    >
-      {/* Pastille qui glisse sous l'onglet actif, comme un sélecteur iOS. */}
-      <Tabs.Indicator className="absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) rounded-xl bg-surface shadow-sm transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
+    <Tabs.List className="sk-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+      {/* Pastille enfoncée qui glisse sous l'onglet actif (contrôle segmenté de barre, iOS 6). */}
+      <Tabs.Indicator className="sk-tabs-pill top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
       {tabs.map(({ id, label }) => (
-        <Tabs.Tab
-          key={id}
-          value={id}
-          className={cx(
-            'relative z-10 truncate rounded-xl px-1 py-1.5 text-sm text-ink-2 transition-colors outline-none select-none',
-            'focus-visible:outline-2 focus-visible:outline-accent data-active:font-semibold data-active:text-ink',
-          )}
-        >
+        <Tabs.Tab key={id} value={id} className="sk-tab">
           {label}
         </Tabs.Tab>
       ))}

@@ -13,7 +13,7 @@ export function InviteLink({ code, from }: { code: string; from: string }) {
   return (
     <div className="flex flex-col gap-2.5 py-2">
       <p>Invitez votre partenaire : en ouvrant ce lien, son compte rejoint directement votre espace.</p>
-      <p className="truncate rounded-xl bg-surface-2 px-3 py-2.5 font-mono text-sm text-ink-2 select-all">{inviteUrl(code)}</p>
+      <p className="sk-groove truncate rounded-xl px-3 py-2.5 font-mono text-sm text-ink-2 select-all">{inviteUrl(code)}</p>
       <div className="grid grid-cols-2 gap-2">
         {canShare && (
           <Button onClick={() => shareInvite(code, from).then(done, fail)} className="py-2.5">
@@ -28,8 +28,10 @@ export function InviteLink({ code, from }: { code: string; from: string }) {
           Copier le lien
         </Button>
       </div>
-      <p className="text-sm text-ink-2">
-        Ou le code à saisir à la main : <strong className="font-mono tracking-[0.15em] text-accent select-all">{code}</strong>
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
+        Ou le code à saisir à la main :
+        {/* Le code, comme une étiquette gaufrée. */}
+        <strong className="sk-embossed font-mono select-all">{code}</strong>
       </p>
       {msg && <p className="text-sm text-accent">{msg}</p>}
     </div>

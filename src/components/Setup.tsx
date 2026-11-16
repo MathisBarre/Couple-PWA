@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, logout } from '../lib/api'
 import { clearInvite, pendingInvite } from '../lib/invite'
-import { CenterLayout } from './Auth'
-import { Button, inputClass } from './ui'
+import { Brand, CenterLayout, FieldGroup, Logo } from './Auth'
+import { Button } from './ui'
 
 export function Setup({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState(() => pendingInvite() ?? '')
@@ -33,8 +33,8 @@ export function Setup({ onDone }: { onDone: () => void }) {
   if (joining)
     return (
       <CenterLayout>
-        <img src="/logo.svg" alt="" className="size-24 animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
-        <p className="text-ink-2">On rejoint votre espace à deux…</p>
+        <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
+        <p className="font-medium text-ink-2">On rejoint votre espace à deux…</p>
       </CenterLayout>
     )
   const create = () => run({ action: 'create' })
@@ -45,20 +45,33 @@ export function Setup({ onDone }: { onDone: () => void }) {
 
   return (
     <CenterLayout>
-      <h1 className="text-2xl font-bold">Votre espace à deux</h1>
-      <p className="text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
+      <Brand compact />
+      <div className="mt-1 w-full">
+        <h2 className="sk-h2">Votre espace à deux</h2>
+        <p className="mt-1 text-[0.95rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
+      </div>
       <Button className="w-full" onClick={create}>
         Créer notre espace
       </Button>
-      <div className="text-sm text-ink-2">ou</div>
-      <form onSubmit={join} className="flex w-full flex-col gap-2.5">
-        <input className={inputClass} placeholder="Code de votre partenaire" value={code} onChange={(e) => setCode(e.target.value)} required />
+      <div className="sk-or w-full text-sm text-ink-2">ou</div>
+      <form onSubmit={join} className="flex w-full flex-col gap-3">
+        <FieldGroup>
+          <input
+            className="sk-field text-center font-mono tracking-[0.12em] uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case"
+            placeholder="Code de votre partenaire"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            autoCapitalize="characters"
+            autoComplete="off"
+            required
+          />
+        </FieldGroup>
         <Button type="submit" variant="secondary">
           Rejoindre
         </Button>
       </form>
-      {msg && <p className="text-sm text-accent">{msg}</p>}
-      <Button variant="link" className="self-center" onClick={() => logout().then(onDone)}>
+      {msg && <p className="text-sm font-medium text-accent">{msg}</p>}
+      <Button variant="link" className="min-h-11 !self-center" onClick={() => logout().then(onDone)}>
         Se déconnecter
       </Button>
     </CenterLayout>

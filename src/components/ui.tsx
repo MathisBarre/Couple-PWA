@@ -1,4 +1,5 @@
-// Petites briques d'interface : Base UI pour le comportement, Tailwind pour le style.
+// Petites briques d'interface : Base UI pour le comportement, Tailwind pour la mise en page,
+// et les classes « sk-… » de src/skeuo.css pour les matières (papier, pièces posées, creux…).
 import { Button as BaseButton } from '@base-ui/react/button'
 import { Drawer } from '@base-ui/react/drawer'
 import { Select as BaseSelect } from '@base-ui/react/select'
@@ -9,14 +10,12 @@ import type { ComponentProps, ReactNode } from 'react'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
-const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
-
 const buttonVariants = {
-  primary: 'bg-accent text-on-accent font-semibold',
-  secondary: 'bg-surface-2 text-ink font-semibold',
-  outline: 'bg-surface text-ink border border-line font-semibold',
-  link: 'bg-transparent text-accent font-medium !p-0 !min-h-0 self-start',
-  ghost: 'bg-transparent text-ink-2 font-medium !p-0 !min-h-0',
+  primary: 'sk-btn-primary',
+  secondary: 'sk-btn-secondary',
+  outline: 'sk-btn-outline',
+  link: 'sk-btn-link self-start',
+  ghost: 'sk-btn-ghost',
 }
 
 export function Button({
@@ -24,37 +23,34 @@ export function Button({
   className,
   ...props
 }: ComponentProps<typeof BaseButton> & { variant?: keyof typeof buttonVariants }) {
-  return (
-    <BaseButton
-      className={cx(
-        'min-h-12 rounded-2xl px-4 py-3 select-none transition active:scale-[0.98] disabled:opacity-60',
-        focus,
-        buttonVariants[variant],
-        className as string,
-      )}
-      {...props}
-    />
-  )
+  return <BaseButton className={cx('sk-btn', buttonVariants[variant], className as string)} {...props} />
 }
 
+/** Petit bouton rond posé. */
 export function IconButton({ className, ...props }: ComponentProps<typeof BaseButton>) {
+  return <BaseButton className={cx('sk-round', className as string)} {...props} />
+}
+
+/** Feuille de papier ou panneau mat posé sur le plan de travail. */
+export function Card({ className, ...props }: ComponentProps<'div'>) {
+  return <div className={cx('sk-card p-4', className)} {...props} />
+}
+
+export function SectionTitle({ children, className }: { children: ReactNode; className?: string }) {
+  return <h3 className={cx('sk-section-title', className)}>{children}</h3>
+}
+
+/** Rubrique : son titre au-dessus, hors du cadre, puis sa feuille. */
+export function Group({ title, id, className, children }: { title: ReactNode; id?: string; className?: string; children: ReactNode }) {
   return (
-    <BaseButton
-      className={cx('grid size-10 place-items-center rounded-full bg-surface-2 text-xl', focus, className as string)}
-      {...props}
-    />
+    <section id={id} className="sk-group scroll-mt-4">
+      <SectionTitle>{title}</SectionTitle>
+      <Card className={className}>{children}</Card>
+    </section>
   )
 }
 
-export function Card({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cx('rounded-2xl border border-line bg-surface p-4', className)} {...props} />
-}
-
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="mb-2 text-xs font-semibold tracking-wider text-ink-2 uppercase">{children}</h3>
-}
-
-export const inputClass = cx('w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-ink placeholder:text-ink-2/70', focus)
+export const inputClass = 'sk-input'
 
 /** Choix unique parmi des options (flux, douleur…) : un nouvel appui sur l'option active ne la désélectionne pas. */
 export function SingleChoice<T extends number>({
@@ -80,7 +76,7 @@ export function SingleChoice<T extends number>({
       className={className}
     >
       {options.map((o) => (
-        <Toggle key={o.value} value={String(o.value)} className={cx(focus, itemClassName, o.className)}>
+        <Toggle key={o.value} value={String(o.value)} className={cx(itemClassName, o.className)}>
           {o.label}
         </Toggle>
       ))}
@@ -105,11 +101,7 @@ export function MultiChoice({
         <Toggle
           key={o}
           value={o}
-          className={cx(
-            'rounded-full border border-line bg-surface px-3 py-2 text-sm',
-            'data-pressed:border-accent data-pressed:bg-surface-2 data-pressed:font-semibold data-pressed:text-accent',
-            focus,
-          )}
+          className="sk-key min-h-11 rounded-full px-4 py-2 text-sm font-medium data-pressed:bg-flow-1 data-pressed:font-semibold data-pressed:text-ink"
         >
           {o}
         </Toggle>
@@ -118,20 +110,13 @@ export function MultiChoice({
   )
 }
 
+/** Interrupteur usiné : gorge en creux, bouton de métal brossé. */
 export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label className="flex items-center justify-between gap-3 py-2">
+    <label className="flex min-h-11 items-center justify-between gap-3 py-2">
       <span>{label}</span>
-      <BaseSwitch.Root
-        checked={checked}
-        onCheckedChange={onChange}
-        className={cx(
-          // Pouce centré : 3 px de marge tout autour, il glisse de 50 − 2×3 − 24 = 20 px.
-          'relative inline-flex h-7.5 w-12.5 shrink-0 items-center rounded-full bg-line p-0.75 transition-colors data-checked:bg-accent',
-          focus,
-        )}
-      >
-        <BaseSwitch.Thumb className="block size-6 rounded-full bg-white shadow transition-transform duration-200 ease-out data-checked:translate-x-5" />
+      <BaseSwitch.Root checked={checked} onCheckedChange={onChange} className="sk-switch">
+        <BaseSwitch.Thumb className="sk-switch-thumb" />
       </BaseSwitch.Root>
     </label>
   )
@@ -150,25 +135,22 @@ export function Select<T extends string | number>({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2">
-      <span>{label}</span>
+      <span className="font-medium">{label}</span>
       <BaseSelect.Root items={items} value={value} onValueChange={(v) => v != null && onChange(v as T)}>
-        <BaseSelect.Trigger
-          aria-label={label}
-          className={cx('flex min-w-32 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3.5 py-2.5', focus)}
-        >
+        <BaseSelect.Trigger aria-label={label} className="sk-btn sk-btn-secondary flex min-h-11 min-w-32 items-center justify-between gap-3 px-3.5 py-2 font-medium">
           <BaseSelect.Value />
           <BaseSelect.Icon className="text-ink-2">▾</BaseSelect.Icon>
         </BaseSelect.Trigger>
         <BaseSelect.Portal>
           <BaseSelect.Positioner className="z-50 outline-none" sideOffset={6}>
-            <BaseSelect.Popup className="max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-xl border border-line bg-surface py-1 text-ink shadow-lg transition-[scale,opacity] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <BaseSelect.Popup className="max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-2xl border border-line bg-surface py-1.5 text-ink shadow-[0_12px_32px_-8px_rgb(0_0_0/0.3)] transition-[scale,opacity] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
               {items.map((i) => (
                 <BaseSelect.Item
                   key={i.value}
                   value={i.value}
-                  className="grid cursor-default grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 outline-none select-none data-highlighted:bg-surface-2"
+                  className="grid cursor-default grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2.5 outline-none select-none data-highlighted:bg-surface-2"
                 >
-                  <BaseSelect.ItemIndicator className="col-start-1 text-accent">✓</BaseSelect.ItemIndicator>
+                  <BaseSelect.ItemIndicator className="col-start-1 font-bold text-accent">✓</BaseSelect.ItemIndicator>
                   <BaseSelect.ItemText className="col-start-2">{i.label}</BaseSelect.ItemText>
                 </BaseSelect.Item>
               ))}
@@ -195,15 +177,17 @@ export function Sheet({
   return (
     <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
-        <Drawer.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-black opacity-[calc(0.35*(1-var(--drawer-swipe-progress)))] transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0" />
+        <Drawer.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-black opacity-[calc(0.32*(1-var(--drawer-swipe-progress)))] transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0" />
         <Drawer.Viewport className="fixed inset-0 z-40 flex items-end justify-center">
-          <Drawer.Popup className="-mb-12 max-h-[calc(88dvh+3rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-t-3xl bg-bg px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none">
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-line" />
+          <Drawer.Popup className="sk-body sk-sheet -mb-12 max-h-[calc(88dvh+3rem)] w-full max-w-xl overflow-y-auto overscroll-contain px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none">
+            <div className="sk-grabber mx-auto mb-3 h-1.5 w-12 rounded-full" />
             <Drawer.Content>
-              <div className="mb-2 flex items-center justify-between">
-                <Drawer.Title className="text-xl font-bold first-letter:uppercase">{title}</Drawer.Title>
-                <Drawer.Close className={cx('grid size-10 place-items-center rounded-full bg-surface-2', focus)} aria-label="Fermer">
-                  ✕
+              <div className="mb-3 flex items-center justify-between">
+                <Drawer.Title className="text-[1.35rem] font-semibold tracking-tight first-letter:uppercase">{title}</Drawer.Title>
+                <Drawer.Close className="sk-round" aria-label="Fermer">
+                  <svg aria-hidden viewBox="0 0 12 12" className="size-3" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round">
+                    <path d="M2 2l8 8M10 2l-8 8" />
+                  </svg>
                 </Drawer.Close>
               </div>
               {children}

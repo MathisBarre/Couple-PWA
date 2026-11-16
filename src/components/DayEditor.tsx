@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FLOW_LABELS, PAIN_LABELS, type DayLog, type Flow } from '../../shared/cycles'
 import { SYMPTOMS } from '../lib/symptoms'
+import { Drop } from './icons'
 import { Button, cx, inputClass, MultiChoice, SectionTitle, SingleChoice } from './ui'
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
 }
 
 const flowPressed = [
-  'data-pressed:bg-surface-2 data-pressed:ring-2 data-pressed:ring-ink-2',
+  'data-pressed:bg-surface-2',
   'data-pressed:bg-flow-1',
   'data-pressed:bg-flow-2',
   'data-pressed:bg-flow-3 data-pressed:text-on-flow',
@@ -36,15 +37,15 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Flux"
           value={base.flow}
           onChange={(flow) => update({ flow })}
-          className="grid grid-cols-3 gap-2"
-          itemClassName="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border border-line bg-surface px-1.5 py-3 text-[0.9rem] font-medium data-pressed:border-transparent data-pressed:font-bold"
+          className="grid grid-cols-3 gap-2.5"
+          itemClassName="sk-key flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-2.5 text-[0.9rem] font-medium data-pressed:font-semibold"
           options={FLOW_LABELS.map((label, i) => ({
             value: i as Flow,
             className: flowPressed[i],
             label: (
               <>
-                <span aria-hidden className="text-xs tracking-wide text-flow-3 in-data-pressed:text-current">
-                  {i === 0 ? '—' : i === 1 ? '·' : '●'.repeat(i - 1)}
+                <span aria-hidden className="flex h-4 items-center gap-px text-xs text-flow-4 in-data-pressed:text-current">
+                  {i === 0 ? '—' : i === 1 ? <Drop className="scale-60" /> : Array.from({ length: i - 1 }, (_, k) => <Drop key={k} />)}
                 </span>
                 {label}
                 {i === 1 && <span className="text-[0.7rem] leading-tight font-normal opacity-75">quelques gouttes</span>}
@@ -60,8 +61,8 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Douleur"
           value={base.pain}
           onChange={(pain) => update({ pain })}
-          className="grid grid-cols-4 gap-1 rounded-2xl border border-line bg-surface p-1"
-          itemClassName="rounded-xl px-1 py-2.5 text-sm data-pressed:bg-accent data-pressed:font-semibold data-pressed:text-on-accent"
+          className="sk-seg grid-cols-4"
+          itemClassName="sk-seg-item"
           options={PAIN_LABELS.map((label, i) => ({ value: i, label }))}
         />
       </section>

@@ -6,7 +6,8 @@ import { AppUpdate } from './AppUpdate'
 import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
-import { Button, Card, cx, inputClass, SectionTitle, Switch } from './ui'
+import { Chevron, Glyph } from './icons'
+import { Button, cx, Group, inputClass, SectionTitle, Switch } from './ui'
 
 interface Props {
   couple: Couple
@@ -44,31 +45,29 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
   return (
     <>
       {!embedded && <ScreenHeader title="Réglages" />}
-      <div className="flex flex-col gap-3.5">
-      {embedded && <h2 className="text-xl font-bold">Réglages</h2>}
+      <div className="flex flex-col gap-5">
+      {embedded && <h2 className="sk-h2">Réglages</h2>}
 
       {SPACES_WITH_SETTINGS.length > 0 && (
-        <section id="reglages-espaces" className="scroll-mt-4">
+        <section id="reglages-espaces" className="sk-group scroll-mt-4">
           <SectionTitle>Réglages des espaces</SectionTitle>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="sk-card sk-list">
             {SPACES_WITH_SETTINGS.map((m) => (
-              <li key={m.id} className="border-b border-line last:border-b-0">
+              <li key={m.id}>
                 <button
                   type="button"
                   onClick={() => onOpenSpace(m.id)}
                   className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors outline-none select-none focus-visible:bg-surface-2 active:bg-surface-2"
                 >
                   {/* Pastille aux couleurs de l'espace (son thème s'applique à elle seule). */}
-                  <span data-theme={m.theme} aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-lg">
-                    {m.icon}
+                  <span data-theme={m.theme} aria-hidden className="sk-app-icon size-9 shrink-0">
+                    <Glyph icon={m.icon} className="size-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{m.label}</span>
+                    <span className="block font-semibold">{m.label}</span>
                     <span className="block truncate text-sm text-ink-2">{m.settings}</span>
                   </span>
-                  <span aria-hidden className="text-xl text-ink-2/60">
-                    ›
-                  </span>
+                  <Chevron className="text-ink-2/60" />
                 </button>
               </li>
             ))}
@@ -76,13 +75,12 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
         </section>
       )}
 
-      <Card id="reglages-apparence" className="scroll-mt-4">
+      <section id="reglages-apparence" className="sk-group scroll-mt-4">
         <SectionTitle>Apparence</SectionTitle>
         <SchemePicker />
-      </Card>
+      </section>
 
-      <Card id="reglages-notifications" className="scroll-mt-4">
-        <SectionTitle>Notifications</SectionTitle>
+      <Group id="reglages-notifications" title="Notifications">
         {!pushSupported || (isIOS && !isStandalone) ? (
           <p className="text-sm">
             {isIOS && !isStandalone
@@ -113,12 +111,11 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
           l’espace).
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
-      </Card>
+      </Group>
 
-      <Card id="reglages-couple" className="scroll-mt-4">
-        <SectionTitle>Couple</SectionTitle>
+      <Group id="reglages-couple" title="Couple">
         <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0">Mon prénom</span>
+          <span className="shrink-0 font-medium">Mon prénom</span>
           <input
             className={cx(inputClass, 'max-w-[55%] py-2.5')}
             value={name}
@@ -135,7 +132,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
         ) : (
           <InviteLink code={couple.invite_code} from={profile.display_name} />
         )}
-      </Card>
+      </Group>
 
       <div id="reglages-app" className="scroll-mt-4">
         <AppUpdate />
