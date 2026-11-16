@@ -2,8 +2,8 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
 import { DayEditor } from './DayEditor'
-import { Icon } from './icons'
-import { cx, IconButton, Sheet } from './ui'
+import { Arrow } from './icons'
+import { cx, flowBg, flowText, Sheet } from './ui'
 
 interface Props {
   today: string
@@ -12,21 +12,13 @@ interface Props {
   names: Record<string, string>
   onSave: (log: DayLog) => void
   onDelete: (day: string) => void
-  /** Proposé en tête de la saisie d'aujourd'hui (ex. « Ça continue » pendant les règles). */
-  todayActions?: ReactNode
+  /** Affiché en tête de la saisie d'aujourd'hui (raccourcis « ça continue / c'est fini »). */
+  todayExtra?: ReactNode
 }
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
-/** Diamètre (px) de la pastille d'encre selon le flux : du point (traces) au gros rond (très abondant). */
-const DOT = [0, 6, 11, 16, 21, 27]
 
-/**
- * Le mois comme une page d'almanach : une grille à filets, le quantième en haut de chaque case,
- * et dessous une pastille d'encre dont la taille suit le flux. Les jours prévus sont tramés
- * (hachures), une douleur marquée d'un petit carré noir. Aujourd'hui est la seule case en
- * réserve (encre pleine, chiffre en papier) : c'est elle qu'on touche pour noter la journée.
- */
-export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, todayActions }: Props) {
+export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, todayExtra }: Props) {
   const [month, setMonth] = useState(today.slice(0, 7) + '-01')
   const [selected, setSelected] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -59,84 +51,69 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
   const sel = selected ? byDay.get(selected) : undefined
 
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between border-t-2 border-ink pt-1">
-        <h2 className="text-[2.1rem] leading-tight font-normal tracking-[-0.02em] first-letter:uppercase">{formatMonth(month)}</h2>
-        <div className="-mr-2.5 flex">
-          <IconButton onClick={() => shift(-1)} aria-label="Mois précédent">
-            <Icon name="prev" />
-          </IconButton>
-          <IconButton onClick={() => shift(1)} aria-label="Mois suivant">
-            <Icon name="next" />
-          </IconButton>
+    <div className="flex flex-col gap-4">
+      <div className="sk-cal">
+        <div className="sk-cal-head">
+          <button type="button" className="sk-navbtn sk-cal-nav" onClick={() => shift(-1)} aria-label="Mois précédent">
+            <Arrow dir="left" />
+          </button>
+          <h2 className="first-letter:uppercase">{formatMonth(month)}</h2>
+          <button type="button" className="sk-navbtn sk-cal-nav" onClick={() => shift(1)} aria-label="Mois suivant">
+            <Arrow dir="right" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7">
+          {WEEKDAYS.map((w, i) => (
+            <div key={i} className="sk-cal-week">{w}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {cells.map((d) => {
+            const l = byDay.get(d)
+            const flow = l?.flow
+            const future = d > today
+            return (
+              <button
+                key={d}
+                disabled={future}
+                onClick={() => {
+                  setSelected(d)
+                  setOpen(true)
+                }}
+                className={cx(
+                  'sk-day',
+                  flow != null && flow > 0 && flowText[flow],
+                  d.slice(0, 7) !== month.slice(0, 7) && 'opacity-35',
+                  d === today && 'sk-day-today',
+                  open && d === selected && 'ring-2 ring-accent ring-inset',
+                )}
+              >
+                {/* Jour noté : pastille au feutre (du rose pâle au bordeaux) ; « rien » : pastille grise. */}
+                {flow != null && <i aria-hidden className={cx('sk-mark', flowBg[flow])} />}
+                {!l && predicted.has(d) && <i aria-hidden className="sk-predict" />}
+                {d === today && (
+                  <svg aria-hidden viewBox="0 0 50 46" preserveAspectRatio="none" className="sk-today-ring" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
+                    <path d="M30 5.5C17 2 5.5 9 4.5 22 3.5 35 13 43 26 42.5 39 42 47 33 46 21 45 9.5 36 3.5 22 4.5" vectorEffect="non-scaling-stroke" />
+                  </svg>
+                )}
+                <span className="relative">{Number(d.slice(8))}</span>
+                {(l?.pain ?? 0) >= 2 && <span className="absolute bottom-[9%] size-[5px] rounded-full bg-current" />}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="mt-1 grid grid-cols-7 border-l border-ink">
-        {WEEKDAYS.map((w, i) => (
-          <div key={i} className="etiquette border-y border-r border-ink py-1.5 text-center">
-            {w}
-          </div>
-        ))}
-        {cells.map((d) => {
-          const l = byDay.get(d)
-          const flow = l?.flow
-          const future = d > today
-          const outside = d.slice(0, 7) !== month.slice(0, 7)
-          const isToday = d === today
-          return (
-            <button
-              key={d}
-              disabled={future}
-              aria-current={isToday ? 'date' : undefined}
-              aria-label={isToday ? `Aujourd’hui, ${formatLong(d)}` : formatLong(d)}
-              onClick={() => {
-                setSelected(d)
-                setOpen(true)
-              }}
-              className={cx(
-                'relative flex h-[3.7rem] flex-col items-center border-r border-b border-ink text-[1.05rem] outline-none',
-                isToday ? 'bg-ink text-bg active:opacity-80' : 'focus-visible:bg-surface-2 active:bg-surface-2',
-                future && 'text-ink-2',
-                open && d === selected && !isToday && 'bg-surface-2',
-              )}
-            >
-              <span className={cx('flex w-full items-start justify-between pt-0.5 pl-1', outside && 'opacity-35')}>
-                <span className={cx('min-w-5 px-0.5 text-left leading-6', isToday && 'font-semibold')}>{Number(d.slice(8))}</span>
-                {/* Douleur modérée ou forte : un petit carré d'encre noire dans le coin. */}
-                {(l?.pain ?? 0) >= 2 && <span className={cx('mt-1.5 mr-1.5 size-1.5', isToday ? 'bg-bg' : 'bg-ink')} />}
-              </span>
-              <span className={cx('grid flex-1 place-items-center pb-0.5 text-accent', outside && 'opacity-35')}>
-                {flow ? (
-                  <span className="rounded-full bg-current" style={{ width: DOT[flow], height: DOT[flow] }} />
-                ) : flow === 0 ? (
-                  <span className={cx('h-px w-3', isToday ? 'bg-bg' : 'bg-ink-2')} />
-                ) : (
-                  predicted.has(d) && <span className="trame size-4.5 rounded-full border border-current" />
-                )}
-              </span>
-            </button>
-          )
-        })}
+      <div className="sk-engrave flex flex-wrap gap-x-3.5 gap-y-1.5 px-1 text-xs font-medium text-ink-2">
+        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark bg-flow-1" /> Traces</span>
+        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark bg-flow-3" /> Règles</span>
+        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark border-[1.5px] border-dashed border-flow-3" /> Prévu</span>
+        <span className="inline-flex items-center gap-1.5"><i className="size-1.5 rounded-full bg-ink" /> Douleur</span>
       </div>
 
-      <div className="etiquette mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-ink-2">
-        <span className="inline-flex items-center gap-1.5 text-accent">
-          <i className="size-1.5 rounded-full bg-current" /> <span className="text-ink-2">Traces</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-accent">
-          <i className="size-3 rounded-full bg-current" /> <span className="text-ink-2">Règles</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-accent">
-          <i className="trame size-3 rounded-full border border-current" /> <span className="text-ink-2">Prévu</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <i className="size-1.5 bg-ink" /> Douleur
-        </span>
-      </div>
-
-      <Sheet open={open} onClose={() => setOpen(false)} title={selected ? (selected === today ? 'Aujourd’hui' : formatLong(selected)) : ''}>
-        {selected === today && todayActions && <div className="mb-5">{todayActions}</div>}
+      <Sheet open={open} onClose={() => setOpen(false)} title={selected ? formatLong(selected) : ''}>
+        {selected === today && todayExtra}
         {selected && (
           <DayEditor
             key={selected}

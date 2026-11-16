@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, logout } from '../lib/api'
 import { clearInvite, pendingInvite } from '../lib/invite'
-import { CenterLayout, CoverLayout, Masthead } from './Auth'
-import { Icon } from './icons'
-import { Button, inputClass, SectionTitle } from './ui'
+import { Brand, CenterLayout, FieldGroup, Logo } from './Auth'
+import { Button } from './ui'
 
 export function Setup({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState(() => pendingInvite() ?? '')
@@ -34,8 +33,8 @@ export function Setup({ onDone }: { onDone: () => void }) {
   if (joining)
     return (
       <CenterLayout>
-        <Icon name="rings" className="size-20 animate-[pulse-soft_1.2s_ease-in-out_infinite]" strokeWidth={0.75} />
-        <p className="text-[1.15rem] text-ink-2 italic">On rejoint votre espace à deux…</p>
+        <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
+        <p className="sk-engrave font-medium text-ink-2">On rejoint votre espace à deux…</p>
       </CenterLayout>
     )
   const create = () => run({ action: 'create' })
@@ -45,45 +44,36 @@ export function Setup({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <CoverLayout>
-      <Masthead compact />
-      <div className="border-t-2 border-ink pt-4">
-        <h1 className="text-[3.25rem] leading-[0.92] tracking-[-0.025em] text-balance">Votre espace à deux</h1>
-        <p className="mt-4 text-[1.3rem] leading-snug italic">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
+    <CenterLayout>
+      <Brand compact />
+      <div className="mt-1 w-full">
+        <h2 className="sk-section-title text-center !text-[1.15rem]">Votre espace à deux</h2>
+        <p className="sk-engrave text-[0.95rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
       </div>
-      <section className="border-t border-ink pt-3">
-        <SectionTitle>Créer</SectionTitle>
-        <Button className="w-full" onClick={create}>
-          Créer notre espace
-        </Button>
-      </section>
-      <div className="-my-2 flex items-center gap-3 text-ink-2 italic">
-        <span className="h-px flex-1 bg-line" />
-        ou
-        <span className="h-px flex-1 bg-line" />
-      </div>
-      <section className="border-t border-ink pt-3">
-        <SectionTitle>Rejoindre</SectionTitle>
-        <form onSubmit={join} className="flex w-full flex-col gap-3">
+      <Button className="w-full" onClick={create}>
+        Créer notre espace
+      </Button>
+      <div className="sk-or w-full text-sm font-bold text-ink-2">ou</div>
+      <form onSubmit={join} className="flex w-full flex-col gap-3">
+        <FieldGroup>
           <input
-            className={inputClass + ' font-mono tracking-[0.12em] placeholder:font-serif placeholder:tracking-normal'}
+            className="sk-field text-center font-mono tracking-[0.12em] uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case"
             placeholder="Code de votre partenaire"
-            aria-label="Code de votre partenaire"
-            autoCapitalize="characters"
-            autoComplete="off"
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            autoCapitalize="characters"
+            autoComplete="off"
             required
           />
-          <Button type="submit" variant="secondary">
-            Rejoindre
-          </Button>
-        </form>
-        {msg && <p className="mt-2 text-sm font-medium italic">{msg}</p>}
-      </section>
-      <Button variant="link" className="mt-auto !text-ink-2" onClick={() => logout().then(onDone)}>
+        </FieldGroup>
+        <Button type="submit" variant="secondary">
+          Rejoindre
+        </Button>
+      </form>
+      {msg && <p className="text-sm font-medium text-accent">{msg}</p>}
+      <Button variant="link" className="min-h-11 !self-center" onClick={() => logout().then(onDone)}>
         Se déconnecter
       </Button>
-    </CoverLayout>
+    </CenterLayout>
   )
 }

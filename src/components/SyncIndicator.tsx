@@ -52,8 +52,8 @@ export function SyncIndicator({ pending }: { pending: number }) {
       )}
     >
       {visible && (
-        <span className="etiquette inline-flex items-center gap-2 border border-ink bg-bg px-3 py-1.5 whitespace-nowrap text-ink">
-          <span aria-hidden className={cx('size-1.5 bg-accent', online && 'animate-pulse')} />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-soon/95 px-3 py-1 text-xs font-medium text-on-soon shadow-md backdrop-blur">
+          <span aria-hidden className={cx('size-1.5 rounded-full bg-current', online && 'animate-pulse')} />
           {label}
         </span>
       )}

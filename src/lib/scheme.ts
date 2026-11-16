@@ -16,9 +16,10 @@ export function getSchemeChoice(): SchemeChoice {
   }
 }
 
-/** Couleur de la barre d'état du téléphone = fond de l'écran affiché. */
+/** Couleur de la barre d'état du téléphone = couleur unie de la reliure de l'écran affiché (--color-chrome). */
 export function syncStatusBar() {
-  const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim()
+  const css = getComputedStyle(document.documentElement)
+  const bg = (css.getPropertyValue('--color-chrome') || css.getPropertyValue('--color-bg')).trim()
   if (!bg) return
   document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = bg))
   // iOS 26 colore la barre d'état d'après le bandeau #top-edge (voir src/index.css), mais ne

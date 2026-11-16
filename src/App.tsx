@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { Auth, CenterLayout } from './components/Auth'
+import { Auth, CenterLayout, Logo } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
 import { More } from './components/More'
@@ -12,7 +12,7 @@ import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
 import { useTabMenu, type MenuItem } from './components/TabMenu'
-import { Icon } from './components/icons'
+import { Glyph } from './components/icons'
 import { cx } from './components/ui'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
@@ -238,17 +238,13 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
 
-  // Numéro de rubrique d'un espace : sa place dans la barre du bas (« N° 1 », « N° 2 »…).
-  const folio = (v: View) => `N° ${BAR.findIndex((b) => b.id === v) + 1}`
-
-  const settings = <Settings folio={folio('settings')} couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
+  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
 
   const render = (v: View): ReactNode => {
     switch (v) {
       case 'cycle':
         return (
           <Cycle
-            folio={folio('cycle')}
             tab={subTabs.cycle}
             onTab={setSubTab('cycle')}
             today={today}
@@ -264,7 +260,6 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         return (
           <SpaceTabs
             title="Courses"
-            folio={folio('groceries')}
             onSettings={() => openSpaceSettings('groceries')}
             tab="list"
             onTab={() => {}}
@@ -334,13 +329,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           </div>
         ))}
       </div>
-      <nav
-        aria-label="Navigation principale"
-        className="fixed inset-x-0 bottom-0 z-20 bg-bg px-4 pb-[calc(env(safe-area-inset-bottom)+4px)] transition-colors duration-300"
-      >
-        {/* Une ligne de mots en petites capitales sous un filet ; l'onglet actif porte un marqueur d'encre. */}
-        <div className="mx-auto flex max-w-xl border-t border-ink">
-          {BAR.map(({ id, label }) => {
+      <nav aria-label="Navigation principale" className="sk-tabbar fixed inset-x-0 bottom-0 z-20 px-1 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-xl">
+          {BAR.map(({ id, label, icon }) => {
             const badge = badges[id] ?? 0
             return (
               <button
@@ -349,18 +340,13 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                 onClick={() => openTab(id)}
                 {...tabMenu.bind(id)}
                 aria-current={tab === id ? 'page' : undefined}
-                className="group etiquette relative flex h-13 touch-none [-webkit-touch-callout:none] flex-1 items-center justify-center gap-1.5 text-ink-2 outline-none select-none focus-visible:underline active:opacity-60 aria-[current=page]:text-ink"
+                className="sk-tabbar-item group flex flex-1 touch-none flex-col items-center justify-center select-none [-webkit-touch-callout:none]"
               >
-                <span
-                  aria-hidden
-                  className="absolute -top-px left-1/2 h-1 w-full -translate-x-1/2 scale-x-0 bg-accent transition-transform duration-200 ease-out group-aria-[current=page]:scale-x-100 motion-reduce:transition-none"
-                />
-                {label}
-                {badge > 0 && (
-                  <span aria-hidden className="min-w-4.5 bg-accent px-1 text-center text-[0.65rem] leading-4.5 tracking-normal text-on-accent">
-                    {badge > 99 ? '99+' : badge}
-                  </span>
-                )}
+                <span aria-hidden className="relative transition-transform duration-200 ease-out group-active:scale-90 motion-reduce:transition-none">
+                  <Glyph icon={icon} />
+                  {badge > 0 && <span className="sk-badge">{badge > 99 ? '99+' : badge}</span>}
+                </span>
+                <span className="relative">{label}</span>
                 {badge > 0 && <span className="sr-only">({badge})</span>}
               </button>
             )
@@ -375,7 +361,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 function Splash() {
   return (
     <CenterLayout>
-      <Icon name="rings" className="size-20 animate-[pulse-soft_1.2s_ease-in-out_infinite] self-center" strokeWidth={0.75} />
+      <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
     </CenterLayout>
   )
 }

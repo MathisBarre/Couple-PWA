@@ -1,8 +1,8 @@
 import { Checkbox } from '@base-ui/react/checkbox'
 import { useRef, useState } from 'react'
 import type { GroceryItem } from '../lib/groceries'
-import { Icon } from './icons'
-import { Button, cx, inputClass, SectionTitle } from './ui'
+import { Cross, Glyph } from './icons'
+import { Button, cx } from './ui'
 
 interface Props {
   items: GroceryItem[]
@@ -14,8 +14,8 @@ interface Props {
 }
 
 /**
- * La liste comme un ticket de caisse : articles en caractères de machine, une ligne par article
- * séparée par un pointillé, et les articles cochés barrés d'un trait d'encre.
+ * La liste de courses, sur un bloc-notes ligné : tout tient sur des lignes de 44 px (`sk-ruled`),
+ * l'écriture manuscrite se pose sur les lignes, les cases sont dans la marge.
  */
 export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone }: Props) {
   const [text, setText] = useState('')
@@ -33,8 +33,8 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
   }
 
   return (
-    <div className="flex flex-col gap-7">
-      <form onSubmit={submit} className="flex">
+    <div className="sk-ruled">
+      <form onSubmit={submit} className="sk-ruled-row pr-2.5 pl-14">
         <input
           ref={input}
           value={text}
@@ -44,25 +44,25 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
           enterKeyHint="done"
           autoComplete="off"
           autoCapitalize="sentences"
-          className={cx(inputClass, 'min-w-0 border-r-0 text-[1.05rem]')}
+          className="sk-ruled-input"
         />
-        <Button type="submit" disabled={!text.trim()} className="grid w-13 shrink-0 place-items-center !p-0 disabled:!opacity-100" aria-label="Ajouter">
-          <Icon name="plus" className="size-6" />
+        <Button type="submit" disabled={!text.trim()} className="mt-1 size-9 min-h-0 shrink-0 rounded-full p-0 font-sans text-2xl leading-none after:absolute after:-inset-1" aria-label="Ajouter">
+          +
         </Button>
       </form>
 
       {!items.length && (
-        <div className="flex flex-col items-center border-y border-ink py-8 text-center text-ink-2">
-          <Icon name="basket" className="size-12 text-ink" strokeWidth={1} />
-          <p className="mt-3 max-w-64 italic">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
+        <div className="px-6 pt-11 text-center text-ink-2">
+          <Glyph icon="🛒" className="mx-auto size-11 opacity-60" />
+          <p className="sk-hand">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
         </div>
       )}
 
       {todo.length > 0 && (
-        <section>
-          <div className="border-b-2 border-ink">
-            <SectionTitle>À acheter · {todo.length}</SectionTitle>
-          </div>
+        <section className="mt-11">
+          <h3 className="sk-ruled-title">
+            <span>À acheter · {todo.length}</span>
+          </h3>
           <ul>
             {todo.map((i) => (
               <Row key={i.id} item={i} by={i.added_by ? names[i.added_by] : undefined} onToggle={onToggle} onRemove={onRemove} />
@@ -72,10 +72,12 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
       )}
 
       {done.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between border-b-2 border-ink">
-            <SectionTitle>Dans le panier · {done.length}</SectionTitle>
-            <Button variant="link" onClick={onClearDone} className="etiquette -my-1.5 !self-auto">
+        <section className="mt-11">
+          <div className="flex items-start justify-between pr-4">
+            <h3 className="sk-ruled-title">
+              <span>Dans le panier · {done.length}</span>
+            </h3>
+            <Button variant="link" onClick={onClearDone} className="sk-hand h-11 px-1 font-hand text-[1.5rem] leading-none">
               Vider
             </Button>
           </div>
@@ -84,7 +86,7 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
               <Row key={i.id} item={i} onToggle={onToggle} onRemove={onRemove} />
             ))}
           </ul>
-          <p className="mt-3 text-sm text-ink-2 italic">Toucher un article coché le remet dans la liste.</p>
+          <p className="sk-ruled-note pt-2">Toucher un article coché le remet dans la liste.</p>
         </section>
       )}
     </div>
@@ -103,29 +105,29 @@ function Row({
   onRemove: (item: GroceryItem) => void
 }) {
   return (
-    <li className="flex items-center border-b border-dashed border-ink-2/70">
-      <label className="flex min-h-13 min-w-0 flex-1 items-center gap-3.5 py-2.5 select-none">
-        <Checkbox.Root
-          checked={item.done}
-          onCheckedChange={() => onToggle(item)}
-          className="grid size-5.5 shrink-0 place-items-center border-[1.5px] border-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-checked:border-accent data-checked:bg-accent"
-        >
-          <Checkbox.Indicator className="text-on-accent">
-            <Icon name="check" className="size-4" strokeWidth={2.5} />
-          </Checkbox.Indicator>
+    <li className="sk-ruled-row">
+      <label className="flex min-w-0 flex-1 items-start select-none">
+        <Checkbox.Root checked={item.done} onCheckedChange={() => onToggle(item)} className="sk-checkbox">
+          <Checkbox.Indicator
+            render={
+              <svg aria-hidden viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 19c2.5 2 4.5 4.5 6 7.5C15.5 17 21 9.5 29 3.5" />
+              </svg>
+            }
+          />
         </Checkbox.Root>
-        <span className="min-w-0 flex-1 break-words">
-          <span className={cx('font-mono text-[0.95rem]', item.done && 'text-ink-2 line-through decoration-ink decoration-[1.5px]')}>{item.name}</span>
-          {by && by !== 'vous' && <span className="ml-2.5 text-sm whitespace-nowrap text-ink-2 italic">par {by}</span>}
+        <span className={cx('sk-hand min-w-0 flex-1 pl-2.5 break-words', item.done && 'sk-struck')}>
+          {item.name}
+          {by && by !== 'vous' && <span className="ml-2.5 text-[1.15rem] text-ink-2">par {by}</span>}
         </span>
       </label>
       <button
         type="button"
         onClick={() => onRemove(item)}
         aria-label={`Retirer ${item.name}`}
-        className="-mr-3 grid size-12 shrink-0 place-items-center text-ink-2 active:opacity-50 focus-visible:outline-2 focus-visible:outline-accent"
+        className="grid size-11 shrink-0 place-items-center text-ink-2/60 outline-none focus-visible:text-accent active:text-ink"
       >
-        <Icon name="close" className="size-4" strokeWidth={1.25} />
+        <Cross />
       </button>
     </li>
   )

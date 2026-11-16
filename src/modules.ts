@@ -1,4 +1,3 @@
-import type { IconName } from './components/icons'
 import { syncStatusBar } from './lib/scheme'
 
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
@@ -15,32 +14,32 @@ export const MODULES = [
   {
     id: 'cycle',
     label: 'Cycle',
-    icon: 'drop',
+    icon: '💧',
     description: 'Suivi des règles, calendrier et analyse',
     theme: 'rose',
     settings: 'Stérilet, durée du cycle, rappels',
     sections: [
-      { id: 'today', label: 'Suivi', icon: 'calendar' },
-      { id: 'stats', label: 'Analyse', icon: 'chart' },
-      { id: 'settings', label: 'Réglages', icon: 'gear' },
+      { id: 'today', label: 'Suivi', icon: '📅' },
+      { id: 'stats', label: 'Analyse', icon: '📊' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
   {
     id: 'groceries',
     label: 'Courses',
-    icon: 'basket',
+    icon: '🛒',
     description: 'La liste de courses commune',
     theme: 'verdure',
     settings: 'Notifications des courses',
     sections: [
-      { id: 'list', label: 'Liste', icon: 'list' },
-      { id: 'settings', label: 'Réglages', icon: 'gear' },
+      { id: 'list', label: 'Liste', icon: '📝' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
 ] as const satisfies readonly {
   id: string
   label: string
-  icon: IconName
+  icon: string
   description: string
   theme: Theme
   /** Si l'espace a son propre onglet « Réglages » (en haut) : ce qu'on y trouve, affiché dans les réglages globaux. */
@@ -51,16 +50,16 @@ export const MODULES = [
 export interface Section {
   id: string
   label: string
-  icon: IconName
+  icon: string
 }
 
 /** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
-  { id: 'espaces', label: 'Réglages des espaces', icon: 'grid' },
-  { id: 'apparence', label: 'Apparence', icon: 'contrast' },
-  { id: 'notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'couple', label: 'Couple', icon: 'rings' },
-  { id: 'app', label: 'Application', icon: 'phone' },
+  { id: 'espaces', label: 'Réglages des espaces', icon: '🧩' },
+  { id: 'apparence', label: 'Apparence', icon: '🎨' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'couple', label: 'Couple', icon: '💞' },
+  { id: 'app', label: 'Application', icon: '📲' },
 ]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
@@ -79,11 +78,11 @@ const IN_BAR = 3
 export interface NavItem {
   id: View
   label: string
-  icon: IconName
+  icon: string
 }
 
-export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: 'gear' }
-const MORE_ITEM: NavItem = { id: 'more', label: 'Plus', icon: 'menu' }
+export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: '⚙️' }
+const MORE_ITEM: NavItem = { id: 'more', label: 'Plus', icon: '☰' }
 
 const fitsInBar = MODULES.length <= IN_BAR
 export const BAR: NavItem[] = fitsInBar ? [...MODULES, SETTINGS_ITEM] : [...MODULES.slice(0, IN_BAR), MORE_ITEM]

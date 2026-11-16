@@ -2,7 +2,6 @@ import { Tabs } from '@base-ui/react/tabs'
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { slideTabs } from '../lib/motion'
 import { GearIcon, HeaderButton, ScreenHeader } from './ScreenHeader'
-import { cx } from './ui'
 
 export interface SpaceTab<T extends string> {
   id: T
@@ -21,11 +20,8 @@ export function SpaceTabs<T extends string>({
   tab,
   onTab,
   onSettings,
-  folio,
 }: {
   title: string
-  /** Numéro de rubrique affiché en regard du titre (ex. « N° 1 »). */
-  folio?: string
   tabs: SpaceTab<T>[]
   tab: T
   onTab: (t: T) => void
@@ -57,24 +53,17 @@ export function SpaceTabs<T extends string>({
   if (tabs.length === 1)
     return (
       <>
-        <ScreenHeader title={title} action={action} folio={folio} />
+        <ScreenHeader title={title} action={action} />
         {tabs[0].node}
       </>
     )
 
   const list = (
-    <Tabs.List className="relative flex gap-7">
-      {/* Marqueur d'encre qui glisse sous le mot de l'onglet actif. */}
-      <Tabs.Indicator className="absolute bottom-0 left-(--active-tab-left) h-[3px] w-(--active-tab-width) bg-accent transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
+    <Tabs.List className="sk-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+      {/* Pastille enfoncée qui glisse sous l'onglet actif (contrôle segmenté de barre, iOS 6). */}
+      <Tabs.Indicator className="sk-tabs-pill top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
       {tabs.map(({ id, label }) => (
-        <Tabs.Tab
-          key={id}
-          value={id}
-          className={cx(
-            'etiquette relative z-10 h-11 truncate text-ink-2 transition-colors outline-none select-none',
-            'focus-visible:outline-2 focus-visible:outline-accent data-active:text-ink',
-          )}
-        >
+        <Tabs.Tab key={id} value={id} className="sk-tab">
           {label}
         </Tabs.Tab>
       ))}
@@ -83,13 +72,12 @@ export function SpaceTabs<T extends string>({
 
   return (
     <Tabs.Root value={tab} onValueChange={(v) => onTab(v as T)}>
-      <ScreenHeader title={title} action={action} folio={folio} sticky={list} />
-      <div className="relative pt-0">
+      <ScreenHeader title={title} action={action} sticky={list} />
+      <div className="relative">
         {tabs.map(({ id, node }) => (
           <Tabs.Panel
             key={id}
             keepMounted
-            className="rubriques"
             value={id}
             ref={(el: HTMLElement | null) => {
               panels.current[id] = el

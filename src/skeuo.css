@@ -1,0 +1,1274 @@
+/* Composants skeuomorphes (façon iPhone OS 3 à iOS 6). Tout passe par les variables de thème de
+   src/index.css : un même composant change de matière selon l'espace et le mode clair / sombre.
+   Dans la couche « components » : une classe utilitaire Tailwind posée à côté garde le dernier mot. */
+@layer components {
+  /* ───────── Écran : reliure en haut, page dessous ───────── */
+
+  /* Fond de l'écran (derrière la page) : la couleur de la reliure, visible quand iOS « étire » le défilement. */
+  .sk-screen {
+    background-color: var(--color-chrome);
+    color: var(--color-ink);
+  }
+  /* La page : papier, kraft ou lin selon le thème. */
+  .sk-body {
+    background-color: var(--color-bg);
+    background-image: var(--body-tex);
+  }
+  /* La reliure : cuir, toile ou barre ardoise. En haut, sa couleur unie raccorde avec #top-edge. */
+  .sk-chrome {
+    background-color: var(--color-chrome);
+    background-image: var(--chrome-tex);
+    background-blend-mode: var(--chrome-blend);
+    color: #fff;
+  }
+  .sk-title {
+    /* 1 px de recouvrement avec la barre : pas de filet de papier entre les deux. */
+    margin: -1px -1rem 0;
+    padding: 1px 1rem 0.5rem;
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  /* Titre « doré à chaud » dans le cuir (ou blanc gravé sur la barre ardoise). */
+  .sk-title > span {
+    background: var(--title-fill);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: var(--title-shadow);
+  }
+  /* Bas de la reliure : reste collé sous la barre. Porte les onglets de l'espace, la couture, et
+     ce qui dépasse sur la page (pages arrachées de l'agenda, spirale du bloc-notes, ombre). */
+  .sk-edge {
+    position: sticky;
+    z-index: 20;
+    margin: -1px -1rem 0;
+    padding: 1px 1rem 0.95rem;
+    min-height: 0.95rem;
+    margin-bottom: var(--edge-gap);
+  }
+  .sk-edge::before {
+    /* Couture : points de fil clair, ombrés dessous. */
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 5px;
+    height: 3px;
+    background:
+      repeating-linear-gradient(90deg, var(--stitch) 0 8px, transparent 8px 13px) 2px 0 / 100% 2px no-repeat,
+      repeating-linear-gradient(90deg, var(--stitch-shadow, rgb(0 0 0 / 0.35)) 0 8px, transparent 8px 13px) 2px 1px / 100% 2px no-repeat;
+    border-radius: 1px;
+  }
+  .sk-edge::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: var(--edge-top);
+    height: var(--edge-h);
+    background: var(--edge-img) repeat-x left top;
+    pointer-events: none;
+  }
+  [data-theme='neutre'] .sk-edge {
+    box-shadow:
+      inset 0 -1px 0 rgb(0 0 0 / 0.4),
+      inset 0 -2px 0 rgb(255 255 255 / 0.12);
+  }
+  [data-theme='verdure'] .sk-edge::after,
+  [data-theme='verdure'].sk-edge::after {
+    background-position: 6px 0;
+  }
+
+  /* Bouton de la barre du haut (iOS 6) : teinte de la reliure, bombé, bord sombre. */
+  .sk-navbtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    min-width: 36px;
+    padding: 0 9px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
+    background: linear-gradient(
+      color-mix(in srgb, var(--color-chrome), white 30%),
+      color-mix(in srgb, var(--color-chrome), white 6%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 20%)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 1px 0 rgb(255 255 255 / 0.22),
+      0 1px 2px rgb(0 0 0 / 0.3);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.5);
+    outline: none;
+  }
+  /* Zone tactile de 44 px autour du bouton. */
+  .sk-navbtn::after {
+    content: '';
+    position: absolute;
+    inset: -7px -5px;
+  }
+  .sk-navbtn:active {
+    background: linear-gradient(color-mix(in srgb, var(--color-chrome), black 45%), color-mix(in srgb, var(--color-chrome), black 22%));
+    box-shadow:
+      inset 0 2px 4px rgb(0 0 0 / 0.5),
+      0 1px 0 rgb(255 255 255 / 0.22);
+  }
+  .sk-navbtn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+  .sk-navbtn svg {
+    filter: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.45));
+  }
+  /* Bouton retour en pointe, comme sur iOS 6. */
+  .sk-back {
+    isolation: isolate;
+    margin-left: 11px;
+    padding: 0 9px 0 5px;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+  }
+  .sk-back::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -11.5px;
+    top: 3.6px;
+    width: 22.6px;
+    height: 22.6px;
+    transform: rotate(45deg);
+    border-radius: 0 0 0 4px;
+    border-left: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-chrome), white 30%),
+      color-mix(in srgb, var(--color-chrome), white 6%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 20%)
+    );
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / 0.18);
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+  }
+  .sk-back:active::before {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-chrome), black 45%), color-mix(in srgb, var(--color-chrome), black 22%));
+  }
+
+  /* Onglets de l'espace : contrôle segmenté de barre, la pastille enfoncée glisse sous l'onglet actif. */
+  .sk-tabs {
+    position: relative;
+    display: grid;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--color-chrome), black 58%);
+    background: linear-gradient(
+      color-mix(in srgb, var(--color-chrome), white 28%),
+      color-mix(in srgb, var(--color-chrome), white 5%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
+      color-mix(in srgb, var(--color-chrome), black 18%)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.32),
+      0 1px 0 rgb(255 255 255 / 0.2);
+  }
+  .sk-tabs-pill {
+    position: absolute;
+    border-radius: 5px;
+    background: linear-gradient(color-mix(in srgb, var(--color-chrome), black 52%), color-mix(in srgb, var(--color-chrome), black 30%));
+    box-shadow:
+      inset 0 1px 4px rgb(0 0 0 / 0.65),
+      inset 0 0 0 1px rgb(0 0 0 / 0.25);
+  }
+  .sk-tab {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgb(255 255 255 / 0.92);
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.5);
+    outline: none;
+  }
+  .sk-tab + .sk-tab {
+    box-shadow: -1px 0 0 rgb(0 0 0 / 0.3);
+  }
+  /* Zone tactile de 44 px. */
+  .sk-tab::after {
+    content: '';
+    position: absolute;
+    inset: -7px 0;
+  }
+  .sk-tab:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -3px;
+  }
+
+  /* ───────── Texte ───────── */
+  .sk-engrave {
+    text-shadow: var(--engrave);
+  }
+  .sk-h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-shadow: var(--engrave);
+  }
+  /* Titre de rubrique : petites capitales imprimées (agenda), en-tête de groupe (réglages) ou feutre (bloc-notes). */
+  .sk-section-title {
+    margin-bottom: 0.45rem;
+    font-family: var(--st-font);
+    font-size: var(--st-size);
+    font-weight: var(--st-weight);
+    text-transform: var(--st-transform);
+    letter-spacing: var(--st-track);
+    color: var(--color-ink-2);
+    text-shadow: var(--engrave);
+  }
+  .sk-group > .sk-section-title {
+    padding-left: 0.55rem;
+  }
+
+  /* ───────── Feuilles et tableaux groupés ───────── */
+  .sk-card {
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-border);
+    background-color: var(--color-surface);
+    background-image: var(--card-tex);
+    box-shadow: var(--card-shadow);
+  }
+  .sk-list {
+    overflow: hidden;
+  }
+  .sk-list > li + li {
+    border-top: 1px solid var(--color-line);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
+  }
+  [data-scheme='dark'] .sk-list > li + li {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+  /* Pense-bête jaune collé de travers (« À surveiller »). */
+  .sk-postit {
+    position: relative;
+    padding: 1.1rem 1rem 1rem;
+    background: linear-gradient(175deg, color-mix(in srgb, var(--color-warn), white 25%), var(--color-warn) 60%, color-mix(in srgb, var(--color-warn), black 6%));
+    box-shadow:
+      0 1px 1px rgb(0 0 0 / 0.2),
+      0 10px 12px -8px rgb(60 40 0 / 0.5);
+    transform: rotate(-0.7deg);
+    border-radius: 1px 1px 3px 14px / 1px 1px 3px 4px;
+  }
+  .sk-postit::before {
+    /* Bout de ruban adhésif. */
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 84px;
+    height: 20px;
+    margin-left: -42px;
+    transform: rotate(1.6deg);
+    background: linear-gradient(rgb(255 255 255 / 0.55), rgb(240 235 215 / 0.4));
+    border-inline: 1px dashed rgb(0 0 0 / 0.12);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+  }
+  [data-scheme='dark'] .sk-postit::before {
+    background: linear-gradient(rgb(255 255 255 / 0.22), rgb(240 235 215 / 0.12));
+  }
+
+  /* ───────── Boutons bombés ───────── */
+  .sk-btn {
+    position: relative;
+    min-height: 46px;
+    padding: 0.6rem 1rem;
+    border-radius: 9px;
+    font-weight: 700;
+    line-height: 1.2;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .sk-btn:disabled {
+    opacity: 0.55;
+  }
+  .sk-btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .sk-btn-primary {
+    color: var(--color-on-btn);
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
+    border: 1px solid color-mix(in srgb, var(--color-btn), black 48%);
+    background: linear-gradient(
+      color-mix(in srgb, var(--color-btn), white 42%),
+      color-mix(in srgb, var(--color-btn), white 14%) 50%,
+      var(--color-btn) 50%,
+      color-mix(in srgb, var(--color-btn), black 14%)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 1px 0 rgb(255 255 255 / 0.35),
+      0 1px 3px rgb(0 0 0 / 0.35);
+  }
+  .sk-btn-primary:active:not(:disabled) {
+    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 38%), color-mix(in srgb, var(--color-btn), black 12%));
+    box-shadow:
+      inset 0 2px 5px rgb(0 0 0 / 0.45),
+      0 1px 0 rgb(255 255 255 / 0.35);
+  }
+  .sk-btn-secondary,
+  .sk-btn-outline {
+    color: var(--color-ink);
+    text-shadow: var(--engrave);
+    border: 1px solid var(--key-border);
+    background: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), var(--key-bottom) 45%) 50%, var(--key-bottom) 50%, color-mix(in srgb, var(--key-bottom), black 7%));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.7),
+      0 1px 0 rgb(255 255 255 / 0.35),
+      0 1px 2.5px rgb(0 0 0 / 0.28);
+  }
+  .sk-btn-outline {
+    color: var(--color-accent);
+  }
+  [data-scheme='dark'] .sk-btn-secondary,
+  [data-scheme='dark'] .sk-btn-outline {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 1px 0 rgb(255 255 255 / 0.06),
+      0 1px 2.5px rgb(0 0 0 / 0.5);
+  }
+  .sk-btn-secondary:active:not(:disabled),
+  .sk-btn-outline:active:not(:disabled) {
+    background: linear-gradient(color-mix(in srgb, var(--key-bottom), black 22%), var(--key-bottom));
+    box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.35);
+  }
+  .sk-btn-link,
+  .sk-btn-ghost {
+    min-height: 44px;
+    padding: 0;
+    border-radius: 3px;
+    font-weight: 700;
+    text-shadow: var(--engrave);
+    color: var(--color-accent);
+  }
+  .sk-btn-ghost {
+    color: var(--color-ink-2);
+    font-weight: 500;
+  }
+  .sk-btn-link:active,
+  .sk-btn-ghost:active {
+    opacity: 0.5;
+  }
+  /* Petit bouton rond bombé (mois précédent / suivant, fermer). */
+  .sk-round {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    color: var(--color-ink);
+    border: 1px solid var(--key-border);
+    background: linear-gradient(var(--key-top), var(--key-bottom));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.6),
+      0 1px 0 rgb(255 255 255 / 0.3),
+      0 1px 2px rgb(0 0 0 / 0.3);
+  }
+  [data-scheme='dark'] .sk-round {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 1px 2px rgb(0 0 0 / 0.5);
+  }
+  .sk-round::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+  }
+  .sk-round:active {
+    background: linear-gradient(color-mix(in srgb, var(--key-bottom), black 20%), var(--key-bottom));
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+  .sk-round:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Touche à enfoncer (flux, symptômes) : bombée au repos, creusée et teintée une fois choisie.
+     La couleur de fond vient des classes utilitaires (bg-flow-n) ; le relief est un dégradé posé dessus. */
+  .sk-key {
+    border: 1px solid var(--key-border);
+    background-color: var(--key-bottom);
+    background-image: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), transparent 60%) 50%, transparent 50%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.6),
+      0 1px 0 rgb(255 255 255 / 0.35),
+      0 1px 2.5px rgb(0 0 0 / 0.28);
+    text-shadow: var(--engrave);
+    outline: none;
+  }
+  [data-scheme='dark'] .sk-key {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 1px 2.5px rgb(0 0 0 / 0.5);
+  }
+  .sk-key[data-pressed] {
+    border-color: rgb(0 0 0 / 0.55);
+    background-image: linear-gradient(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0) 55%, rgb(255 255 255 / 0.12));
+    box-shadow:
+      inset 0 2px 5px rgb(0 0 0 / 0.45),
+      0 1px 0 rgb(255 255 255 / 0.5);
+    text-shadow: none;
+  }
+  [data-scheme='dark'] .sk-key[data-pressed] {
+    box-shadow:
+      inset 0 2px 5px rgb(0 0 0 / 0.6),
+      0 1px 0 rgb(255 255 255 / 0.08);
+  }
+  .sk-key:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Contrôle segmenté d'iOS 6 (douleur, apparence) : le segment choisi est enfoncé, à la couleur du thème. */
+  .sk-seg {
+    display: grid;
+    overflow: hidden;
+    border-radius: 7px;
+    border: 1px solid var(--key-border);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.4),
+      0 1px 2px rgb(0 0 0 / 0.2);
+  }
+  [data-scheme='dark'] .sk-seg {
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.07);
+  }
+  .sk-seg-item {
+    min-height: 44px;
+    padding: 0.45rem 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    text-shadow: var(--engrave);
+    background: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), var(--key-bottom) 45%) 50%, var(--key-bottom) 50%, color-mix(in srgb, var(--key-bottom), black 6%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+    outline: none;
+  }
+  [data-scheme='dark'] .sk-seg-item {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
+  }
+  .sk-seg-item + .sk-seg-item {
+    border-left: 1px solid var(--key-border);
+  }
+  .sk-seg-item[data-pressed] {
+    color: var(--color-on-btn);
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.45);
+    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 42%), color-mix(in srgb, var(--color-btn), black 8%) 60%, var(--color-btn));
+    box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.5);
+  }
+  .sk-seg-item:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -3px;
+  }
+
+  /* Champ de saisie creusé. */
+  .sk-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.6rem 0.8rem;
+    border-radius: 7px;
+    border: 1px solid var(--key-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow:
+      inset 0 2px 3px rgb(0 0 0 / 0.16),
+      0 1px 0 rgb(255 255 255 / 0.6);
+    outline: none;
+  }
+  [data-scheme='dark'] .sk-input {
+    background-color: var(--color-surface-2);
+    box-shadow:
+      inset 0 2px 4px rgb(0 0 0 / 0.5),
+      0 1px 0 rgb(255 255 255 / 0.07);
+  }
+  .sk-input::placeholder {
+    color: color-mix(in srgb, var(--color-ink-2), transparent 30%);
+  }
+  .sk-input:focus-visible {
+    border-color: var(--color-accent);
+    box-shadow:
+      inset 0 2px 3px rgb(0 0 0 / 0.16),
+      0 0 0 2px color-mix(in srgb, var(--color-accent), transparent 60%);
+  }
+  /* Champs empilés dans un tableau groupé (connexion) : une ligne par champ, sans cadre propre. */
+  .sk-field {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.6rem 0.9rem;
+    background: transparent;
+    color: var(--color-ink);
+    font-weight: 500;
+    outline: none;
+  }
+  .sk-field::placeholder {
+    color: color-mix(in srgb, var(--color-ink-2), transparent 35%);
+    font-weight: 400;
+  }
+  .sk-field:focus-visible {
+    background: color-mix(in srgb, var(--color-accent), transparent 90%);
+  }
+
+  /* Interrupteur I / O d'iOS 6 : glissière à la couleur du thème, bouton chromé. */
+  .sk-switch {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    width: 78px;
+    height: 28px;
+    overflow: hidden;
+    border-radius: 14px;
+    outline: none;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+  }
+  [data-scheme='dark'] .sk-switch {
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+  .sk-switch:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .sk-switch-strip {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    display: flex;
+    width: 128px;
+    transform: translateX(-50px);
+    transition: transform 0.2s ease-out;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 28px;
+    text-align: center;
+  }
+  .sk-switch[data-checked] .sk-switch-strip {
+    transform: none;
+  }
+  .sk-switch-on {
+    width: 64px;
+    padding-right: 14px;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
+    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 30%), var(--color-btn) 55%, color-mix(in srgb, var(--color-btn), white 22%));
+  }
+  .sk-switch-off {
+    width: 64px;
+    padding-left: 14px;
+    color: #7b7f86;
+    background: linear-gradient(#cfd1d4, #f4f4f4 55%, #fff);
+  }
+  [data-scheme='dark'] .sk-switch-off {
+    color: #9a9da3;
+    background: linear-gradient(#18191b, #2a2c30 55%, #36383d);
+  }
+  /* Ombre interne de la glissière, par-dessus la bande mais sous le bouton. */
+  .sk-switch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 0 1px rgb(0 0 0 / 0.45),
+      inset 0 2px 4px rgb(0 0 0 / 0.4);
+    pointer-events: none;
+  }
+  .sk-switch-thumb {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid #6f7379;
+    background: linear-gradient(#d4d6da, #fbfbfc 60%, #fff);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 rgb(0 0 0 / 0.08),
+      0 0 3px rgb(0 0 0 / 0.5);
+    transition: transform 0.2s ease-out;
+  }
+  .sk-switch-thumb[data-checked] {
+    transform: translateX(50px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sk-switch-strip,
+    .sk-switch-thumb {
+      transition: none;
+    }
+  }
+
+  /* ───────── Barre d'onglets noire brillante d'iOS 6 ───────── */
+  .sk-tabbar {
+    background:
+      linear-gradient(#444 0, #2b2b2b 25px, #0b0b0b 25px, #000 50px) top / 100% 50px no-repeat,
+      #000;
+    border-top: 1px solid #000;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 -2px 7px rgb(0 0 0 / 0.4);
+  }
+  .sk-tabbar-item {
+    position: relative;
+    height: 49px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9a9a9a;
+    text-shadow: 0 -1px 0 #000;
+    --tab-hi: #c4c4c4;
+    --tab-lo: #6a6a6a;
+    outline: none;
+  }
+  .sk-tabbar-item::before {
+    content: '';
+    position: absolute;
+    inset: 2px 3px;
+    border-radius: 4px;
+    background: linear-gradient(rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.1) 50%, rgb(255 255 255 / 0.06) 50%, rgb(255 255 255 / 0.08));
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .sk-tabbar-item[aria-current='page'] {
+    color: #fff;
+    --tab-hi: color-mix(in srgb, var(--color-btn), white 78%);
+    --tab-lo: color-mix(in srgb, var(--color-btn), white 12%);
+  }
+  .sk-tabbar-item[aria-current='page']::before,
+  .sk-tabbar-item:focus-visible::before {
+    opacity: 1;
+  }
+  .sk-tabbar-item[aria-current='page'] .sk-glyph {
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-btn), transparent 35%));
+  }
+  .sk-tabbar-item .sk-glyph {
+    width: 28px;
+    height: 28px;
+  }
+  /* Pastille rouge brillante à liseré blanc. */
+  .sk-badge {
+    position: absolute;
+    top: -3px;
+    right: -11px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    background: linear-gradient(#ff8a8a, #e1101d 50%, #c20009 50%, #d80f1a);
+    box-shadow: 0 2px 3px rgb(0 0 0 / 0.6);
+    color: #fff;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.35);
+  }
+
+  /* Icônes en relief : dégradé clair → foncé (--tab-hi / --tab-lo). */
+  .sk-glyph {
+    display: block;
+    width: 1.5em;
+    height: 1.5em;
+  }
+  .sk-glyph .hi {
+    stop-color: var(--tab-hi, currentColor);
+  }
+  .sk-glyph .lo {
+    stop-color: var(--tab-lo, currentColor);
+  }
+  /* Pastille d'icône façon icône d'app (réglages des espaces, écran d'accueil). */
+  .sk-app-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 22%;
+    color: #fff;
+    --tab-hi: #fff;
+    --tab-lo: rgb(255 255 255 / 0.82);
+    border: 1px solid color-mix(in srgb, var(--color-btn), black 50%);
+    background: linear-gradient(color-mix(in srgb, var(--color-btn), white 28%), color-mix(in srgb, var(--color-btn), black 18%));
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.4),
+      inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .sk-app-icon::after {
+    /* Reflet en arc des icônes d'avant iOS 7. */
+    content: '';
+    position: absolute;
+    left: -30%;
+    right: -30%;
+    top: -60%;
+    height: 108%;
+    border-radius: 50%;
+    background: linear-gradient(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.12));
+  }
+  .sk-app-icon > * {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.3));
+  }
+
+  /* Menu rapide (appui long sur un onglet) : bulle bleu nuit brillante, avec sa pointe. */
+  .sk-popover {
+    border-radius: 9px;
+    border: 1px solid #000;
+    background: linear-gradient(#5c6880, #262e42 22px, #0e1424 22px, #080c18);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 10px 30px rgb(0 0 0 / 0.55);
+    color: #fff;
+    text-shadow: 0 -1px 0 #000;
+  }
+  .sk-popover::after {
+    content: '';
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    bottom: -7px;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    transform: rotate(45deg);
+    background: #080c18;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+  }
+  .sk-popover-item {
+    position: relative;
+    --tab-hi: #fff;
+    --tab-lo: #b9c2d6;
+  }
+  .sk-popover-item + .sk-popover-item {
+    border-top: 1px solid rgb(0 0 0 / 0.7);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  }
+  .sk-popover-item[data-hover],
+  .sk-popover-item:focus-visible {
+    background: linear-gradient(#5a9bf0, #1f5fd0);
+  }
+
+  /* Feuille qui monte du bas : une page de plus, avec son rebord. */
+  .sk-sheet {
+    border-top: 1px solid rgb(255 255 255 / 0.6);
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -6px 24px rgb(0 0 0 / 0.45);
+  }
+  [data-scheme='dark'] .sk-sheet {
+    border-top-color: rgb(255 255 255 / 0.1);
+  }
+  .sk-grabber {
+    background: var(--color-surface-2);
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.35),
+      0 1px 0 rgb(255 255 255 / 0.5);
+  }
+  [data-scheme='dark'] .sk-grabber {
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.6),
+      0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  /* ───────── Cycle : éphéméride et calendrier de l'agenda ───────── */
+
+  /* Éphéméride à feuilles : bandeau de couleur, deux anneaux, pile de pages dessous. */
+  .sk-ephem {
+    position: relative;
+    flex-shrink: 0;
+    width: 54px;
+    margin-bottom: 5px;
+    border-radius: 3px 3px 2px 2px;
+    background: linear-gradient(#fff, #f2ede2);
+    color: #2a2422;
+    text-align: center;
+    box-shadow:
+      0 0 0 1px rgb(90 70 50 / 0.35),
+      0 2px 0 -0.5px #fff,
+      0 2px 0 0.5px rgb(90 70 50 / 0.35),
+      0 4px 0 -1px #f4efe6,
+      0 4px 0 0 rgb(90 70 50 / 0.35),
+      0 7px 8px -2px rgb(40 25 10 / 0.45);
+  }
+  .sk-ephem-band {
+    position: relative;
+    height: 19px;
+    border-radius: 3px 3px 0 0;
+    font-size: 9px;
+    line-height: 23px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
+    background: linear-gradient(color-mix(in srgb, var(--ephem, var(--color-btn)), white 35%), var(--ephem, var(--color-btn)) 50%, color-mix(in srgb, var(--ephem, var(--color-btn)), black 14%) 50%, color-mix(in srgb, var(--ephem, var(--color-btn)), black 22%));
+    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.3);
+  }
+  .sk-ephem-band::before,
+  .sk-ephem-band::after {
+    /* Anneaux de métal. */
+    content: '';
+    position: absolute;
+    top: -6px;
+    width: 4.5px;
+    height: 11px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #6d6d6d, #fafafa 40%, #8d8d8d);
+    box-shadow:
+      0 0 0 0.5px rgb(0 0 0 / 0.5),
+      1px 1px 1px rgb(0 0 0 / 0.3);
+  }
+  .sk-ephem-band::before {
+    left: 11px;
+  }
+  .sk-ephem-band::after {
+    right: 11px;
+  }
+  .sk-ephem-num {
+    font-size: 28px;
+    line-height: 35px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    text-shadow: 0 1px 0 #fff;
+    /* Pli de la feuille, à mi-hauteur. */
+    background: linear-gradient(transparent 49%, rgb(0 0 0 / 0.07) 49%, rgb(0 0 0 / 0.07) 51%, transparent 51%);
+  }
+
+  /* Ligne de contexte, imprimée sur la page : l'éphéméride et où en est le cycle. */
+  .sk-status {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0 0.15rem;
+  }
+  .sk-status[data-tone='period'] {
+    --ephem: var(--color-flow-4);
+  }
+  .sk-status[data-tone='soon'] {
+    --ephem: #d98a00;
+  }
+  .sk-status[data-tone='soon'] .sk-status-title {
+    color: color-mix(in srgb, #b26a00, var(--color-ink) 30%);
+  }
+  [data-scheme='dark'] .sk-status[data-tone='soon'] .sk-status-title {
+    color: var(--color-on-soon);
+  }
+  .sk-status[data-tone='period'] .sk-status-title {
+    color: color-mix(in srgb, var(--color-flow-5), var(--color-ink) 25%);
+  }
+  [data-scheme='dark'] .sk-status[data-tone='period'] .sk-status-title {
+    color: var(--color-flow-5);
+  }
+
+  /* Ligne de pointillés perforés entre la saisie du jour et le calendrier. */
+  .sk-perforation {
+    height: 3px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-ink), transparent 62%) 1.1px, transparent 1.4px) 0 0 / 9px 3px repeat-x;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+
+  /* Calendrier : feuille mensuelle sous un bandeau brillant, pile de pages dessous. */
+  .sk-cal {
+    border-radius: 4px 4px 2px 2px;
+    background-color: var(--color-surface);
+    background-image: var(--card-tex);
+    box-shadow:
+      0 0 0 1px var(--card-border),
+      0 3px 0 -1px var(--color-surface),
+      0 3px 0 0 var(--card-border),
+      0 6px 0 -2px var(--color-surface),
+      0 6px 0 -1px var(--card-border),
+      0 12px 14px -6px rgb(50 30 10 / 0.5);
+  }
+  .sk-cal-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 9px;
+    border-radius: 4px 4px 0 0;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.45);
+    background: linear-gradient(
+      color-mix(in srgb, var(--color-btn), white 36%),
+      color-mix(in srgb, var(--color-btn), white 8%) 50%,
+      color-mix(in srgb, var(--color-btn), black 6%) 50%,
+      color-mix(in srgb, var(--color-btn), black 22%)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      inset 0 -1px 0 rgb(0 0 0 / 0.35);
+  }
+  .sk-cal-head h2 {
+    font-size: 1.12rem;
+    font-weight: 700;
+  }
+  .sk-cal-nav {
+    --color-chrome: var(--color-btn);
+    width: 36px;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .sk-cal-week {
+    padding: 4px 0 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-2);
+    text-align: center;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-line);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
+    text-shadow: var(--engrave);
+  }
+  .sk-day {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1.08;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    border-top: 1px solid var(--color-line);
+    border-left: 1px solid var(--color-line);
+    outline: none;
+  }
+  .sk-day:nth-child(7n + 1) {
+    border-left: none;
+  }
+  .sk-day:disabled {
+    color: color-mix(in srgb, var(--color-ink-2), transparent 35%);
+    font-weight: 500;
+  }
+  .sk-day:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-ink), transparent 90%);
+  }
+  .sk-day:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+  /* Jour de règles : pastille passée au feutre, un peu irrégulière. */
+  .sk-mark {
+    position: absolute;
+    inset: 11% 12%;
+    border-radius: 47% 53% 51% 49% / 55% 46% 54% 45%;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.07);
+    background-image: linear-gradient(115deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.06));
+  }
+  .sk-day:nth-child(3n) .sk-mark {
+    transform: rotate(-14deg) scale(1.03);
+  }
+  .sk-day:nth-child(3n + 1) .sk-mark {
+    transform: rotate(9deg);
+    border-radius: 52% 48% 46% 54% / 47% 53% 49% 51%;
+  }
+  .sk-day:nth-child(5n) .sk-mark {
+    transform: rotate(24deg) scale(0.97);
+  }
+  /* Jour prévu : entouré au crayon, en pointillés. */
+  .sk-predict {
+    position: absolute;
+    inset: 12% 13%;
+    border-radius: 50% 47% 52% 48% / 48% 52% 47% 53%;
+    border: 1.6px dashed var(--color-flow-3);
+  }
+  /* Aujourd'hui : entouré d'un trait de feutre (SVG en ligne). */
+  .sk-today-ring {
+    position: absolute;
+    inset: -2px -3px;
+    width: calc(100% + 6px);
+    height: calc(100% + 4px);
+    color: var(--color-accent);
+    pointer-events: none;
+    overflow: visible;
+    filter: drop-shadow(0 1px 0.5px rgb(0 0 0 / 0.25));
+  }
+  .sk-day-today {
+    font-weight: 800;
+    z-index: 1;
+  }
+  .sk-legend-mark {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 47% 53% 51% 49% / 55% 46% 54% 45%;
+  }
+
+  /* Analyse : jauges en creux, barres brillantes. */
+  .sk-groove {
+    background-color: var(--color-surface-2);
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.3),
+      0 1px 0 rgb(255 255 255 / 0.5);
+  }
+  [data-scheme='dark'] .sk-groove {
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.6),
+      0 1px 0 rgb(255 255 255 / 0.06);
+  }
+  .sk-gloss {
+    background-image: linear-gradient(rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1) 50%, rgb(0 0 0 / 0.04) 50%, rgb(0 0 0 / 0.1));
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.2);
+  }
+
+  /* ───────── Courses : bloc-notes ligné, écrit à la main ───────── */
+  .sk-ruled {
+    --row: 44px;
+    flex: 1;
+    /* Pleine largeur, jusque sous la barre d'onglets. */
+    margin: calc(-1 * var(--edge-gap)) -1rem calc(-88px - env(safe-area-inset-bottom));
+    padding: 22px 0 calc(88px + env(safe-area-inset-bottom));
+    font-family: var(--font-hand);
+    font-size: 1.62rem;
+    font-weight: 500;
+    line-height: var(--row);
+    background-image:
+      linear-gradient(90deg, transparent 45px, var(--margin-line) 45px, var(--margin-line) 46.5px, transparent 46.5px),
+      repeating-linear-gradient(transparent 0, transparent calc(var(--row) - 1px), var(--color-rule) calc(var(--row) - 1px), var(--color-rule) var(--row));
+    background-position:
+      0 0,
+      0 22px;
+  }
+  /* L'écriture se pose sur la ligne (et non au milieu de l'interligne). */
+  .sk-hand {
+    position: relative;
+    top: 7px;
+  }
+  .sk-ruled-row {
+    display: flex;
+    align-items: flex-start;
+    min-height: var(--row);
+  }
+  .sk-ruled-title {
+    height: var(--row);
+    margin: 0;
+    padding-left: 56px;
+    font-family: var(--font-hand);
+    font-size: 1.62rem;
+    font-weight: 700;
+    line-height: var(--row);
+    color: var(--color-accent);
+    text-shadow: none;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .sk-ruled-title > span {
+    position: relative;
+    top: 7px;
+    /* Souligné d'un trait de feutre. */
+    background: linear-gradient(transparent 0, transparent) no-repeat;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, var(--color-accent), transparent 45%);
+  }
+  .sk-ruled-input {
+    flex: 1;
+    min-width: 0;
+    height: var(--row);
+    padding: 12px 0 0;
+    background: transparent;
+    font: inherit;
+    line-height: 32px;
+    color: var(--color-ink);
+    outline: none;
+  }
+  .sk-ruled-input::placeholder {
+    color: color-mix(in srgb, var(--color-ink-2), transparent 25%);
+  }
+  /* Case tracée à la main, dans la marge ; la coche au crayon déborde de la case. */
+  .sk-checkbox {
+    position: relative;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    margin: 12px 11px 0 11px;
+    background: var(--box-img) center / contain no-repeat;
+    outline: none;
+  }
+  .sk-checkbox:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .sk-checkbox svg {
+    position: absolute;
+    left: 1px;
+    top: -9px;
+    width: 32px;
+    height: 32px;
+    color: var(--color-accent);
+    overflow: visible;
+  }
+  .sk-struck {
+    color: var(--color-ink-2);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: color-mix(in srgb, var(--color-ink), transparent 35%);
+  }
+  .sk-ruled-note {
+    padding: 0 16px 0 56px;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 22px;
+    min-height: var(--row);
+    color: var(--color-ink-2);
+  }
+
+  /* ───────── Connexion : écran d'accueil sur lin ───────── */
+  .sk-logo {
+    border-radius: 22.5%;
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.5),
+      0 6px 14px -4px rgb(0 0 0 / 0.55),
+      0 2px 3px rgb(0 0 0 / 0.4);
+  }
+  .sk-logo-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22.5%;
+  }
+  .sk-logo-wrap::after {
+    content: '';
+    position: absolute;
+    left: -30%;
+    right: -30%;
+    top: -62%;
+    height: 110%;
+    border-radius: 50%;
+    background: linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.08));
+    pointer-events: none;
+  }
+  .sk-wordmark {
+    font-size: 2.1rem;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink-2);
+    text-shadow: var(--engrave);
+  }
+  /* Bandeau d'invitation : carton d'invitation crème, liseré doré. */
+  .sk-invite-card {
+    position: relative;
+    padding: 0.95rem 1rem;
+    border-radius: 4px;
+    text-align: left;
+    color: #3a2c1c;
+    background: #fffaf0 var(--tex-paper);
+    box-shadow:
+      0 0 0 1px rgb(120 92 58 / 0.4),
+      inset 0 0 0 4px #fffaf0,
+      inset 0 0 0 5px #c9a55a,
+      0 8px 14px -8px rgb(0 0 0 / 0.55);
+  }
+  /* Étagère vitrée du Dock : les espaces de l'app posés dessus, avec leur reflet. */
+  .sk-shelf {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 1.6rem;
+    width: 100%;
+    margin-top: 0.35rem;
+    padding: 0 0.5rem 0.55rem;
+  }
+  .sk-shelf::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 1.75rem;
+    height: 1.35rem;
+    border-radius: 3px;
+    border-top: 1px solid rgb(255 255 255 / 0.85);
+    background: linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.12) 55%, rgb(0 0 0 / 0.08));
+    box-shadow:
+      0 1px 0 rgb(0 0 0 / 0.25),
+      0 5px 7px -3px rgb(0 0 0 / 0.4);
+    transform: perspective(240px) rotateX(48deg);
+    transform-origin: bottom;
+  }
+  [data-scheme='dark'] .sk-shelf::before {
+    border-top-color: rgb(255 255 255 / 0.3);
+    background: linear-gradient(rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.05) 55%, rgb(0 0 0 / 0.2));
+  }
+  .sk-shelf > li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.05rem;
+    width: 4rem;
+  }
+  .sk-shelf .sk-app-icon {
+    -webkit-box-reflect: below 1px linear-gradient(transparent 74%, rgb(0 0 0 / 0.25));
+  }
+  .sk-shelf-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-ink-2);
+    text-shadow: var(--engrave);
+  }
+  [data-theme] > .sk-shelf-label,
+  .sk-shelf-label {
+    color: #4c566c;
+    text-shadow: 0 1px 0 rgb(255 255 255 / 0.9);
+  }
+  [data-scheme='dark'] .sk-shelf-label {
+    color: #c3c9d4;
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.7);
+  }
+  .sk-app-icon-soon {
+    --color-btn: #8a909c;
+  }
+  /* « ou » entre deux filets gravés. */
+  .sk-or {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-shadow: var(--engrave);
+  }
+  .sk-or::before,
+  .sk-or::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    border-top: 1px solid color-mix(in srgb, var(--color-ink), transparent 72%);
+    border-bottom: 1px solid rgb(255 255 255 / 0.6);
+  }
+  [data-scheme='dark'] .sk-or::before,
+  [data-scheme='dark'] .sk-or::after {
+    border-top-color: rgb(0 0 0 / 0.7);
+    border-bottom-color: rgb(255 255 255 / 0.1);
+  }
+  .sk-fields > * + * {
+    border-top: 1px solid var(--color-line);
+  }
+  /* Étiquette gaufrée (ruban d'étiqueteuse) : le code d'invitation. */
+  .sk-embossed {
+    padding: 0.2rem 0.55rem 0.15rem;
+    border-radius: 2px;
+    letter-spacing: 0.2em;
+    font-size: 0.95rem;
+    color: #fff;
+    text-shadow:
+      0 1px 0 rgb(0 0 0 / 0.5),
+      0 0 3px rgb(255 255 255 / 0.5);
+    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 30%), color-mix(in srgb, var(--color-btn), black 48%));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 1px 2px rgb(0 0 0 / 0.4);
+  }
+}

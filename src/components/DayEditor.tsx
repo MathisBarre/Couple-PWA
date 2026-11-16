@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FLOW_LABELS, PAIN_LABELS, type DayLog, type Flow } from '../../shared/cycles'
 import { SYMPTOMS } from '../lib/symptoms'
-import { Icon } from './icons'
+import { Drop } from './icons'
 import { Button, cx, inputClass, MultiChoice, SectionTitle, SingleChoice } from './ui'
 
 interface Props {
@@ -12,10 +12,14 @@ interface Props {
   authorName?: string
 }
 
-// « Rien » se coche à l'encre noire ; un flux, en aplat de l'encre de couleur.
-const flowPressed = (i: number) => (i === 0 ? 'data-pressed:bg-ink data-pressed:text-bg' : 'data-pressed:bg-accent data-pressed:text-on-accent')
-/** Diamètre (px) de la pastille d'encre de chaque niveau de flux : la même échelle que le calendrier. */
-const FLOW_DOT = [0, 5, 9, 13, 17, 22]
+const flowPressed = [
+  'data-pressed:bg-surface-2',
+  'data-pressed:bg-flow-1',
+  'data-pressed:bg-flow-2',
+  'data-pressed:bg-flow-3 data-pressed:text-on-flow',
+  'data-pressed:bg-flow-4 data-pressed:text-on-flow',
+  'data-pressed:bg-flow-5 data-pressed:text-on-flow',
+]
 
 /** Saisie d'une journée : chaque appui enregistre immédiatement. Monter avec key={day}. */
 export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
@@ -33,22 +37,18 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Flux"
           value={base.flow}
           onChange={(flow) => update({ flow })}
-          className="grid grid-cols-3 border-t border-l border-ink"
-          itemClassName="flex min-h-[4.75rem] flex-col items-center justify-center gap-1 border-r border-b border-ink px-1.5 py-2.5 text-[0.98rem] leading-tight data-pressed:font-semibold"
+          className="grid grid-cols-3 gap-2"
+          itemClassName="sk-key flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-2.5 text-[0.9rem] font-bold"
           options={FLOW_LABELS.map((label, i) => ({
             value: i as Flow,
-            className: flowPressed(i),
+            className: flowPressed[i],
             label: (
               <>
-                <span aria-hidden className="grid h-6 place-items-center text-accent in-data-pressed:text-current">
-                  {i === 0 ? (
-                    <span className="h-px w-3.5 bg-ink in-data-pressed:bg-current" />
-                  ) : (
-                    <span className="rounded-full bg-current" style={{ width: FLOW_DOT[i], height: FLOW_DOT[i] }} />
-                  )}
+                <span aria-hidden className="flex h-4 items-center gap-px text-xs text-flow-4 in-data-pressed:text-current">
+                  {i === 0 ? '—' : i === 1 ? <Drop className="scale-60" /> : Array.from({ length: i - 1 }, (_, k) => <Drop key={k} />)}
                 </span>
                 {label}
-                {i === 1 && <span className="text-[0.78rem] leading-none font-normal italic opacity-80">quelques gouttes</span>}
+                {i === 1 && <span className="text-[0.7rem] leading-tight font-normal opacity-75">quelques gouttes</span>}
               </>
             ),
           }))}
@@ -61,8 +61,8 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Douleur"
           value={base.pain}
           onChange={(pain) => update({ pain })}
-          className="grid grid-cols-4 border-t border-l border-ink"
-          itemClassName="min-h-12 border-r border-b border-ink px-1 py-2.5 text-[0.98rem] data-pressed:bg-ink data-pressed:font-semibold data-pressed:text-bg"
+          className="sk-seg grid-cols-4"
+          itemClassName="sk-seg-item"
           options={PAIN_LABELS.map((label, i) => ({ value: i, label }))}
         />
       </section>
@@ -92,10 +92,8 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
       )}
 
       {log && (
-        <div className="flex items-center justify-between border-t border-line text-sm text-ink-2">
-          <span className="inline-flex items-center gap-1.5 italic">
-            {authorName ? `Noté par ${authorName}` : 'Enregistré'} <Icon name="check" className="size-3.5" strokeWidth={2} />
-          </span>
+        <div className="sk-engrave flex items-center justify-between text-sm text-ink-2">
+          <span>{authorName ? `Noté par ${authorName}` : 'Enregistré'} ✓</span>
           <Button variant="ghost" onClick={() => confirm('Effacer cette journée ?') && onDelete(day)}>
             Effacer
           </Button>

@@ -1,12 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { api } from '../lib/api'
-import { formatLong, localToday } from '../lib/dates'
 import { pendingInvite } from '../lib/invite'
 import { MODULES } from '../modules'
-import { Icon } from './icons'
-import { Button, inputClass, SectionTitle } from './ui'
-
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
+import { Glyph } from './icons'
+import { Button, cx } from './ui'
 
 export function Auth({ onDone }: { onDone: () => void }) {
   const invited = pendingInvite()
@@ -32,106 +29,96 @@ export function Auth({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <CoverLayout>
-      <Masthead />
-      {invited ? (
-        <div className="border-2 border-ink px-3.5 pt-2.5 pb-3">
-          <div className="etiquette mb-1.5">Invitation</div>
-          <p className="text-[1.1rem] leading-snug">
+    <CenterLayout>
+      <Brand compact={Boolean(invited)} />
+      {invited && (
+        <div className="sk-invite-card w-full">
+          <p className="text-[0.7rem] font-bold tracking-[0.14em] text-[#a07a2c] uppercase">Invitation</p>
+          <p className="mt-1 text-[0.95rem] leading-snug">
             Vous avez été invité·e à rejoindre un espace à deux. Créez votre compte (ou connectez-vous) : vous le rejoindrez automatiquement.
           </p>
         </div>
-      ) : (
-        <Contents />
       )}
-      <section className="border-t-2 border-ink pt-3">
-        <SectionTitle>{mode === 'login' ? 'Se connecter' : 'Créer un compte'}</SectionTitle>
-        <form onSubmit={submit} className="flex w-full flex-col">
-          {mode === 'signup' && <input className={inputClass} placeholder="Prénom" aria-label="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
+      <form onSubmit={submit} className="flex w-full flex-col gap-3.5">
+        <FieldGroup>
+          {mode === 'signup' && <input className="sk-field" placeholder="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
+          <input className="sk-field" type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input
-            className={inputClass + (mode === 'signup' ? ' border-t-0' : '')}
-            type="email"
-            placeholder="E-mail"
-            aria-label="E-mail"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className={inputClass + ' border-t-0'}
+            className="sk-field"
             type="password"
             placeholder="Mot de passe"
-            aria-label="Mot de passe"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             minLength={mode === 'signup' ? 8 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" disabled={busy} className="mt-3">
-            {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
-          </Button>
-        </form>
-        {msg && <p className="mt-2 text-sm font-medium italic">{msg}</p>}
-        <Button variant="link" className="mt-1" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-          {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
+        </FieldGroup>
+        <Button type="submit" disabled={busy}>
+          {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
         </Button>
-      </section>
-    </CoverLayout>
+      </form>
+      {msg && <p className="text-sm font-medium text-accent">{msg}</p>}
+      <Button variant="link" className="min-h-11 !self-center" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+        {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
+      </Button>
+    </CenterLayout>
   )
 }
 
-/** Têtière de couverture : la date du jour entre deux filets, puis le titre de l'almanach en très grand. */
-export function Masthead({ compact }: { compact?: boolean }) {
+/** Écrans hors de l'app (connexion, création de l'espace) : centrés sur le lin gris du thème neutre. */
+export function CenterLayout({ children }: { children: ReactNode }) {
   return (
-    <header>
-      <div className="etiquette flex items-center justify-between border-y border-ink py-2">
-        <span>{formatLong(localToday())}</span>
-        <Icon name="rings" className="h-4 w-6" />
-      </div>
-      <div className={compact ? 'pt-4 text-[2.75rem] leading-none font-light tracking-[-0.03em]' : 'pt-5 text-[6.25rem] leading-[0.85] font-light tracking-[-0.05em]'}>
-        À deux
-      </div>
-      {!compact && <p className="mt-4 text-[1.3rem] leading-snug italic">Notre app de couple, rien qu’à nous deux : cycle, courses et plus.</p>}
-    </header>
-  )
-}
-
-/** Sommaire de couverture : les espaces de l'app, chacun annoncé par un chiffre romain à son encre. */
-function Contents() {
-  return (
-    <ol className="border-t border-ink">
-      {MODULES.map((m, i) => (
-        <li key={m.id} className="flex items-center gap-3.5 border-b border-line py-2.5">
-          <span data-theme={m.theme} aria-hidden className="w-9 shrink-0 text-[2rem] leading-none font-light text-accent italic">
-            {ROMAN[i]}
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[1.2rem] leading-tight font-medium">{m.label}</span>
-            <span className="block text-sm text-ink-2 italic">{m.description}</span>
-          </span>
-        </li>
-      ))}
-      <li className="flex items-center gap-3.5 py-2.5 text-ink-2">
-        <span aria-hidden className="w-9 shrink-0 text-[2rem] leading-none font-light italic">
-          …
-        </span>
-        <span className="text-sm italic">Et d’autres espaces à venir.</span>
-      </li>
-    </ol>
-  )
-}
-
-/** Page de couverture (connexion, création de l'espace) : une colonne de texte, alignée à gauche. */
-export function CoverLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="rubriques mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+20px)]">
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-5 pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-center">
       {children}
     </div>
   )
 }
 
-export function CenterLayout({ children }: { children: ReactNode }) {
-  return <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-4 py-6 text-center">{children}</div>
+/** Le logo en icône d'app d'avant iOS 7 : coins arrondis, reflet en arc, ombre portée. */
+export function Logo({ className, size = 'size-24' }: { className?: string; size?: string }) {
+  return (
+    <div className={cx('sk-logo', size, className)}>
+      <div className="sk-logo-wrap size-full">
+        <img src="/logo.svg" alt="" className="size-full" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * L'identité de l'app : « À deux », une app de couple avec plusieurs espaces (et d'autres à venir),
+ * présentés comme des icônes posées sur une étagère.
+ */
+export function Brand({ compact }: { compact?: boolean }) {
+  return (
+    <div className="flex w-full flex-col items-center gap-3">
+      <Logo size={compact ? 'size-18' : 'size-24'} />
+      <div>
+        <h1 className="sk-wordmark">À deux</h1>
+        <p className="sk-engrave mt-1 text-[0.95rem] font-medium text-ink-2">Notre app de couple, rien qu’à nous deux.</p>
+      </div>
+      <ul aria-label="Les espaces de l’app" className="sk-shelf">
+        {MODULES.map((m) => (
+          <li key={m.id} data-theme={m.theme}>
+            <span aria-hidden className="sk-app-icon size-12">
+              <Glyph icon={m.icon} className="size-7" />
+            </span>
+            <span className="sk-shelf-label">{m.label}</span>
+          </li>
+        ))}
+        <li>
+          <span aria-hidden className="sk-app-icon sk-app-icon-soon size-12">
+            <span className="text-2xl leading-none font-bold">+</span>
+          </span>
+          <span className="sk-shelf-label">Et plus…</span>
+        </li>
+      </ul>
+    </div>
+  )
+}
+
+/** Champs empilés dans un même tableau groupé, comme un formulaire d'iOS 6. */
+export function FieldGroup({ children }: { children: ReactNode }) {
+  return <div className="sk-card sk-fields w-full overflow-hidden text-left">{children}</div>
 }

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { haptic } from '../lib/haptics'
 import type { View } from '../modules'
-import { Icon, type IconName } from './icons'
-import { cx } from './ui'
+import { Glyph } from './icons'
 
 export interface MenuItem {
   key: string
   label: string
-  icon: IconName
+  icon: string
   current?: boolean
 }
 
@@ -148,32 +147,27 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
       <div
         aria-hidden
         onClick={onClose}
-        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/35 motion-reduce:animate-none"
+        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/40 motion-reduce:animate-none"
       />
       <div
         role="menu"
         aria-label="Aller directement à"
-        style={{ left, width: WIDTH, bottom: innerHeight - rect.top + 10, transformOrigin: `${center - left}px 100%` }}
-        className="absolute animate-[menu-in_200ms_ease-out] overflow-hidden border border-ink bg-bg text-ink motion-reduce:animate-[fade-in_120ms_ease-out]"
+        style={{ left, width: WIDTH, bottom: innerHeight - rect.top + 12, transformOrigin: `${center - left}px 100%`, ['--arrow-x' as string]: `${center - left}px` }}
+        className="sk-popover absolute animate-[menu-in_260ms_cubic-bezier(0.2,0.9,0.3,1.15)] motion-reduce:animate-[fade-in_120ms_ease-out]"
       >
-        {items.map((item, i) => (
+        {items.map((item) => (
           <button
             key={item.key}
             type="button"
             role="menuitem"
             data-menu-item={item.key}
             onClick={() => onPick(item.key)}
-            className={cx(
-              'flex w-full items-center gap-3 px-4 py-3.5 text-left text-[1.05rem] transition-colors duration-100 outline-none select-none focus-visible:bg-surface-2',
-              i > 0 && 'border-t border-ink',
-              hover === item.key && 'bg-surface-2',
-            )}
+            data-hover={hover === item.key ? '' : undefined}
+            className="sk-popover-item flex w-full items-center gap-3 px-4 py-3 text-left font-bold outline-none select-none first:rounded-t-lg last:rounded-b-lg"
           >
-            <Icon name={item.icon} />
-            <span className={cx('flex-1', item.current && 'font-semibold')}>{item.label}</span>
-            {item.current && (
-              <span aria-hidden className="size-2 bg-accent" />
-            )}
+            <Glyph icon={item.icon} className="size-6" />
+            <span className="flex-1">{item.label}</span>
+            {item.current && <span aria-hidden>✓</span>}
           </button>
         ))}
       </div>
