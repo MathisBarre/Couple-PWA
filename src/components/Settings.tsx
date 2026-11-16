@@ -61,10 +61,10 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
                 >
                   {/* Pastille aux couleurs de l'espace (son thème s'applique à elle seule). */}
                   <span data-theme={m.theme} aria-hidden className="sk-app-icon size-9 shrink-0">
-                    <Glyph icon={m.icon} className="size-[1.35rem]" />
+                    <Glyph icon={m.icon} className="size-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{m.label}</span>
+                    <span className="block font-semibold">{m.label}</span>
                     <span className="block truncate text-sm text-ink-2">{m.settings}</span>
                   </span>
                   <Chevron className="text-ink-2/60" />

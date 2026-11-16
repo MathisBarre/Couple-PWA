@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { computeStatus, FLOW_LABELS, type DayLog, type Flow } from '../../shared/cycles'
 import { formatDM, formatLong } from '../lib/dates'
 import { Calendar } from './Calendar'
-import { Button, cx } from './ui'
+import { Button } from './ui'
 
 interface Props {
   today: string
@@ -45,7 +45,7 @@ export function Today({ today, logs, defaultCycle, names, onSave, onDelete }: Pr
     ) : null
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <StatusLine status={status} today={today} />
       <section aria-label="Calendrier">
         <Calendar today={today} logs={logs} defaultCycle={defaultCycle} names={names} onSave={onSave} onDelete={onDelete} todayExtra={shortcuts} />
@@ -94,8 +94,8 @@ function StatusLine({ status, today }: { status: ReturnType<typeof computeStatus
         <div className="sk-ephem-num">{cycleDay ?? Number(today.slice(8))}</div>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="sk-status-title sk-engrave text-[1.12rem] leading-tight font-bold">{title}</div>
-        <div className={cx('sk-engrave mt-0.5 text-[0.85rem] leading-snug text-ink-2')}>{sub}</div>
+        <div className="text-[1.12rem] leading-tight font-semibold tracking-tight">{title}</div>
+        <div className="mt-0.5 text-[0.88rem] leading-snug text-ink-2">{sub}</div>
       </div>
     </div>
   )

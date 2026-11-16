@@ -37,8 +37,8 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Flux"
           value={base.flow}
           onChange={(flow) => update({ flow })}
-          className="grid grid-cols-3 gap-2"
-          itemClassName="sk-key flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-2.5 text-[0.9rem] font-bold"
+          className="grid grid-cols-3 gap-2.5"
+          itemClassName="sk-key flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-2.5 text-[0.9rem] font-medium data-pressed:font-semibold"
           options={FLOW_LABELS.map((label, i) => ({
             value: i as Flow,
             className: flowPressed[i],
@@ -92,7 +92,7 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
       )}
 
       {log && (
-        <div className="sk-engrave flex items-center justify-between text-sm text-ink-2">
+        <div className="flex items-center justify-between text-sm text-ink-2">
           <span>{authorName ? `Noté par ${authorName}` : 'Enregistré'} ✓</span>
           <Button variant="ghost" onClick={() => confirm('Effacer cette journée ?') && onDelete(day)}>
             Effacer

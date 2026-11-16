@@ -29,7 +29,7 @@ export function SchemePicker() {
         <Toggle
           key={id}
           value={id}
-          className="sk-seg-item flex min-h-11 items-center justify-center gap-1.5 select-none"
+          className="sk-seg-item flex items-center justify-center gap-1.5 select-none"
         >
           <Glyph icon={icon} className="size-[1.15rem]" />
           {label}

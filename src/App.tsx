@@ -329,8 +329,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           </div>
         ))}
       </div>
-      <nav aria-label="Navigation principale" className="sk-tabbar fixed inset-x-0 bottom-0 z-20 px-1 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-xl">
+      <nav aria-label="Navigation principale" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+        <div aria-hidden className="sk-tabbar-fade absolute inset-x-0 -top-7 bottom-0" />
+        <div className="sk-tabbar pointer-events-auto relative mx-auto max-w-md">
           {BAR.map(({ id, label, icon }) => {
             const badge = badges[id] ?? 0
             return (
@@ -340,7 +341,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                 onClick={() => openTab(id)}
                 {...tabMenu.bind(id)}
                 aria-current={tab === id ? 'page' : undefined}
-                className="sk-tabbar-item group flex flex-1 touch-none flex-col items-center justify-center select-none [-webkit-touch-callout:none]"
+                className="sk-tabbar-item group flex flex-1 touch-none flex-col items-center justify-center gap-0.5 select-none [-webkit-touch-callout:none]"
               >
                 <span aria-hidden className="relative transition-transform duration-200 ease-out group-active:scale-90 motion-reduce:transition-none">
                   <Glyph icon={icon} />

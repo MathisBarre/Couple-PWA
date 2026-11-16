@@ -1,317 +1,231 @@
 @import 'tailwindcss';
-/* Écriture manuscrite du bloc-notes des courses, embarquée (l'app marche hors ligne). */
-@import '@fontsource/caveat/latin-500.css';
-@import '@fontsource/caveat/latin-700.css';
 @import './textures.css';
 @import './skeuo.css';
 
-/* Direction visuelle : skeuomorphisme façon premiers iOS (iPhone OS 3 à iOS 6). Chaque espace imite
-   un objet : Cycle = agenda en cuir aux pages de papier, Courses = bloc-notes à spirale écrit à la
-   main, Réglages = lin gris et tableaux groupés. Les matières sont dans src/textures.css (généré),
-   les composants (boutons bombés, interrupteurs, reliures…) dans src/skeuo.css.
+/* Linéale embarquée (l'app marche hors ligne) : Geist, en police variable, latin seulement. */
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Direction visuelle : réalisme tactile d'aujourd'hui. Chaque espace reste un objet réel, mais
+   dessiné sobrement : Cycle = bloc calendrier de bureau en papier épais, Courses = bloc-notes de
+   papeterie, Réglages = panneau de contrôles physiques (interrupteurs usinés, panneaux mats).
+   Fonds presque neutres, une seule lumière venue du haut, ombres douces en plusieurs couches,
+   épaisseur visible des objets. Les composants sont dans src/skeuo.css.
 
    Jetons de couleur : redéfinis par thème et en mode sombre, utilisables en classes Tailwind
    (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…).
-   - bg / surface / surface-2 : la page, une feuille posée dessus, un creux ;
-   - chrome / on-chrome : la reliure du haut (cuir, couverture, barre) et la barre d'état ;
-   - btn / on-btn : les boutons bombés ; accent : liens, encre de couleur. */
+   - bg : le plan de travail ; surface : un objet posé dessus (papier, panneau) ; surface-2 : un creux ;
+   - chrome : couleur unie de l'en-tête et de la barre d'état (= bg) ;
+   - btn / on-btn : boutons pleins ; accent : liens, encre de couleur ; signal : voyant « allumé ». */
 @theme {
-  --color-bg: #f7f0df;
-  --color-surface: #fffdf6;
-  --color-surface-2: #ece2cc;
-  --color-ink: #33241d;
-  --color-ink-2: #77634f;
-  --color-line: #d8cab0;
-  --color-accent: #b92d53;
+  --color-bg: #f6f2ef;
+  --color-surface: #fffdfb;
+  --color-surface-2: #ece5e1;
+  --color-ink: #231a1c;
+  --color-ink-2: #7c6d6f;
+  --color-line: #e8deda;
+  --color-accent: #c2335b;
   --color-on-accent: #ffffff;
-  --color-btn: #c93a61;
+  --color-btn: #c93a62;
   --color-on-btn: #ffffff;
-  --color-chrome: #a4304e;
-  --color-on-chrome: #f6dfae;
-  --color-rule: #b9c8e4;
-  --color-soon: #fdf0a6;
-  --color-on-soon: #6b4a00;
-  --color-warn: #fdf0a6;
+  --color-signal: #c93a62;
+  --color-chrome: #f6f2ef;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
   /* Intensité du flux : une seule teinte, du clair au foncé */
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
+  --color-flow-1: #f6ccd3;
+  --color-flow-2: #efa2b0;
+  --color-flow-3: #e2667e;
   --color-flow-4: #c43a5a;
   --color-flow-5: #8a1d3b;
   --color-on-flow: #ffffff;
-  --font-sans: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', sans-serif;
-  --font-hand: 'Caveat', 'Marker Felt', 'Bradley Hand', cursive;
+  --font-sans: 'Geist Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Thèmes par espace : chaque espace (src/modules.ts) choisit un thème. Il est posé
    sur <html data-theme="…"> (barre du bas, barre d'état) et sur chaque écran, pour
-   que deux espaces gardent chacun leurs matières pendant qu'ils glissent l'un sur
+   que deux espaces gardent chacun leurs couleurs pendant qu'ils glissent l'un sur
    l'autre. « rose » est aussi le thème par défaut (:root), répété pour un écran rose posé
-   dans une page verte. Chaque bloc définit TOUTES les variables (couleurs + matières).
-   Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts. */
+   dans une page verte. Chaque bloc définit TOUTES les variables.
+   Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts.
+   --shade : teinte des ombres portées (triplet RVB) ; --lift : force des ombres. */
 
-/* Rose (Cycle) : agenda de bureau, reliure en cuir framboise cousu, pages de papier crème. */
+/* Rose (Cycle) : blanc cassé chaud à peine rosé, papier ivoire, encre framboise. */
 :root,
 [data-theme='rose'] {
-  --color-bg: #f7f0df;
-  --color-surface: #fffdf6;
-  --color-surface-2: #ece2cc;
-  --color-ink: #33241d;
-  --color-ink-2: #77634f;
-  --color-line: #d8cab0;
-  --color-accent: #b92d53;
+  --color-bg: #f6f2ef;
+  --color-surface: #fffdfb;
+  --color-surface-2: #ece5e1;
+  --color-ink: #231a1c;
+  --color-ink-2: #7c6d6f;
+  --color-line: #e8deda;
+  --color-accent: #c2335b;
   --color-on-accent: #ffffff;
-  --color-btn: #c93a61;
+  --color-btn: #c93a62;
   --color-on-btn: #ffffff;
-  --color-chrome: #a4304e;
-  --color-on-chrome: #f6dfae;
-  --color-rule: #b9c8e4;
-  --color-soon: #fdf0a6;
-  --color-on-soon: #6b4a00;
-  --color-warn: #fdf0a6;
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
+  --color-signal: #c93a62;
+  --color-chrome: #f6f2ef;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --color-flow-1: #f6ccd3;
+  --color-flow-2: #efa2b0;
+  --color-flow-3: #e2667e;
   --color-flow-4: #c43a5a;
   --color-flow-5: #8a1d3b;
   --color-on-flow: #ffffff;
-
-  --chrome-tex: var(--tex-leather);
-  --chrome-blend: soft-light;
-  --title-fill: linear-gradient(#fbeec6, #dcb568 58%, #f3d894);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(60 10 25 / 0.55)) drop-shadow(0 1px 0 rgb(255 255 255 / 0.18));
-  --stitch: #f3dcc0;
-  --edge-img: var(--tex-torn);
-  --edge-h: 18px;
-  --edge-top: 100%;
-  --edge-gap: 26px;
-  --body-tex: var(--tex-paper);
-  --engrave: 0 1px 0 rgb(255 255 255 / 0.85);
-  --card-radius: 3px;
-  --card-border: rgb(120 92 58 / 0.32);
-  --card-shadow: 0 1px 1.5px rgb(70 45 20 / 0.28), 0 8px 14px -10px rgb(70 45 20 / 0.55);
-  --card-tex: var(--tex-paper);
-  --key-top: #ffffff;
-  --key-bottom: #e7dcc6;
-  --key-border: #a8977c;
-  --st-font: var(--font-sans);
-  --st-size: 0.72rem;
-  --st-weight: 700;
-  --st-transform: uppercase;
-  --st-track: 0.09em;
-  --box-img: var(--tex-box);
+  --shade: 74 44 44;
+  --lift: 1;
+  --paper-tex: var(--tex-paper);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #eeeae7);
 }
 :root[data-scheme='dark'],
 [data-scheme='dark'] [data-theme='rose'],
 [data-scheme='dark'][data-theme='rose'] {
-  /* Cuir noir aux reflets bordeaux, papier kraft sombre. */
-  --color-bg: #2e2620;
-  --color-surface: #3b3129;
-  --color-surface-2: #241d18;
-  --color-ink: #f3e7d6;
-  --color-ink-2: #bba791;
-  --color-line: #57483b;
-  --color-accent: #ff8ba3;
+  --color-bg: #171213;
+  --color-surface: #251d1f;
+  --color-surface-2: #110d0e;
+  --color-ink: #f4eaea;
+  --color-ink-2: #a89598;
+  --color-line: #382c2f;
+  --color-accent: #ff8ba5;
   --color-on-accent: #2b0d15;
-  --color-btn: #b5345a;
+  --color-btn: #d2456d;
   --color-on-btn: #ffffff;
-  --color-chrome: #2a1016;
-  --color-on-chrome: #e9c58d;
-  --color-rule: #4a4f5c;
-  --color-soon: #5b4a1d;
+  --color-signal: #e85a82;
+  --color-chrome: #171213;
+  --color-soon: #4a3d19;
   --color-on-soon: #ffe2a3;
-  --color-warn: #57471c;
-  --color-flow-1: #6a434a;
-  --color-flow-2: #96495a;
-  --color-flow-3: #c25270;
+  --color-warn: #463a18;
+  --color-flow-1: #5f3c43;
+  --color-flow-2: #8c4455;
+  --color-flow-3: #bf4f6d;
   --color-flow-4: #e66d8b;
   --color-flow-5: #ffa3b8;
   --color-on-flow: #2b0d15;
-
-  --chrome-tex: var(--tex-leather);
-  --chrome-blend: overlay;
-  --title-fill: linear-gradient(#f3dcae, #b98f4f 58%, #e3c07c);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.8)) drop-shadow(0 1px 0 rgb(255 255 255 / 0.08));
-  --stitch: #b98f6a;
-  --edge-img: var(--tex-torn-dark);
-  --body-tex: var(--tex-kraft);
-  --engrave: 0 -1px 0 rgb(0 0 0 / 0.55);
-  --card-border: rgb(0 0 0 / 0.55);
-  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 14px -10px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --card-tex: var(--tex-kraft);
-  --key-top: #54463b;
-  --key-bottom: #3a3028;
-  --key-border: #17120e;
-  --box-img: var(--tex-box-dark);
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-paper-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#4a4043, #34292c);
   color-scheme: dark;
 }
 
-/* Verdure (Courses) : bloc-notes à spirale, couverture toilée verte, papier jaune ligné. */
+/* Verdure (Courses) : blanc cassé à peine vert, papier blanc chaud, bande de toile verte. */
 [data-theme='verdure'] {
-  --color-bg: #fbf3b9;
-  --color-surface: #fffce3;
-  --color-surface-2: #ece2a0;
-  --color-ink: #1f2c5c;
-  --color-ink-2: #6c6a4e;
-  --color-line: #d6cb8a;
-  --color-accent: #2c7a3d;
+  --color-bg: #f2f3ee;
+  --color-surface: #fffefb;
+  --color-surface-2: #e6e9e0;
+  --color-ink: #1a211c;
+  --color-ink-2: #6b756c;
+  --color-line: #e2e6dc;
+  --color-accent: #2c7a42;
   --color-on-accent: #ffffff;
-  --color-btn: #3a9a4e;
+  --color-btn: #2f8448;
   --color-on-btn: #ffffff;
-  --color-chrome: #2b6a3a;
-  --color-on-chrome: #f4f1d8;
-  --color-rule: #a9bfe6;
-  --color-soon: #fff0d9;
-  --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
-
-  --chrome-tex: var(--tex-leather);
-  --chrome-blend: soft-light;
-  --title-fill: linear-gradient(#ffffff, #e9e4c2);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(0 30 10 / 0.6));
-  --stitch: #e9e2b4;
-  --edge-img: var(--tex-rings);
-  --edge-h: 36px;
-  --edge-top: calc(100% - 14px);
-  --edge-gap: 30px;
-  --body-tex: var(--tex-paper);
-  --engrave: 0 1px 0 rgb(255 255 255 / 0.6);
-  --card-radius: 3px;
-  --card-border: rgb(110 100 40 / 0.35);
-  --card-shadow: 0 1px 1.5px rgb(70 60 10 / 0.28), 0 8px 14px -10px rgb(70 60 10 / 0.5);
-  --card-tex: var(--tex-paper);
-  --key-top: #ffffff;
-  --key-bottom: #e8e2bd;
-  --key-border: #a39b63;
-  --st-font: var(--font-hand);
-  --st-size: 1.45rem;
-  --st-weight: 700;
-  --st-transform: none;
-  --st-track: 0;
-  --margin-line: rgb(214 82 82 / 0.6);
-  --box-img: var(--tex-box);
+  --color-signal: #2f8448;
+  --color-chrome: #f2f3ee;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --shade: 40 56 44;
+  --lift: 1;
+  --paper-tex: var(--tex-paper);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #ebeee8);
 }
 [data-scheme='dark'] [data-theme='verdure'],
 [data-scheme='dark'][data-theme='verdure'] {
-  /* Couverture vert bouteille, papier kraft sombre écrit au crayon blanc. */
-  --color-bg: #2c2a22;
-  --color-surface: #38352b;
-  --color-surface-2: #201e18;
-  --color-ink: #f2eedb;
-  --color-ink-2: #aaa48c;
-  --color-line: #504c3d;
-  --color-accent: #8fd39b;
+  --color-bg: #111512;
+  --color-surface: #1c221d;
+  --color-surface-2: #0b0e0c;
+  --color-ink: #e9f0e8;
+  --color-ink-2: #95a397;
+  --color-line: #2b342d;
+  --color-accent: #86d298;
   --color-on-accent: #0e2313;
-  --color-btn: #2f8443;
+  --color-btn: #37975a;
   --color-on-btn: #ffffff;
-  --color-chrome: #12251a;
-  --color-on-chrome: #dfe8cf;
-  --color-rule: rgb(255 255 255 / 0.13);
-  --color-soon: #3d2c12;
+  --color-signal: #4bb46d;
+  --color-chrome: #111512;
+  --color-soon: #3d3212;
   --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-
-  --chrome-blend: overlay;
-  --title-fill: linear-gradient(#eef3df, #b9c7a6);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.8));
-  --stitch: #9fb08c;
-  --edge-img: var(--tex-rings-dark);
-  --body-tex: var(--tex-kraft);
-  --engrave: 0 -1px 0 rgb(0 0 0 / 0.5);
-  --card-border: rgb(0 0 0 / 0.55);
-  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 14px -10px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --card-tex: var(--tex-kraft);
-  --key-top: #4f4b3d;
-  --key-bottom: #37342a;
-  --key-border: #14130f;
-  --margin-line: rgb(226 110 110 / 0.45);
-  --box-img: var(--tex-box-dark);
+  --color-warn: #3a2f14;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-paper-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#3e4840, #2a322c);
 }
 
-/* Neutre (réglages, « Plus », connexion) : lin gris, barre ardoise et tableaux groupés d'iOS 6. */
+/* Neutre (réglages, « Plus », connexion) : gris chaud mat, graphite, un seul voyant orange. */
 [data-theme='neutre'] {
-  --color-bg: #d6d9df;
-  --color-surface: #ffffff;
-  --color-surface-2: #e6e8ec;
-  --color-ink: #17181b;
-  --color-ink-2: #4c566c;
-  --color-line: #a9adb5;
-  --color-accent: #2f5ea8;
+  --color-bg: #f0efec;
+  --color-surface: #fbfaf8;
+  --color-surface-2: #e3e2de;
+  --color-ink: #1c1c1e;
+  --color-ink-2: #6f6f73;
+  --color-line: #e2e1dd;
+  --color-accent: #1c1c1e;
   --color-on-accent: #ffffff;
-  --color-btn: #3f7fde;
+  --color-btn: #29292c;
   --color-on-btn: #ffffff;
-  --color-chrome: #6d83a3;
-  --color-on-chrome: #ffffff;
-  --color-rule: #a9adb5;
-  --color-soon: #fff0d9;
-  --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
-
-  --chrome-tex: var(--tex-noise);
-  --chrome-blend: normal;
-  --title-fill: linear-gradient(#ffffff, #e9eef6);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(20 35 60 / 0.55));
-  --stitch: transparent;
-  --stitch-shadow: transparent;
-  --edge-img: linear-gradient(rgb(0 0 0 / 0.3), rgb(0 0 0 / 0));
-  --edge-h: 5px;
-  --edge-top: 100%;
-  --edge-gap: 18px;
-  --body-tex: var(--tex-linen);
-  --engrave: 0 1px 0 rgb(255 255 255 / 0.9);
-  --card-radius: 10px;
-  --card-border: #9fa3ab;
-  --card-shadow: 0 1px 0 rgb(255 255 255 / 0.85), inset 0 1px 2px rgb(0 0 0 / 0.1);
-  --card-tex: none;
-  --key-top: #ffffff;
-  --key-bottom: #dfe2e8;
-  --key-border: #8f949e;
-  --st-font: var(--font-sans);
-  --st-size: 1.02rem;
-  --st-weight: 700;
-  --st-transform: none;
-  --st-track: 0;
-  --box-img: var(--tex-box);
+  --color-signal: #f0622a;
+  --color-chrome: #f0efec;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --shade: 40 38 34;
+  --lift: 1;
+  --paper-tex: none;
+  --hi: rgb(255 255 255 / 0.95);
+  --knob: linear-gradient(#ffffff, #e9e8e5);
 }
 [data-scheme='dark'] [data-theme='neutre'],
 [data-scheme='dark'][data-theme='neutre'] {
-  /* Lin anthracite (celui du centre de notifications d'iOS 5 et 6). */
-  --color-bg: #35373c;
-  --color-surface: #25272b;
-  --color-surface-2: #1a1b1e;
-  --color-ink: #f1f2f4;
-  --color-ink-2: #aab1bf;
-  --color-line: #0f1012;
-  --color-accent: #9dc0f5;
-  --color-on-accent: #0d1a2e;
-  --color-btn: #2f6fcf;
-  --color-on-btn: #ffffff;
-  --color-chrome: #1d1f23;
-  --color-on-chrome: #ffffff;
-  --color-rule: #0f1012;
-  --color-soon: #3d2c12;
+  --color-bg: #131314;
+  --color-surface: #202022;
+  --color-surface-2: #0b0b0c;
+  --color-ink: #f2f2f3;
+  --color-ink-2: #9c9ca3;
+  --color-line: #303033;
+  --color-accent: #f2f2f3;
+  --color-on-accent: #18181b;
+  --color-btn: #ececee;
+  --color-on-btn: #18181b;
+  --color-signal: #ff7a45;
+  --color-chrome: #131314;
+  --color-soon: #3d3212;
   --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-
-  --chrome-tex: var(--tex-linen-dark);
-  --title-fill: linear-gradient(#ffffff, #c9ced8);
-  --title-shadow: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.9));
-  --edge-img: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
-  --body-tex: var(--tex-linen-dark);
-  --engrave: 0 -1px 0 rgb(0 0 0 / 0.7);
-  --card-border: #0b0c0d;
-  --card-shadow: 0 1px 0 rgb(255 255 255 / 0.09), inset 0 1px 3px rgb(0 0 0 / 0.5);
-  --key-top: #4a4d54;
-  --key-bottom: #2e3035;
-  --key-border: #0b0c0d;
-  --box-img: var(--tex-box-dark);
+  --color-warn: #3a2f14;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: none;
+  --hi: rgb(255 255 255 / 0.08);
+  --knob: linear-gradient(#56565b, #3a3a3e);
 }
 
 /* Avant le chargement du script : suivre le téléphone, pour éviter un flash clair. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-scheme]) {
-    --color-bg: #35373c;
-    --color-chrome: #1d1f23;
+    --color-bg: #131314;
+    --color-chrome: #131314;
     color-scheme: dark;
   }
 }
@@ -319,9 +233,7 @@
 @layer base {
   html,
   body {
-    @apply min-h-full text-ink antialiased;
-    background-color: var(--color-bg);
-    background-image: var(--body-tex);
+    @apply min-h-full bg-bg text-ink antialiased;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     /* Comme une app native : pas de sélection de texte ni de bulle « Copier » sur un appui
@@ -329,9 +241,6 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
-  }
-  body {
-    background: none;
   }
   /* Les champs de saisie restent sélectionnables, ainsi que ce qu'on a voulu copier (select-all, select-text). */
   input,
@@ -369,7 +278,7 @@
 /* Haut de l'écran sur iPhone (iOS 26+) : une app installée reçoit un flou système sous la
    barre d'état (« scroll edge effect »). WebKit le remplace par une couleur unie seulement
    s'il trouve, à quelques pixels du bord haut, un élément fixe, opaque et sur toute la
-   largeur. Ce bandeau, de la couleur unie de la reliure (--color-chrome), joue ce rôle. Il doit
+   largeur. Ce bandeau, de la couleur unie de l'en-tête (--color-chrome), joue ce rôle. Il doit
    rester « touchable » (pas de pointer-events: none) : WebKit le repère par hit-test. Le contenu
    commence 12 px sous la zone sûre, donc rien d'utile n'est masqué. */
 #top-edge {
@@ -381,20 +290,4 @@
   /* Couleur posée aussi en dur par syncStatusBar() (src/lib/scheme.ts), sans transition :
      iOS doit lire la couleur finale tout de suite. */
   background-color: var(--color-chrome);
-}
-/* Fondu vers le grain de la reliure, juste sous le bandeau uni : pas de marche visible. */
-#top-edge::after {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  top: 100%;
-  height: 22px;
-  pointer-events: none;
-  background: linear-gradient(var(--color-chrome), transparent);
-}
-/* Hors de l'app (connexion, création de l'espace) : pas de reliure sous le bandeau. Il devient la
-   barre d'état teintée d'iOS 6, une bande nette qui porte une ombre sur le lin. */
-:root:not(:has(.sk-screen)) #top-edge::after {
-  height: 5px;
-  background: linear-gradient(rgb(0 0 0 / 0.38), transparent);
 }

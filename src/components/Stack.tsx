@@ -167,7 +167,7 @@ export function Stack({ screens, onPop, ref }: { screens: StackScreen[]; onPop: 
             )}
           >
             <div data-scroll className="h-full overflow-x-hidden overflow-y-auto overscroll-contain">
-              <main className="sk-body mx-auto flex min-h-full w-full max-w-xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+88px)]">
+              <main className="sk-body mx-auto flex min-h-full w-full max-w-xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+104px)]">
                 {/* Un écran empilé affiche « ‹ Précédent » dans son en-tête (ScreenHeader). */}
                 <BackContext value={i > 0 ? { label: screens[i - 1].title, onBack: () => pop() } : null}>{s.node}</BackContext>
               </main>

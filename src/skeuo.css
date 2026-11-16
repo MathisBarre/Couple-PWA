@@ -1,359 +1,335 @@
-/* Composants skeuomorphes (façon iPhone OS 3 à iOS 6). Tout passe par les variables de thème de
-   src/index.css : un même composant change de matière selon l'espace et le mode clair / sombre.
+/* Composants « réalisme tactile » : des objets sobres (papier épais, panneaux mats, boutons usinés)
+   éclairés par une seule lumière venue du haut. Pas de reflet brillant ni de biseau dur : le relief
+   vient d'ombres douces en plusieurs couches (contact fin + portée diffuse), d'un liseré de lumière
+   en haut des objets et de creux pour ce qui se remplit ou se règle.
+   Tout passe par les variables de thème de src/index.css (--shade, --lift, --hi, --knob…).
    Dans la couche « components » : une classe utilitaire Tailwind posée à côté garde le dernier mot. */
 @layer components {
-  /* ───────── Écran : reliure en haut, page dessous ───────── */
+  /* Ombres : déclarées ici pour être recalculées dans chaque thème (--shade, --lift). */
+  :where([class*='sk-']) {
+    /* Petite pièce posée (touche, bouton rond, curseur). */
+    --sh-key:
+      0 0.5px 0.5px rgb(var(--shade) / calc(0.12 * var(--lift))), 0 1px 2px rgb(var(--shade) / calc(0.07 * var(--lift))),
+      0 4px 8px -2px rgb(var(--shade) / calc(0.08 * var(--lift)));
+    /* Feuille ou panneau posé. */
+    --sh-card:
+      0 0 0 0.5px rgb(var(--shade) / calc(0.09 * var(--lift))), 0 1px 1.5px rgb(var(--shade) / calc(0.05 * var(--lift))),
+      0 6px 14px -6px rgb(var(--shade) / calc(0.1 * var(--lift)));
+    /* Objet épais, nettement décollé du plan de travail. */
+    --sh-object:
+      0 1px 2px rgb(var(--shade) / calc(0.06 * var(--lift))), 0 8px 16px -6px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 26px 44px -20px rgb(var(--shade) / calc(0.22 * var(--lift)));
+    /* Creux : ombre interne en haut, liseré de lumière sur la lèvre du bas. */
+    --sh-well:
+      inset 0 1px 2.5px rgb(var(--shade) / calc(0.16 * var(--lift))), inset 0 0 0 0.5px rgb(var(--shade) / calc(0.07 * var(--lift))), 0 1px 0 var(--hi);
+  }
 
-  /* Fond de l'écran (derrière la page) : la couleur de la reliure, visible quand iOS « étire » le défilement. */
-  .sk-screen {
-    background-color: var(--color-chrome);
+  /* ───────── Écran ───────── */
+  .sk-screen,
+  .sk-body,
+  .sk-chrome {
+    background-color: var(--color-bg);
     color: var(--color-ink);
   }
-  /* La page : papier, kraft ou lin selon le thème. */
-  .sk-body {
-    background-color: var(--color-bg);
-    background-image: var(--body-tex);
-  }
-  /* La reliure : cuir, toile ou barre ardoise. En haut, sa couleur unie raccorde avec #top-edge. */
+  /* En-tête : couleur unie, exactement celle de la barre d'état (#top-edge). */
   .sk-chrome {
     background-color: var(--color-chrome);
-    background-image: var(--chrome-tex);
-    background-blend-mode: var(--chrome-blend);
-    color: #fff;
   }
   .sk-title {
-    /* 1 px de recouvrement avec la barre : pas de filet de papier entre les deux. */
+    /* 1 px de recouvrement avec la barre : pas de filet entre les deux. */
     margin: -1px -1rem 0;
-    padding: 1px 1rem 0.5rem;
-    font-size: 2rem;
-    line-height: 1.15;
+    padding: 0.35rem 1rem 0.7rem;
+    font-size: 2.15rem;
+    line-height: 1.1;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.035em;
   }
-  /* Titre « doré à chaud » dans le cuir (ou blanc gravé sur la barre ardoise). */
-  .sk-title > span {
-    background: var(--title-fill);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: var(--title-shadow);
-  }
-  /* Bas de la reliure : reste collé sous la barre. Porte les onglets de l'espace, la couture, et
-     ce qui dépasse sur la page (pages arrachées de l'agenda, spirale du bloc-notes, ombre). */
+  /* Bas de l'en-tête : reste collé sous la barre, porte les onglets de l'espace. Le contenu qui
+     défile s'efface dessous dans un court fondu, sans filet. */
   .sk-edge {
     position: sticky;
     z-index: 20;
-    margin: -1px -1rem 0;
-    padding: 1px 1rem 0.95rem;
-    min-height: 0.95rem;
-    margin-bottom: var(--edge-gap);
+    margin: -1px -1rem 0.85rem;
+    padding: 1px 1rem 0;
   }
-  .sk-edge::before {
-    /* Couture : points de fil clair, ombrés dessous. */
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    bottom: 5px;
-    height: 3px;
-    background:
-      repeating-linear-gradient(90deg, var(--stitch) 0 8px, transparent 8px 13px) 2px 0 / 100% 2px no-repeat,
-      repeating-linear-gradient(90deg, var(--stitch-shadow, rgb(0 0 0 / 0.35)) 0 8px, transparent 8px 13px) 2px 1px / 100% 2px no-repeat;
-    border-radius: 1px;
+  .sk-edge:not(:empty) {
+    padding-bottom: 0.5rem;
   }
   .sk-edge::after {
     content: '';
     position: absolute;
     inset-inline: 0;
-    top: var(--edge-top);
-    height: var(--edge-h);
-    background: var(--edge-img) repeat-x left top;
+    top: 100%;
+    height: 14px;
+    background: linear-gradient(var(--color-chrome), transparent);
     pointer-events: none;
   }
-  [data-theme='neutre'] .sk-edge {
-    box-shadow:
-      inset 0 -1px 0 rgb(0 0 0 / 0.4),
-      inset 0 -2px 0 rgb(255 255 255 / 0.12);
-  }
-  [data-theme='verdure'] .sk-edge::after,
-  [data-theme='verdure'].sk-edge::after {
-    background-position: 6px 0;
-  }
 
-  /* Bouton de la barre du haut (iOS 6) : teinte de la reliure, bombé, bord sombre. */
-  .sk-navbtn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 32px;
-    min-width: 36px;
-    padding: 0 9px;
-    border-radius: 6px;
-    border: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
-    background: linear-gradient(
-      color-mix(in srgb, var(--color-chrome), white 30%),
-      color-mix(in srgb, var(--color-chrome), white 6%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 20%)
-    );
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      0 1px 0 rgb(255 255 255 / 0.22),
-      0 1px 2px rgb(0 0 0 / 0.3);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.5);
-    outline: none;
-  }
-  /* Zone tactile de 44 px autour du bouton. */
-  .sk-navbtn::after {
-    content: '';
-    position: absolute;
-    inset: -7px -5px;
-  }
-  .sk-navbtn:active {
-    background: linear-gradient(color-mix(in srgb, var(--color-chrome), black 45%), color-mix(in srgb, var(--color-chrome), black 22%));
-    box-shadow:
-      inset 0 2px 4px rgb(0 0 0 / 0.5),
-      0 1px 0 rgb(255 255 255 / 0.22);
-  }
-  .sk-navbtn:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-  }
-  .sk-navbtn svg {
-    filter: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.45));
-  }
-  /* Bouton retour en pointe, comme sur iOS 6. */
-  .sk-back {
-    isolation: isolate;
-    margin-left: 11px;
-    padding: 0 9px 0 5px;
-    border-left: none;
-    border-radius: 0 6px 6px 0;
-  }
-  .sk-back::before {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    left: -11.5px;
-    top: 3.6px;
-    width: 22.6px;
-    height: 22.6px;
-    transform: rotate(45deg);
-    border-radius: 0 0 0 4px;
-    border-left: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
-    border-bottom: 1px solid color-mix(in srgb, var(--color-chrome), black 55%);
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--color-chrome), white 30%),
-      color-mix(in srgb, var(--color-chrome), white 6%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 20%)
-    );
-    box-shadow: inset 1px 0 0 rgb(255 255 255 / 0.18);
-    clip-path: polygon(0 0, 0 100%, 100% 100%);
-  }
-  .sk-back:active::before {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--color-chrome), black 45%), color-mix(in srgb, var(--color-chrome), black 22%));
-  }
-
-  /* Onglets de l'espace : contrôle segmenté de barre, la pastille enfoncée glisse sous l'onglet actif. */
-  .sk-tabs {
+  /* Bouton rond de la barre du haut : céramique mate, posée. */
+  .sk-navbtn,
+  .sk-round {
     position: relative;
     display: grid;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid color-mix(in srgb, var(--color-chrome), black 58%);
-    background: linear-gradient(
-      color-mix(in srgb, var(--color-chrome), white 28%),
-      color-mix(in srgb, var(--color-chrome), white 5%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 8%) 50%,
-      color-mix(in srgb, var(--color-chrome), black 18%)
-    );
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    color: var(--color-ink);
+    background: var(--knob);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.32),
-      0 1px 0 rgb(255 255 255 / 0.2);
+      var(--sh-key),
+      inset 0 1px 0 var(--hi);
+    outline: none;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+  .sk-round {
+    width: 38px;
+    height: 38px;
+  }
+  /* Zone tactile de 44 px. */
+  .sk-navbtn::after,
+  .sk-round::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+  }
+  .sk-navbtn:active,
+  .sk-round:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow:
+      0 0.5px 0.5px rgb(var(--shade) / calc(0.14 * var(--lift))),
+      inset 0 1px 0 var(--hi);
+  }
+  .sk-navbtn:focus-visible,
+  .sk-round:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  /* Retour : un chevron et le nom de l'écran précédent. */
+  .sk-back {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 44px;
+    margin-left: -0.15rem;
+    padding-right: 0.5rem;
+    font-size: 1.06rem;
+    font-weight: 550;
+    color: var(--color-accent);
+    outline: none;
+  }
+  .sk-back:active {
+    opacity: 0.5;
+  }
+  .sk-back:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* Onglets de l'espace : une glissière en creux, un curseur posé dedans qui glisse sous l'onglet actif. */
+  .sk-tabs,
+  .sk-seg {
+    position: relative;
+    display: grid;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 15px;
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
   }
   .sk-tabs-pill {
     position: absolute;
-    border-radius: 5px;
-    background: linear-gradient(color-mix(in srgb, var(--color-chrome), black 52%), color-mix(in srgb, var(--color-chrome), black 30%));
+    border-radius: 12px;
+    background: var(--knob);
     box-shadow:
-      inset 0 1px 4px rgb(0 0 0 / 0.65),
-      inset 0 0 0 1px rgb(0 0 0 / 0.25);
+      var(--sh-key),
+      inset 0 1px 0 var(--hi);
   }
-  .sk-tab {
+  .sk-tab,
+  .sk-seg-item {
     position: relative;
     z-index: 1;
+    min-height: 40px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 0 4px;
-    font-size: 13px;
-    font-weight: 700;
-    color: rgb(255 255 255 / 0.92);
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.5);
+    padding: 0 6px;
+    border-radius: 12px;
+    font-size: 0.94rem;
+    font-weight: 550;
+    color: var(--color-ink-2);
     outline: none;
+    transition: color 0.2s;
   }
-  .sk-tab + .sk-tab {
-    box-shadow: -1px 0 0 rgb(0 0 0 / 0.3);
+  .sk-tab[data-active],
+  .sk-seg-item[data-pressed] {
+    color: var(--color-ink);
+    font-weight: 650;
+  }
+  .sk-seg-item[data-pressed] {
+    background: var(--knob);
+    box-shadow:
+      var(--sh-key),
+      inset 0 1px 0 var(--hi);
   }
   /* Zone tactile de 44 px. */
-  .sk-tab::after {
+  .sk-tab::after,
+  .sk-seg-item::after {
     content: '';
     position: absolute;
-    inset: -7px 0;
+    inset: -3px 0;
   }
-  .sk-tab:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: -3px;
+  .sk-tab:focus-visible,
+  .sk-seg-item:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
 
   /* ───────── Texte ───────── */
-  .sk-engrave {
-    text-shadow: var(--engrave);
-  }
   .sk-h2 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    text-shadow: var(--engrave);
+    font-size: 1.3rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
   }
-  /* Titre de rubrique : petites capitales imprimées (agenda), en-tête de groupe (réglages) ou feutre (bloc-notes). */
   .sk-section-title {
-    margin-bottom: 0.45rem;
-    font-family: var(--st-font);
-    font-size: var(--st-size);
-    font-weight: var(--st-weight);
-    text-transform: var(--st-transform);
-    letter-spacing: var(--st-track);
+    margin-bottom: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
     color: var(--color-ink-2);
-    text-shadow: var(--engrave);
   }
   .sk-group > .sk-section-title {
-    padding-left: 0.55rem;
+    padding-left: 0.35rem;
   }
 
-  /* ───────── Feuilles et tableaux groupés ───────── */
+  /* ───────── Feuilles et panneaux ───────── */
   .sk-card {
-    border-radius: var(--card-radius);
-    border: 1px solid var(--card-border);
+    border-radius: 20px;
     background-color: var(--color-surface);
-    background-image: var(--card-tex);
-    box-shadow: var(--card-shadow);
+    background-image: var(--paper-tex);
+    box-shadow:
+      var(--sh-card),
+      inset 0 1px 0 var(--hi);
   }
   .sk-list {
     overflow: hidden;
   }
   .sk-list > li + li {
     border-top: 1px solid var(--color-line);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
   }
-  [data-scheme='dark'] .sk-list > li + li {
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
-  }
-  /* Pense-bête jaune collé de travers (« À surveiller »). */
-  .sk-postit {
+  /* Bloc de papier épais : on voit la tranche des feuilles sous le bloc. */
+  .sk-block {
     position: relative;
-    padding: 1.1rem 1rem 1rem;
-    background: linear-gradient(175deg, color-mix(in srgb, var(--color-warn), white 25%), var(--color-warn) 60%, color-mix(in srgb, var(--color-warn), black 6%));
+    border-radius: 24px;
+    background-color: var(--color-surface);
+    background-image: var(--paper-tex);
     box-shadow:
-      0 1px 1px rgb(0 0 0 / 0.2),
-      0 10px 12px -8px rgb(60 40 0 / 0.5);
-    transform: rotate(-0.7deg);
-    border-radius: 1px 1px 3px 14px / 1px 1px 3px 4px;
+      0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 2.5px 0 -0.5px var(--color-surface),
+      0 3px 0 -0.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
+      0 5.5px 0 -1.5px var(--color-surface),
+      0 6px 0 -1.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
+      0 8.5px 0 -2.5px var(--color-surface),
+      0 9px 0 -2.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
+      0 11.5px 0 -3.5px var(--color-surface),
+      0 12px 0 -3.5px rgb(var(--shade) / calc(0.26 * var(--lift))),
+      0 18px 20px -8px rgb(var(--shade) / calc(0.14 * var(--lift))),
+      0 34px 50px -22px rgb(var(--shade) / calc(0.26 * var(--lift))),
+      inset 0 1px 0 var(--hi);
+    margin-bottom: 12px;
+    overflow: hidden;
+    /* overflow: hidden ne coupe pas les ombres portées, seulement la reliure aux coins arrondis. */
   }
-  .sk-postit::before {
-    /* Bout de ruban adhésif. */
+  /* Reliure collée en tête du bloc : une bande de toile à la couleur de l'espace. */
+  .sk-block::before {
     content: '';
     position: absolute;
-    top: -9px;
-    left: 50%;
-    width: 84px;
-    height: 20px;
-    margin-left: -42px;
-    transform: rotate(1.6deg);
-    background: linear-gradient(rgb(255 255 255 / 0.55), rgb(240 235 215 / 0.4));
-    border-inline: 1px dashed rgb(0 0 0 / 0.12);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+    inset: 0 0 auto;
+    height: var(--binding, 8px);
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px),
+      linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.1)),
+      color-mix(in srgb, var(--color-btn), #8a8080 26%);
+    box-shadow: 0 1px 2px rgb(var(--shade) / calc(0.22 * var(--lift)));
   }
-  [data-scheme='dark'] .sk-postit::before {
-    background: linear-gradient(rgb(255 255 255 / 0.22), rgb(240 235 215 / 0.12));
+  /* Pense-bête : papier jaune pâle, un coin qui se soulève. */
+  .sk-postit {
+    position: relative;
+    padding: 1rem 1.05rem 1.05rem;
+    border-radius: 3px 3px 22px 3px / 3px 3px 10px 3px;
+    background: linear-gradient(172deg, color-mix(in srgb, var(--color-warn), white 18%), var(--color-warn) 70%);
+    transform: rotate(-0.6deg);
+    box-shadow:
+      0 0.5px 1px rgb(var(--shade) / calc(0.14 * var(--lift))),
+      0 10px 16px -8px rgb(var(--shade) / calc(0.22 * var(--lift))),
+      14px 22px 20px -18px rgb(var(--shade) / calc(0.4 * var(--lift)));
+  }
+  [data-scheme='dark'] .sk-postit {
+    background: var(--color-warn);
   }
 
-  /* ───────── Boutons bombés ───────── */
+  /* ───────── Boutons ───────── */
   .sk-btn {
     position: relative;
-    min-height: 46px;
-    padding: 0.6rem 1rem;
-    border-radius: 9px;
-    font-weight: 700;
+    min-height: 50px;
+    padding: 0.7rem 1.1rem;
+    border-radius: 15px;
+    font-weight: 600;
     line-height: 1.2;
+    letter-spacing: -0.005em;
     user-select: none;
     -webkit-user-select: none;
+    outline: none;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s,
+      opacity 0.15s;
   }
   .sk-btn:disabled {
-    opacity: 0.55;
+    opacity: 0.45;
   }
   .sk-btn:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
+  /* Plein : une pièce mate de la couleur de l'espace, éclairée d'en haut, avec son ombre teintée. */
   .sk-btn-primary {
     color: var(--color-on-btn);
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
-    border: 1px solid color-mix(in srgb, var(--color-btn), black 48%);
-    background: linear-gradient(
-      color-mix(in srgb, var(--color-btn), white 42%),
-      color-mix(in srgb, var(--color-btn), white 14%) 50%,
-      var(--color-btn) 50%,
-      color-mix(in srgb, var(--color-btn), black 14%)
-    );
+    background-color: var(--color-btn);
+    background-image: linear-gradient(rgb(255 255 255 / 0.09), rgb(255 255 255 / 0) 60%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.5),
-      0 1px 0 rgb(255 255 255 / 0.35),
-      0 1px 3px rgb(0 0 0 / 0.35);
-  }
-  .sk-btn-primary:active:not(:disabled) {
-    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 38%), color-mix(in srgb, var(--color-btn), black 12%));
-    box-shadow:
-      inset 0 2px 5px rgb(0 0 0 / 0.45),
-      0 1px 0 rgb(255 255 255 / 0.35);
+      0 0.5px 0.5px rgb(0 0 0 / 0.25),
+      0 2px 4px color-mix(in srgb, var(--color-btn), transparent 78%),
+      0 10px 18px -8px color-mix(in srgb, var(--color-btn), transparent 45%),
+      inset 0 1px 0 rgb(255 255 255 / 0.24),
+      inset 0 -1px 0 rgb(0 0 0 / 0.12);
   }
   .sk-btn-secondary,
   .sk-btn-outline {
     color: var(--color-ink);
-    text-shadow: var(--engrave);
-    border: 1px solid var(--key-border);
-    background: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), var(--key-bottom) 45%) 50%, var(--key-bottom) 50%, color-mix(in srgb, var(--key-bottom), black 7%));
+    background: var(--knob);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.7),
-      0 1px 0 rgb(255 255 255 / 0.35),
-      0 1px 2.5px rgb(0 0 0 / 0.28);
+      var(--sh-key),
+      inset 0 1px 0 var(--hi);
   }
   .sk-btn-outline {
     color: var(--color-accent);
   }
-  [data-scheme='dark'] .sk-btn-secondary,
-  [data-scheme='dark'] .sk-btn-outline {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.16),
-      0 1px 0 rgb(255 255 255 / 0.06),
-      0 1px 2.5px rgb(0 0 0 / 0.5);
-  }
+  .sk-btn-primary:active:not(:disabled),
   .sk-btn-secondary:active:not(:disabled),
   .sk-btn-outline:active:not(:disabled) {
-    background: linear-gradient(color-mix(in srgb, var(--key-bottom), black 22%), var(--key-bottom));
-    box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.35);
+    transform: translateY(1.5px);
+    box-shadow:
+      0 0.5px 0.5px rgb(var(--shade) / calc(0.2 * var(--lift))),
+      inset 0 1px 0 rgb(255 255 255 / 0.12);
   }
   .sk-btn-link,
   .sk-btn-ghost {
     min-height: 44px;
     padding: 0;
-    border-radius: 3px;
-    font-weight: 700;
-    text-shadow: var(--engrave);
+    border-radius: 6px;
     color: var(--color-accent);
   }
   .sk-btn-ghost {
@@ -364,911 +340,561 @@
   .sk-btn-ghost:active {
     opacity: 0.5;
   }
-  /* Petit bouton rond bombé (mois précédent / suivant, fermer). */
-  .sk-round {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    color: var(--color-ink);
-    border: 1px solid var(--key-border);
-    background: linear-gradient(var(--key-top), var(--key-bottom));
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.6),
-      0 1px 0 rgb(255 255 255 / 0.3),
-      0 1px 2px rgb(0 0 0 / 0.3);
-  }
-  [data-scheme='dark'] .sk-round {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.16),
-      0 1px 2px rgb(0 0 0 / 0.5);
-  }
-  .sk-round::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-  }
-  .sk-round:active {
-    background: linear-gradient(color-mix(in srgb, var(--key-bottom), black 20%), var(--key-bottom));
-    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4);
-  }
-  .sk-round:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
 
-  /* Touche à enfoncer (flux, symptômes) : bombée au repos, creusée et teintée une fois choisie.
-     La couleur de fond vient des classes utilitaires (bg-flow-n) ; le relief est un dégradé posé dessus. */
+  /* Touche (flux, symptômes) : posée au repos, enfoncée et teintée une fois choisie.
+     La couleur enfoncée vient des classes utilitaires (bg-flow-n). */
   .sk-key {
-    border: 1px solid var(--key-border);
-    background-color: var(--key-bottom);
-    background-image: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), transparent 60%) 50%, transparent 50%);
+    background-color: var(--color-surface);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.6),
-      0 1px 0 rgb(255 255 255 / 0.35),
-      0 1px 2.5px rgb(0 0 0 / 0.28);
-    text-shadow: var(--engrave);
+      var(--sh-key),
+      inset 0 1px 0 var(--hi);
     outline: none;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
   }
-  [data-scheme='dark'] .sk-key {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.14),
-      0 1px 2.5px rgb(0 0 0 / 0.5);
+  [data-scheme='dark'] .sk-key:not([data-pressed]) {
+    background-image: var(--knob);
   }
   .sk-key[data-pressed] {
-    border-color: rgb(0 0 0 / 0.55);
-    background-image: linear-gradient(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0) 55%, rgb(255 255 255 / 0.12));
+    transform: translateY(1px);
     box-shadow:
-      inset 0 2px 5px rgb(0 0 0 / 0.45),
-      0 1px 0 rgb(255 255 255 / 0.5);
-    text-shadow: none;
-  }
-  [data-scheme='dark'] .sk-key[data-pressed] {
-    box-shadow:
-      inset 0 2px 5px rgb(0 0 0 / 0.6),
-      0 1px 0 rgb(255 255 255 / 0.08);
+      inset 0 1.5px 3px rgb(0 0 0 / 0.22),
+      inset 0 0 0 0.5px rgb(0 0 0 / 0.12),
+      0 1px 0 var(--hi);
   }
   .sk-key:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
-  /* Contrôle segmenté d'iOS 6 (douleur, apparence) : le segment choisi est enfoncé, à la couleur du thème. */
-  .sk-seg {
-    display: grid;
-    overflow: hidden;
-    border-radius: 7px;
-    border: 1px solid var(--key-border);
-    box-shadow:
-      0 1px 0 rgb(255 255 255 / 0.4),
-      0 1px 2px rgb(0 0 0 / 0.2);
-  }
-  [data-scheme='dark'] .sk-seg {
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.07);
-  }
-  .sk-seg-item {
-    min-height: 44px;
-    padding: 0.45rem 0.25rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--color-ink);
-    text-shadow: var(--engrave);
-    background: linear-gradient(var(--key-top), color-mix(in srgb, var(--key-top), var(--key-bottom) 45%) 50%, var(--key-bottom) 50%, color-mix(in srgb, var(--key-bottom), black 6%));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
-    outline: none;
-  }
-  [data-scheme='dark'] .sk-seg-item {
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
-  }
-  .sk-seg-item + .sk-seg-item {
-    border-left: 1px solid var(--key-border);
-  }
-  .sk-seg-item[data-pressed] {
-    color: var(--color-on-btn);
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.45);
-    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 42%), color-mix(in srgb, var(--color-btn), black 8%) 60%, var(--color-btn));
-    box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.5);
-  }
-  .sk-seg-item:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: -3px;
-  }
-
-  /* Champ de saisie creusé. */
+  /* Champ de saisie : un creux dans la surface. */
   .sk-input {
-    width: 100%;
-    min-height: 44px;
-    padding: 0.6rem 0.8rem;
-    border-radius: 7px;
-    border: 1px solid var(--key-border);
-    background-color: var(--color-surface);
-    color: var(--color-ink);
-    box-shadow:
-      inset 0 2px 3px rgb(0 0 0 / 0.16),
-      0 1px 0 rgb(255 255 255 / 0.6);
-    outline: none;
-  }
-  [data-scheme='dark'] .sk-input {
-    background-color: var(--color-surface-2);
-    box-shadow:
-      inset 0 2px 4px rgb(0 0 0 / 0.5),
-      0 1px 0 rgb(255 255 255 / 0.07);
-  }
-  .sk-input::placeholder {
-    color: color-mix(in srgb, var(--color-ink-2), transparent 30%);
-  }
-  .sk-input:focus-visible {
-    border-color: var(--color-accent);
-    box-shadow:
-      inset 0 2px 3px rgb(0 0 0 / 0.16),
-      0 0 0 2px color-mix(in srgb, var(--color-accent), transparent 60%);
-  }
-  /* Champs empilés dans un tableau groupé (connexion) : une ligne par champ, sans cadre propre. */
-  .sk-field {
     width: 100%;
     min-height: 46px;
     padding: 0.6rem 0.9rem;
-    background: transparent;
+    border-radius: 13px;
+    background-color: color-mix(in srgb, var(--color-surface-2), var(--color-surface) 45%);
     color: var(--color-ink);
-    font-weight: 500;
+    box-shadow: var(--sh-well);
     outline: none;
   }
+  .sk-input::placeholder,
   .sk-field::placeholder {
-    color: color-mix(in srgb, var(--color-ink-2), transparent 35%);
-    font-weight: 400;
+    color: color-mix(in srgb, var(--color-ink-2), transparent 25%);
+  }
+  .sk-input:focus-visible {
+    box-shadow:
+      var(--sh-well),
+      0 0 0 2px color-mix(in srgb, var(--color-accent), transparent 35%);
+  }
+  /* Champs empilés dans un même panneau (connexion) : une ligne par champ. */
+  .sk-field {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.7rem 1.05rem;
+    background: transparent;
+    color: var(--color-ink);
+    outline: none;
   }
   .sk-field:focus-visible {
-    background: color-mix(in srgb, var(--color-accent), transparent 90%);
+    background: color-mix(in srgb, var(--color-ink), transparent 95%);
+  }
+  .sk-fields > * + * {
+    border-top: 1px solid var(--color-line);
   }
 
-  /* Interrupteur I / O d'iOS 6 : glissière à la couleur du thème, bouton chromé. */
+  /* Interrupteur usiné : une gorge en creux, un bouton de métal brossé ; allumé, la gorge prend
+     la couleur du voyant (--color-signal). */
   .sk-switch {
     position: relative;
     display: block;
     flex-shrink: 0;
-    width: 78px;
-    height: 28px;
-    overflow: hidden;
-    border-radius: 14px;
+    width: 56px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
     outline: none;
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+    transition: background-color 0.2s;
   }
-  [data-scheme='dark'] .sk-switch {
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.1);
+  .sk-switch[data-checked] {
+    background: var(--color-signal);
+    box-shadow:
+      inset 0 1px 3px rgb(0 0 0 / 0.28),
+      inset 0 0 0 0.5px rgb(0 0 0 / 0.12),
+      0 1px 0 var(--hi);
   }
   .sk-switch:focus-visible {
     outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
-  .sk-switch-strip {
-    position: absolute;
-    inset-block: 0;
-    left: 0;
-    display: flex;
-    width: 128px;
-    transform: translateX(-50px);
-    transition: transform 0.2s ease-out;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 28px;
-    text-align: center;
-  }
-  .sk-switch[data-checked] .sk-switch-strip {
-    transform: none;
-  }
-  .sk-switch-on {
-    width: 64px;
-    padding-right: 14px;
-    color: #fff;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
-    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 30%), var(--color-btn) 55%, color-mix(in srgb, var(--color-btn), white 22%));
-  }
-  .sk-switch-off {
-    width: 64px;
-    padding-left: 14px;
-    color: #7b7f86;
-    background: linear-gradient(#cfd1d4, #f4f4f4 55%, #fff);
-  }
-  [data-scheme='dark'] .sk-switch-off {
-    color: #9a9da3;
-    background: linear-gradient(#18191b, #2a2c30 55%, #36383d);
-  }
-  /* Ombre interne de la glissière, par-dessus la bande mais sous le bouton. */
-  .sk-switch::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow:
-      inset 0 0 0 1px rgb(0 0 0 / 0.45),
-      inset 0 2px 4px rgb(0 0 0 / 0.4);
-    pointer-events: none;
+    outline-offset: 3px;
   }
   .sk-switch-thumb {
     position: absolute;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    width: 28px;
-    height: 28px;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
     border-radius: 999px;
-    border: 1px solid #6f7379;
-    background: linear-gradient(#d4d6da, #fbfbfc 60%, #fff);
+    /* Métal brossé au tour : fins secteurs clairs et sombres autour du centre. */
+    background:
+      conic-gradient(
+        from 20deg,
+        rgb(255 255 255 / 0) 0,
+        rgb(255 255 255 / 0.75) 10%,
+        rgb(255 255 255 / 0) 22%,
+        rgb(0 0 0 / 0.07) 36%,
+        rgb(255 255 255 / 0) 50%,
+        rgb(255 255 255 / 0.75) 60%,
+        rgb(255 255 255 / 0) 72%,
+        rgb(0 0 0 / 0.07) 86%,
+        rgb(255 255 255 / 0) 100%
+      ),
+      #e4e4e6;
     box-shadow:
-      inset 0 1px 0 #fff,
-      inset 0 -1px 0 rgb(0 0 0 / 0.08),
-      0 0 3px rgb(0 0 0 / 0.5);
-    transition: transform 0.2s ease-out;
+      0 0.5px 1px rgb(0 0 0 / 0.35),
+      0 2px 5px rgb(0 0 0 / 0.22),
+      inset 0 0 0 0.5px rgb(0 0 0 / 0.12),
+      inset 0 1px 0 rgb(255 255 255 / 0.9);
+    transition: transform 0.22s cubic-bezier(0.3, 0.7, 0.2, 1);
   }
   .sk-switch-thumb[data-checked] {
-    transform: translateX(50px);
+    transform: translateX(24px);
   }
   @media (prefers-reduced-motion: reduce) {
-    .sk-switch-strip,
     .sk-switch-thumb {
       transition: none;
     }
   }
 
-  /* ───────── Barre d'onglets noire brillante d'iOS 6 ───────── */
+  /* ───────── Barre du bas : un plateau clair et mat, flottant ───────── */
   .sk-tabbar {
-    background:
-      linear-gradient(#444 0, #2b2b2b 25px, #0b0b0b 25px, #000 50px) top / 100% 50px no-repeat,
-      #000;
-    border-top: 1px solid #000;
+    display: flex;
+    padding: 5px;
+    border-radius: 28px;
+    background-color: var(--color-surface);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      0 -2px 7px rgb(0 0 0 / 0.4);
+      0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 2px 4px rgb(var(--shade) / calc(0.06 * var(--lift))),
+      0 12px 24px -8px rgb(var(--shade) / calc(0.2 * var(--lift))),
+      0 30px 40px -24px rgb(var(--shade) / calc(0.3 * var(--lift))),
+      inset 0 1px 0 var(--hi);
+  }
+  /* Le contenu qui défile s'efface sous le plateau. */
+  .sk-tabbar-fade {
+    background: linear-gradient(color-mix(in srgb, var(--color-bg), transparent 100%), var(--color-bg) 62%);
   }
   .sk-tabbar-item {
     position: relative;
-    height: 49px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #9a9a9a;
-    text-shadow: 0 -1px 0 #000;
-    --tab-hi: #c4c4c4;
-    --tab-lo: #6a6a6a;
+    height: 54px;
+    border-radius: 23px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    color: var(--color-ink-2);
     outline: none;
+    transition:
+      color 0.2s,
+      background-color 0.2s,
+      box-shadow 0.2s;
   }
-  .sk-tabbar-item::before {
-    content: '';
-    position: absolute;
-    inset: 2px 3px;
-    border-radius: 4px;
-    background: linear-gradient(rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.1) 50%, rgb(255 255 255 / 0.06) 50%, rgb(255 255 255 / 0.08));
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
+  /* Onglet actif : légèrement enfoncé dans le plateau. */
   .sk-tabbar-item[aria-current='page'] {
-    color: #fff;
-    --tab-hi: color-mix(in srgb, var(--color-btn), white 78%);
-    --tab-lo: color-mix(in srgb, var(--color-btn), white 12%);
+    color: var(--color-accent);
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
   }
-  .sk-tabbar-item[aria-current='page']::before,
-  .sk-tabbar-item:focus-visible::before {
-    opacity: 1;
-  }
-  .sk-tabbar-item[aria-current='page'] .sk-glyph {
-    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-btn), transparent 35%));
+  .sk-tabbar-item:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
   .sk-tabbar-item .sk-glyph {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
   }
-  /* Pastille rouge brillante à liseré blanc. */
+  /* Pastille : une gommette de couleur. */
   .sk-badge {
     position: absolute;
-    top: -3px;
+    top: -5px;
     right: -11px;
-    min-width: 19px;
-    height: 19px;
-    padding: 0 4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4.5px;
     border-radius: 999px;
-    border: 2px solid #fff;
-    background: linear-gradient(#ff8a8a, #e1101d 50%, #c20009 50%, #d80f1a);
-    box-shadow: 0 2px 3px rgb(0 0 0 / 0.6);
+    background: var(--color-signal);
+    box-shadow:
+      0 0 0 2px var(--color-surface),
+      0 1px 2px 2px rgb(var(--shade) / calc(0.12 * var(--lift)));
     color: #fff;
-    font-size: 11px;
-    line-height: 15px;
+    font-size: 0.66rem;
+    line-height: 18px;
     font-weight: 700;
     text-align: center;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.35);
+  }
+  .sk-tabbar-item[aria-current='page'] .sk-badge {
+    box-shadow: 0 0 0 2px var(--color-surface-2);
   }
 
-  /* Icônes en relief : dégradé clair → foncé (--tab-hi / --tab-lo). */
+  /* Icônes au trait. */
   .sk-glyph {
     display: block;
     width: 1.5em;
     height: 1.5em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
-  .sk-glyph .hi {
-    stop-color: var(--tab-hi, currentColor);
-  }
-  .sk-glyph .lo {
-    stop-color: var(--tab-lo, currentColor);
-  }
-  /* Pastille d'icône façon icône d'app (réglages des espaces, écran d'accueil). */
+  /* Pastille d'icône d'un espace : un carré mat à sa couleur, avec son ombre teintée. */
   .sk-app-icon {
-    position: relative;
     display: grid;
     place-items: center;
-    overflow: hidden;
-    border-radius: 22%;
-    color: #fff;
-    --tab-hi: #fff;
-    --tab-lo: rgb(255 255 255 / 0.82);
-    border: 1px solid color-mix(in srgb, var(--color-btn), black 50%);
-    background: linear-gradient(color-mix(in srgb, var(--color-btn), white 28%), color-mix(in srgb, var(--color-btn), black 18%));
+    border-radius: 28%;
+    color: var(--color-on-btn);
+    background-color: var(--color-btn);
+    background-image: linear-gradient(rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 60%);
     box-shadow:
-      0 1px 2px rgb(0 0 0 / 0.4),
-      inset 0 1px 0 rgb(255 255 255 / 0.4);
+      0 0.5px 0.5px rgb(0 0 0 / 0.2),
+      0 4px 8px -3px color-mix(in srgb, var(--color-btn), transparent 50%),
+      inset 0 1px 0 rgb(255 255 255 / 0.25);
   }
-  .sk-app-icon::after {
-    /* Reflet en arc des icônes d'avant iOS 7. */
-    content: '';
-    position: absolute;
-    left: -30%;
-    right: -30%;
-    top: -60%;
-    height: 108%;
-    border-radius: 50%;
-    background: linear-gradient(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.12));
-  }
-  .sk-app-icon > * {
-    position: relative;
-    z-index: 1;
-    filter: drop-shadow(0 -1px 0 rgb(0 0 0 / 0.3));
+  .sk-app-icon-soon {
+    color: var(--color-ink-2);
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-ink-2), transparent 55%);
+    border-radius: 28%;
   }
 
-  /* Menu rapide (appui long sur un onglet) : bulle bleu nuit brillante, avec sa pointe. */
+  /* Menu rapide (appui long sur un onglet) : une fiche posée au-dessus de la barre. */
   .sk-popover {
-    border-radius: 9px;
-    border: 1px solid #000;
-    background: linear-gradient(#5c6880, #262e42 22px, #0e1424 22px, #080c18);
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--color-surface);
+    color: var(--color-ink);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      0 10px 30px rgb(0 0 0 / 0.55);
-    color: #fff;
-    text-shadow: 0 -1px 0 #000;
-  }
-  .sk-popover::after {
-    content: '';
-    position: absolute;
-    left: var(--arrow-x, 50%);
-    bottom: -7px;
-    width: 14px;
-    height: 14px;
-    margin-left: -7px;
-    transform: rotate(45deg);
-    background: #080c18;
-    border-right: 1px solid #000;
-    border-bottom: 1px solid #000;
-  }
-  .sk-popover-item {
-    position: relative;
-    --tab-hi: #fff;
-    --tab-lo: #b9c2d6;
+      0 0 0 0.5px rgb(var(--shade) / calc(0.12 * var(--lift))),
+      0 10px 20px -6px rgb(var(--shade) / calc(0.2 * var(--lift))),
+      0 30px 60px -20px rgb(var(--shade) / calc(0.4 * var(--lift))),
+      inset 0 1px 0 var(--hi);
   }
   .sk-popover-item + .sk-popover-item {
-    border-top: 1px solid rgb(0 0 0 / 0.7);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    border-top: 1px solid var(--color-line);
   }
   .sk-popover-item[data-hover],
   .sk-popover-item:focus-visible {
-    background: linear-gradient(#5a9bf0, #1f5fd0);
+    background: var(--color-surface-2);
   }
 
-  /* Feuille qui monte du bas : une page de plus, avec son rebord. */
+  /* Feuille qui monte du bas. */
   .sk-sheet {
-    border-top: 1px solid rgb(255 255 255 / 0.6);
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 -6px 24px rgb(0 0 0 / 0.45);
-  }
-  [data-scheme='dark'] .sk-sheet {
-    border-top-color: rgb(255 255 255 / 0.1);
+    border-radius: 28px 28px 0 0;
+    box-shadow:
+      0 -0.5px 0 rgb(var(--shade) / calc(0.12 * var(--lift))),
+      0 -12px 40px rgb(0 0 0 / 0.22),
+      inset 0 1px 0 var(--hi);
   }
   .sk-grabber {
     background: var(--color-surface-2);
-    box-shadow:
-      inset 0 1px 2px rgb(0 0 0 / 0.35),
-      0 1px 0 rgb(255 255 255 / 0.5);
-  }
-  [data-scheme='dark'] .sk-grabber {
-    box-shadow:
-      inset 0 1px 2px rgb(0 0 0 / 0.6),
-      0 1px 0 rgb(255 255 255 / 0.08);
+    box-shadow: var(--sh-well);
   }
 
-  /* ───────── Cycle : éphéméride et calendrier de l'agenda ───────── */
+  /* ───────── Cycle : bloc éphéméride et calendrier de bureau ───────── */
 
-  /* Éphéméride à feuilles : bandeau de couleur, deux anneaux, pile de pages dessous. */
+  /* Petit éphéméride : un bloc de feuilles avec sa tranche, bandeau de couleur en tête. */
   .sk-ephem {
-    position: relative;
     flex-shrink: 0;
-    width: 54px;
+    width: 52px;
     margin-bottom: 5px;
-    border-radius: 3px 3px 2px 2px;
-    background: linear-gradient(#fff, #f2ede2);
-    color: #2a2422;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: var(--color-surface);
+    background-image: var(--paper-tex);
     text-align: center;
     box-shadow:
-      0 0 0 1px rgb(90 70 50 / 0.35),
-      0 2px 0 -0.5px #fff,
-      0 2px 0 0.5px rgb(90 70 50 / 0.35),
-      0 4px 0 -1px #f4efe6,
-      0 4px 0 0 rgb(90 70 50 / 0.35),
-      0 7px 8px -2px rgb(40 25 10 / 0.45);
+      0 0 0 0.5px rgb(var(--shade) / calc(0.12 * var(--lift))),
+      0 2.5px 0 -0.5px var(--color-surface),
+      0 3px 0 -0.5px rgb(var(--shade) / calc(0.18 * var(--lift))),
+      0 5px 0 -1.5px var(--color-surface),
+      0 5.5px 0 -1.5px rgb(var(--shade) / calc(0.18 * var(--lift))),
+      0 10px 14px -4px rgb(var(--shade) / calc(0.2 * var(--lift)));
   }
   .sk-ephem-band {
-    position: relative;
-    height: 19px;
-    border-radius: 3px 3px 0 0;
-    font-size: 9px;
-    line-height: 23px;
+    height: 17px;
+    font-size: 0.56rem;
+    line-height: 17px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #fff;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.4);
-    background: linear-gradient(color-mix(in srgb, var(--ephem, var(--color-btn)), white 35%), var(--ephem, var(--color-btn)) 50%, color-mix(in srgb, var(--ephem, var(--color-btn)), black 14%) 50%, color-mix(in srgb, var(--ephem, var(--color-btn)), black 22%));
-    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.3);
-  }
-  .sk-ephem-band::before,
-  .sk-ephem-band::after {
-    /* Anneaux de métal. */
-    content: '';
-    position: absolute;
-    top: -6px;
-    width: 4.5px;
-    height: 11px;
-    border-radius: 3px;
-    background: linear-gradient(90deg, #6d6d6d, #fafafa 40%, #8d8d8d);
-    box-shadow:
-      0 0 0 0.5px rgb(0 0 0 / 0.5),
-      1px 1px 1px rgb(0 0 0 / 0.3);
-  }
-  .sk-ephem-band::before {
-    left: 11px;
-  }
-  .sk-ephem-band::after {
-    right: 11px;
+    background: var(--ephem, var(--color-btn));
   }
   .sk-ephem-num {
-    font-size: 28px;
+    font-size: 1.6rem;
     line-height: 35px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    text-shadow: 0 1px 0 #fff;
-    /* Pli de la feuille, à mi-hauteur. */
-    background: linear-gradient(transparent 49%, rgb(0 0 0 / 0.07) 49%, rgb(0 0 0 / 0.07) 51%, transparent 51%);
+    font-weight: 650;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
   }
-
-  /* Ligne de contexte, imprimée sur la page : l'éphéméride et où en est le cycle. */
+  /* Ligne de contexte : l'éphéméride et où en est le cycle. */
   .sk-status {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    padding: 0 0.15rem;
+    gap: 0.85rem;
+    padding: 0.15rem 0.25rem 0;
   }
   .sk-status[data-tone='period'] {
-    --ephem: var(--color-flow-4);
+    --ephem: var(--color-btn);
   }
   .sk-status[data-tone='soon'] {
-    --ephem: #d98a00;
+    --ephem: #dc8a14;
   }
-  .sk-status[data-tone='soon'] .sk-status-title {
-    color: color-mix(in srgb, #b26a00, var(--color-ink) 30%);
-  }
-  [data-scheme='dark'] .sk-status[data-tone='soon'] .sk-status-title {
-    color: var(--color-on-soon);
-  }
-  .sk-status[data-tone='period'] .sk-status-title {
-    color: color-mix(in srgb, var(--color-flow-5), var(--color-ink) 25%);
-  }
-  [data-scheme='dark'] .sk-status[data-tone='period'] .sk-status-title {
-    color: var(--color-flow-5);
+  .sk-status[data-tone='calm'] {
+    --ephem: color-mix(in srgb, var(--color-ink-2), var(--color-ink) 25%);
   }
 
-  /* Ligne de pointillés perforés entre la saisie du jour et le calendrier. */
-  .sk-perforation {
-    height: 3px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--color-ink), transparent 62%) 1.1px, transparent 1.4px) 0 0 / 9px 3px repeat-x;
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.35);
-  }
-
-  /* Calendrier : feuille mensuelle sous un bandeau brillant, pile de pages dessous. */
-  .sk-cal {
-    border-radius: 4px 4px 2px 2px;
-    background-color: var(--color-surface);
-    background-image: var(--card-tex);
-    box-shadow:
-      0 0 0 1px var(--card-border),
-      0 3px 0 -1px var(--color-surface),
-      0 3px 0 0 var(--card-border),
-      0 6px 0 -2px var(--color-surface),
-      0 6px 0 -1px var(--card-border),
-      0 12px 14px -6px rgb(50 30 10 / 0.5);
-  }
+  /* Calendrier : la feuille du mois, sur le bloc. */
   .sk-cal-head {
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 9px;
-    border-radius: 4px 4px 0 0;
-    color: #fff;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.45);
-    background: linear-gradient(
-      color-mix(in srgb, var(--color-btn), white 36%),
-      color-mix(in srgb, var(--color-btn), white 8%) 50%,
-      color-mix(in srgb, var(--color-btn), black 6%) 50%,
-      color-mix(in srgb, var(--color-btn), black 22%)
-    );
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      inset 0 -1px 0 rgb(0 0 0 / 0.35);
+    padding: 28px 16px 8px 20px;
   }
   .sk-cal-head h2 {
-    font-size: 1.12rem;
-    font-weight: 700;
+    font-size: 1.4rem;
+    font-weight: 650;
+    letter-spacing: -0.025em;
   }
-  .sk-cal-nav {
-    --color-chrome: var(--color-btn);
-    width: 36px;
-    font-size: 20px;
-    line-height: 1;
+  .sk-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    padding: 0 10px;
   }
   .sk-cal-week {
-    padding: 4px 0 3px;
+    padding: 8px 0 4px;
     font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     color: var(--color-ink-2);
     text-align: center;
-    background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-line);
-    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
-    text-shadow: var(--engrave);
   }
   .sk-day {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 1 / 1.08;
-    font-size: 1.05rem;
-    font-weight: 700;
+    aspect-ratio: 1 / 1.07;
+    font-size: 1.06rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
     color: var(--color-ink);
-    border-top: 1px solid var(--color-line);
-    border-left: 1px solid var(--color-line);
+    border-radius: 999px;
     outline: none;
   }
-  .sk-day:nth-child(7n + 1) {
-    border-left: none;
-  }
   .sk-day:disabled {
-    color: color-mix(in srgb, var(--color-ink-2), transparent 35%);
-    font-weight: 500;
+    color: color-mix(in srgb, var(--color-ink-2), transparent 40%);
+    font-weight: 400;
   }
   .sk-day:active:not(:disabled) {
-    background: color-mix(in srgb, var(--color-ink), transparent 90%);
+    background: color-mix(in srgb, var(--color-ink), transparent 93%);
   }
   .sk-day:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: -2px;
   }
-  /* Jour de règles : pastille passée au feutre, un peu irrégulière. */
+  /* Jour noté : une gommette de couleur collée sur la feuille, avec son léger relief. */
   .sk-mark {
     position: absolute;
-    inset: 11% 12%;
-    border-radius: 47% 53% 51% 49% / 55% 46% 54% 45%;
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.07);
-    background-image: linear-gradient(115deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.06));
+    inset: 12% 9%;
+    border-radius: 999px;
+    box-shadow:
+      0 0.5px 0.5px rgb(0 0 0 / 0.2),
+      0 2px 4px -1px rgb(var(--shade) / calc(0.25 * var(--lift))),
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      inset 0 -1px 0 rgb(0 0 0 / 0.07);
   }
-  .sk-day:nth-child(3n) .sk-mark {
-    transform: rotate(-14deg) scale(1.03);
+  /* « Rien » noté : une simple empreinte dans le papier. */
+  .sk-mark.bg-surface-2 {
+    box-shadow: var(--sh-well);
   }
-  .sk-day:nth-child(3n + 1) .sk-mark {
-    transform: rotate(9deg);
-    border-radius: 52% 48% 46% 54% / 47% 53% 49% 51%;
-  }
-  .sk-day:nth-child(5n) .sk-mark {
-    transform: rotate(24deg) scale(0.97);
-  }
-  /* Jour prévu : entouré au crayon, en pointillés. */
+  /* Jour prévu : cercle en pointillés. */
   .sk-predict {
     position: absolute;
-    inset: 12% 13%;
-    border-radius: 50% 47% 52% 48% / 48% 52% 47% 53%;
-    border: 1.6px dashed var(--color-flow-3);
+    inset: 13% 10%;
+    border-radius: 999px;
+    border: 1.5px dashed var(--color-flow-3);
   }
-  /* Aujourd'hui : entouré d'un trait de feutre (SVG en ligne). */
+  /* Aujourd'hui : entouré d'un trait d'encre tracé à la main (SVG en ligne). */
   .sk-today-ring {
     position: absolute;
-    inset: -2px -3px;
-    width: calc(100% + 6px);
-    height: calc(100% + 4px);
-    color: var(--color-accent);
+    inset: 0 -4px;
+    width: calc(100% + 8px);
+    height: 100%;
+    color: var(--color-ink);
     pointer-events: none;
     overflow: visible;
-    filter: drop-shadow(0 1px 0.5px rgb(0 0 0 / 0.25));
   }
   .sk-day-today {
-    font-weight: 800;
+    font-weight: 750;
     z-index: 1;
   }
   .sk-legend-mark {
     display: inline-block;
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 47% 53% 51% 49% / 55% 46% 54% 45%;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
   }
 
-  /* Analyse : jauges en creux, barres brillantes. */
+  /* Analyse : jauges en creux. */
   .sk-groove {
     background-color: var(--color-surface-2);
-    box-shadow:
-      inset 0 1px 2px rgb(0 0 0 / 0.3),
-      0 1px 0 rgb(255 255 255 / 0.5);
-  }
-  [data-scheme='dark'] .sk-groove {
-    box-shadow:
-      inset 0 1px 2px rgb(0 0 0 / 0.6),
-      0 1px 0 rgb(255 255 255 / 0.06);
-  }
-  .sk-gloss {
-    background-image: linear-gradient(rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1) 50%, rgb(0 0 0 / 0.04) 50%, rgb(0 0 0 / 0.1));
-    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.2);
+    box-shadow: var(--sh-well);
   }
 
-  /* ───────── Courses : bloc-notes ligné, écrit à la main ───────── */
-  .sk-ruled {
-    --row: 44px;
-    flex: 1;
-    /* Pleine largeur, jusque sous la barre d'onglets. */
-    margin: calc(-1 * var(--edge-gap)) -1rem calc(-88px - env(safe-area-inset-bottom));
-    padding: 22px 0 calc(88px + env(safe-area-inset-bottom));
-    font-family: var(--font-hand);
-    font-size: 1.62rem;
-    font-weight: 500;
-    line-height: var(--row);
-    background-image:
-      linear-gradient(90deg, transparent 45px, var(--margin-line) 45px, var(--margin-line) 46.5px, transparent 46.5px),
-      repeating-linear-gradient(transparent 0, transparent calc(var(--row) - 1px), var(--color-rule) calc(var(--row) - 1px), var(--color-rule) var(--row));
-    background-position:
-      0 0,
-      0 22px;
+  /* ───────── Courses : bloc-notes de papeterie ───────── */
+  /* Rangée de perforations sous la reliure : on voit le plan de travail à travers. */
+  .sk-perfs {
+    height: 28px;
+    margin-top: var(--binding, 8px);
+    background: radial-gradient(circle at 50% 50%, var(--color-bg) 2.6px, rgb(var(--shade) / calc(0.2 * var(--lift))) 2.7px, transparent 3.4px) center / 20px 30px repeat-x;
+    border-bottom: 1px dashed color-mix(in srgb, var(--color-ink-2), transparent 70%);
   }
-  /* L'écriture se pose sur la ligne (et non au milieu de l'interligne). */
-  .sk-hand {
-    position: relative;
-    top: 7px;
-  }
-  .sk-ruled-row {
+  .sk-row {
     display: flex;
-    align-items: flex-start;
-    min-height: var(--row);
+    align-items: center;
+    min-height: 54px;
   }
-  .sk-ruled-title {
-    height: var(--row);
-    margin: 0;
-    padding-left: 56px;
-    font-family: var(--font-hand);
-    font-size: 1.62rem;
-    font-weight: 700;
-    line-height: var(--row);
-    color: var(--color-accent);
-    text-shadow: none;
-    text-transform: none;
-    letter-spacing: 0;
+  .sk-rows > li + li {
+    /* Ligne très fine, qui commence après la case. */
+    background: linear-gradient(var(--color-line), var(--color-line)) 56px 0 / 100% 1px no-repeat;
   }
-  .sk-ruled-title > span {
-    position: relative;
-    top: 7px;
-    /* Souligné d'un trait de feutre. */
-    background: linear-gradient(transparent 0, transparent) no-repeat;
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 3px;
-    text-decoration-color: color-mix(in srgb, var(--color-accent), transparent 45%);
-  }
-  .sk-ruled-input {
-    flex: 1;
-    min-width: 0;
-    height: var(--row);
-    padding: 12px 0 0;
-    background: transparent;
-    font: inherit;
-    line-height: 32px;
-    color: var(--color-ink);
-    outline: none;
-  }
-  .sk-ruled-input::placeholder {
-    color: color-mix(in srgb, var(--color-ink-2), transparent 25%);
-  }
-  /* Case tracée à la main, dans la marge ; la coche au crayon déborde de la case. */
+  /* Case à cocher : un creux rond ; cochée, un tampon d'encre. */
   .sk-checkbox {
     position: relative;
     flex-shrink: 0;
-    width: 24px;
-    height: 24px;
-    margin: 12px 11px 0 11px;
-    background: var(--box-img) center / contain no-repeat;
+    width: 26px;
+    height: 26px;
+    margin: 0 14px 0 16px;
+    border-radius: 999px;
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
+    color: var(--color-on-btn);
     outline: none;
+    transition: background-color 0.15s;
+  }
+  .sk-checkbox[data-checked] {
+    background-color: var(--color-btn);
+    background-image: linear-gradient(rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 60%);
+    box-shadow:
+      0 0.5px 0.5px rgb(0 0 0 / 0.2),
+      0 3px 6px -2px color-mix(in srgb, var(--color-btn), transparent 45%),
+      inset 0 1px 0 rgb(255 255 255 / 0.25);
   }
   .sk-checkbox:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-    border-radius: 4px;
   }
   .sk-checkbox svg {
     position: absolute;
-    left: 1px;
-    top: -9px;
-    width: 32px;
-    height: 32px;
-    color: var(--color-accent);
-    overflow: visible;
+    inset: 5px;
+    width: 16px;
+    height: 16px;
   }
   .sk-struck {
     color: var(--color-ink-2);
     text-decoration: line-through;
-    text-decoration-thickness: 1.5px;
-    text-decoration-color: color-mix(in srgb, var(--color-ink), transparent 35%);
+    text-decoration-thickness: 1px;
   }
-  .sk-ruled-note {
-    padding: 0 16px 0 56px;
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    line-height: 22px;
-    min-height: var(--row);
-    color: var(--color-ink-2);
+  .sk-bare-input {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    background: transparent;
+    color: var(--color-ink);
+    font-size: 1.06rem;
+    outline: none;
+  }
+  .sk-bare-input::placeholder {
+    color: color-mix(in srgb, var(--color-ink-2), transparent 25%);
   }
 
-  /* ───────── Connexion : écran d'accueil sur lin ───────── */
+  /* ───────── Connexion ───────── */
   .sk-logo {
-    border-radius: 22.5%;
-    box-shadow:
-      0 1px 0 rgb(255 255 255 / 0.5),
-      0 6px 14px -4px rgb(0 0 0 / 0.55),
-      0 2px 3px rgb(0 0 0 / 0.4);
-  }
-  .sk-logo-wrap {
-    position: relative;
     overflow: hidden;
-    border-radius: 22.5%;
-  }
-  .sk-logo-wrap::after {
-    content: '';
-    position: absolute;
-    left: -30%;
-    right: -30%;
-    top: -62%;
-    height: 110%;
-    border-radius: 50%;
-    background: linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.08));
-    pointer-events: none;
+    border-radius: 23%;
+    box-shadow:
+      0 1px 2px rgb(var(--shade) / calc(0.2 * var(--lift))),
+      0 10px 20px -6px rgb(var(--shade) / calc(0.25 * var(--lift))),
+      0 30px 44px -20px rgb(var(--shade) / calc(0.4 * var(--lift)));
   }
   .sk-wordmark {
-    font-size: 2.1rem;
-    line-height: 1.1;
+    font-size: 2.5rem;
+    line-height: 1.05;
     font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--color-ink-2);
-    text-shadow: var(--engrave);
+    letter-spacing: -0.045em;
   }
-  /* Bandeau d'invitation : carton d'invitation crème, liseré doré. */
-  .sk-invite-card {
-    position: relative;
-    padding: 0.95rem 1rem;
-    border-radius: 4px;
-    text-align: left;
-    color: #3a2c1c;
-    background: #fffaf0 var(--tex-paper);
-    box-shadow:
-      0 0 0 1px rgb(120 92 58 / 0.4),
-      inset 0 0 0 4px #fffaf0,
-      inset 0 0 0 5px #c9a55a,
-      0 8px 14px -8px rgb(0 0 0 / 0.55);
-  }
-  /* Étagère vitrée du Dock : les espaces de l'app posés dessus, avec leur reflet. */
-  .sk-shelf {
-    position: relative;
+  /* Plumier : un creux dans le plan de travail où sont rangés les espaces de l'app. */
+  .sk-tray {
     display: flex;
     justify-content: center;
-    gap: 1.6rem;
-    width: 100%;
-    margin-top: 0.35rem;
-    padding: 0 0.5rem 0.55rem;
+    gap: 0.4rem;
+    padding: 0.85rem 0.6rem 0.7rem;
+    border-radius: 22px;
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
   }
-  .sk-shelf::before {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    bottom: 1.75rem;
-    height: 1.35rem;
-    border-radius: 3px;
-    border-top: 1px solid rgb(255 255 255 / 0.85);
-    background: linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.12) 55%, rgb(0 0 0 / 0.08));
-    box-shadow:
-      0 1px 0 rgb(0 0 0 / 0.25),
-      0 5px 7px -3px rgb(0 0 0 / 0.4);
-    transform: perspective(240px) rotateX(48deg);
-    transform-origin: bottom;
-  }
-  [data-scheme='dark'] .sk-shelf::before {
-    border-top-color: rgb(255 255 255 / 0.3);
-    background: linear-gradient(rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.05) 55%, rgb(0 0 0 / 0.2));
-  }
-  .sk-shelf > li {
-    position: relative;
+  .sk-tray > li {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.05rem;
-    width: 4rem;
-  }
-  .sk-shelf .sk-app-icon {
-    -webkit-box-reflect: below 1px linear-gradient(transparent 74%, rgb(0 0 0 / 0.25));
-  }
-  .sk-shelf-label {
-    font-size: 0.72rem;
-    font-weight: 700;
+    gap: 0.45rem;
+    width: 5.2rem;
+    font-size: 0.74rem;
+    font-weight: 600;
     color: var(--color-ink-2);
-    text-shadow: var(--engrave);
   }
-  [data-theme] > .sk-shelf-label,
-  .sk-shelf-label {
-    color: #4c566c;
-    text-shadow: 0 1px 0 rgb(255 255 255 / 0.9);
+  /* Carton d'invitation : une carte de papier épais, un coin qui se soulève. */
+  .sk-invite-card {
+    position: relative;
+    padding: 1rem 1.1rem 1.05rem;
+    border-radius: 6px 6px 26px 6px / 6px 6px 12px 6px;
+    text-align: left;
+    background-color: var(--color-surface);
+    background-image: var(--tex-paper);
+    box-shadow:
+      0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 2px 4px rgb(var(--shade) / calc(0.06 * var(--lift))),
+      0 12px 20px -10px rgb(var(--shade) / calc(0.2 * var(--lift))),
+      16px 26px 24px -20px rgb(var(--shade) / calc(0.45 * var(--lift))),
+      inset 0 1px 0 var(--hi);
+    transform: rotate(-0.5deg);
   }
-  [data-scheme='dark'] .sk-shelf-label {
-    color: #c3c9d4;
-    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.7);
+  [data-scheme='dark'] .sk-invite-card {
+    background-image: var(--tex-paper-dark);
   }
-  .sk-app-icon-soon {
-    --color-btn: #8a909c;
-  }
-  /* « ou » entre deux filets gravés. */
+  /* « ou » entre deux filets. */
   .sk-or {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    text-shadow: var(--engrave);
+    gap: 0.8rem;
   }
   .sk-or::before,
   .sk-or::after {
     content: '';
     flex: 1;
-    height: 2px;
-    border-top: 1px solid color-mix(in srgb, var(--color-ink), transparent 72%);
-    border-bottom: 1px solid rgb(255 255 255 / 0.6);
+    height: 1px;
+    background: var(--color-line);
   }
-  [data-scheme='dark'] .sk-or::before,
-  [data-scheme='dark'] .sk-or::after {
-    border-top-color: rgb(0 0 0 / 0.7);
-    border-bottom-color: rgb(255 255 255 / 0.1);
-  }
-  .sk-fields > * + * {
-    border-top: 1px solid var(--color-line);
-  }
-  /* Étiquette gaufrée (ruban d'étiqueteuse) : le code d'invitation. */
+  /* Ruban d'étiqueteuse : le code d'invitation. */
   .sk-embossed {
-    padding: 0.2rem 0.55rem 0.15rem;
-    border-radius: 2px;
+    padding: 0.22rem 0.6rem;
+    border-radius: 6px;
     letter-spacing: 0.2em;
-    font-size: 0.95rem;
-    color: #fff;
-    text-shadow:
-      0 1px 0 rgb(0 0 0 / 0.5),
-      0 0 3px rgb(255 255 255 / 0.5);
-    background: linear-gradient(color-mix(in srgb, var(--color-btn), black 30%), color-mix(in srgb, var(--color-btn), black 48%));
+    font-size: 0.9rem;
+    color: var(--color-bg);
+    background: var(--color-ink);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      0 1px 2px rgb(0 0 0 / 0.4);
+      0 0.5px 0.5px rgb(0 0 0 / 0.3),
+      0 3px 6px -2px rgb(var(--shade) / calc(0.3 * var(--lift)));
   }
 }

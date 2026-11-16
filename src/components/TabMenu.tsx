@@ -147,7 +147,7 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
       <div
         aria-hidden
         onClick={onClose}
-        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/40 motion-reduce:animate-none"
+        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/25 motion-reduce:animate-none"
       />
       <div
         role="menu"
@@ -163,11 +163,11 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
             data-menu-item={item.key}
             onClick={() => onPick(item.key)}
             data-hover={hover === item.key ? '' : undefined}
-            className="sk-popover-item flex w-full items-center gap-3 px-4 py-3 text-left font-bold outline-none select-none first:rounded-t-lg last:rounded-b-lg"
+            className="sk-popover-item flex w-full items-center gap-3 px-4 py-3.5 text-left font-medium outline-none select-none"
           >
-            <Glyph icon={item.icon} className="size-6" />
-            <span className="flex-1">{item.label}</span>
-            {item.current && <span aria-hidden>✓</span>}
+            <Glyph icon={item.icon} className="size-[1.35rem] text-ink-2" />
+            <span className={item.current ? 'flex-1 font-semibold' : 'flex-1'}>{item.label}</span>
+            {item.current && <span aria-hidden className="text-accent">✓</span>}
           </button>
         ))}
       </div>

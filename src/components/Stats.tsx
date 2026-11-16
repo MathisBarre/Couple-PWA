@@ -59,7 +59,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
 
       {s.flags.length > 0 && (
         <div className="sk-postit mx-1 mt-2 text-on-soon">
-          <SectionTitle className="text-on-soon [text-shadow:none]">À surveiller</SectionTitle>
+          <SectionTitle className="text-on-soon">À surveiller</SectionTitle>
           <ul className="list-disc space-y-1 pl-5">
             {s.flags.map((f) => (
               <li key={f}>{f}</li>
@@ -79,13 +79,13 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
             return (
               <div key={c.start} className="grid grid-cols-[52px_1fr_58px] items-center gap-2 text-[0.82rem]">
                 <div className="text-ink-2">{formatDM(c.start)}</div>
-                <div className="sk-groove flex h-4.5 gap-px overflow-hidden rounded-sm" style={{ width: `${(len / maxLen) * 100}%` }}>
+                <div className="sk-groove flex h-4 gap-px overflow-hidden rounded-full" style={{ width: `${(len / maxLen) * 100}%` }}>
                   {Array.from({ length: c.period.length }, (_, i) => {
                     const d = byDay.get(addDays(firstDay, i))
                     return (
                       <span
                         key={i}
-                        className={cx('sk-gloss h-full min-w-1', d?.flow ? flowBg[d.flow] : 'bg-line')}
+                        className={cx('h-full min-w-1', d?.flow ? flowBg[d.flow] : 'bg-line')}
                         title={`${formatLong(addDays(firstDay, i))} : ${d?.flow != null ? FLOW_LABELS[d.flow] : 'non noté'}${d?.pain ? ` · douleur ${PAIN_LABELS[d.pain].toLowerCase()}` : ''}`}
                         style={{ width: `${(1 / len) * 100}%` }}
                       />
@@ -105,7 +105,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
             {s.symptomCounts.slice(0, 6).map(([name, n]) => (
               <li key={name} className="grid grid-cols-[110px_1fr_40px] items-center gap-2 text-sm">
                 <span>{name}</span>
-                <span className="sk-gloss h-3 rounded-r-sm bg-flow-3" style={{ width: `${(n / s.symptomCounts[0][1]) * 100}%` }} />
+                <span className="h-2.5 rounded-full bg-flow-3" style={{ width: `${(n / s.symptomCounts[0][1]) * 100}%` }} />
                 <span className="text-right text-ink-2">{n} j</span>
               </li>
             ))}
@@ -137,9 +137,9 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
 
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <Card className="p-3.5">
-      <div className="text-xs font-medium text-ink-2">{label}</div>
-      <div className="sk-engrave mt-0.5 text-[1.7rem] leading-tight font-bold tracking-tight">{value}</div>
+    <Card className="p-4">
+      <div className="text-xs text-ink-2">{label}</div>
+      <div className="mt-1 text-[1.75rem] leading-tight font-semibold tracking-tight tabular-nums">{value}</div>
       {hint && <div className="text-xs text-ink-2">{hint}</div>}
     </Card>
   )

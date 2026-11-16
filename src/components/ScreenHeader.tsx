@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
+import { Chevron } from './icons'
 
 /** Fourni par la pile d'écrans (Stack) à un écran empilé : de quoi afficher « ‹ Précédent ». */
 export const BackContext = createContext<{ label: string; onBack: () => void } | null>(null)
@@ -12,35 +13,33 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
  * La barre commence 8 px sous la zone sûre, sous le bandeau #top-edge, qui sinon masquerait
  * (et capterait les appuis sur) le haut des boutons.
  *
- * Matière : la barre, le grand titre et le bas collant forment la « reliure » de l'écran (cuir de
- * l'agenda, couverture du bloc-notes, barre ardoise des réglages : classes sk-chrome de src/skeuo.css).
- * Sa couleur de base est unie et identique à la barre d'état (#top-edge dans src/index.css) : pas de
- * flou, pas de marche de couleur sur iPhone. Le bas de la reliure (`sk-edge` : couture, pages
- * arrachées ou spirale) reste collé sous la barre ; il porte `sticky` quand il y en a un.
+ * Fond uni, exactement la couleur de l'écran et de la barre d'état (#top-edge dans src/index.css) :
+ * barre d'état, barre, titre et onglets forment une seule surface, sans raccord visible. Pas de flou.
+ * Le bas de l'en-tête (`sk-edge`) reste collé sous la barre ; il porte `sticky` quand il y en a un,
+ * et le contenu qui défile s'efface dessous dans un court fondu.
  */
 export function ScreenHeader({ title, action, sticky }: { title: string; action?: ReactNode; sticky?: ReactNode }) {
   const back = useContext(BackContext)
   return (
     <>
       <div className="sk-chrome sticky top-0 z-20 -mx-4 -mt-[calc(env(safe-area-inset-top)+12px)] px-4 pt-[calc(env(safe-area-inset-top)+8px)]">
-        <div className="relative flex h-10 items-center">
+        <div className="relative flex h-11 items-center">
           {back && (
-            <button type="button" onClick={back.onBack} className="sk-navbtn sk-back absolute left-0 max-w-[45%]">
+            <button type="button" onClick={back.onBack} className="sk-back absolute left-0 max-w-[55%]">
+              <Chevron dir="left" className="h-4 w-2.5" />
               <span className="truncate">{back.label}</span>
             </button>
           )}
           {action && <div className="absolute right-0 flex items-center gap-2">{action}</div>}
         </div>
       </div>
-      <h1 className="sk-chrome sk-title">
-        <span>{title}</span>
-      </h1>
-      <div className="sk-chrome sk-edge top-[calc(env(safe-area-inset-top)+3rem)]">{sticky}</div>
+      <h1 className="sk-chrome sk-title">{title}</h1>
+      <div className="sk-chrome sk-edge top-[calc(env(safe-area-inset-top)+8px+2.75rem)]">{sticky}</div>
     </>
   )
 }
 
-/** Bouton bombé de la barre du haut (ex. réglages de l'espace). */
+/** Bouton rond de la barre du haut (ex. réglages de l'espace). */
 export function HeaderButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (
     <button

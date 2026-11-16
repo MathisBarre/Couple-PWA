@@ -33,8 +33,8 @@ export function Auth({ onDone }: { onDone: () => void }) {
       <Brand compact={Boolean(invited)} />
       {invited && (
         <div className="sk-invite-card w-full">
-          <p className="text-[0.7rem] font-bold tracking-[0.14em] text-[#a07a2c] uppercase">Invitation</p>
-          <p className="mt-1 text-[0.95rem] leading-snug">
+          <p className="sk-section-title mb-1">Invitation</p>
+          <p className="text-[0.95rem] leading-snug">
             Vous avez été invité·e à rejoindre un espace à deux. Créez votre compte (ou connectez-vous) : vous le rejoindrez automatiquement.
           </p>
         </div>
@@ -66,59 +66,57 @@ export function Auth({ onDone }: { onDone: () => void }) {
   )
 }
 
-/** Écrans hors de l'app (connexion, création de l'espace) : centrés sur le lin gris du thème neutre. */
+/** Écrans hors de l'app (connexion, création de l'espace) : centrés, en thème neutre. */
 export function CenterLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-5 pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-center">
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-5 px-6 pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-center">
       {children}
     </div>
   )
 }
 
-/** Le logo en icône d'app d'avant iOS 7 : coins arrondis, reflet en arc, ombre portée. */
+/** Le logo, posé comme un objet : coins arrondis, ombre portée douce. */
 export function Logo({ className, size = 'size-24' }: { className?: string; size?: string }) {
   return (
     <div className={cx('sk-logo', size, className)}>
-      <div className="sk-logo-wrap size-full">
-        <img src="/logo.svg" alt="" className="size-full" />
-      </div>
+      <img src="/logo.svg" alt="" className="size-full" />
     </div>
   )
 }
 
 /**
  * L'identité de l'app : « À deux », une app de couple avec plusieurs espaces (et d'autres à venir),
- * présentés comme des icônes posées sur une étagère.
+ * rangés côte à côte dans un plumier.
  */
 export function Brand({ compact }: { compact?: boolean }) {
   return (
-    <div className="flex w-full flex-col items-center gap-3">
-      <Logo size={compact ? 'size-18' : 'size-24'} />
+    <div className="flex w-full flex-col items-center gap-5">
+      <Logo size={compact ? 'size-16' : 'size-22'} />
       <div>
         <h1 className="sk-wordmark">À deux</h1>
-        <p className="sk-engrave mt-1 text-[0.95rem] font-medium text-ink-2">Notre app de couple, rien qu’à nous deux.</p>
+        <p className="mt-2 text-[1.02rem] text-ink-2">Notre app de couple, rien qu’à nous deux.</p>
       </div>
-      <ul aria-label="Les espaces de l’app" className="sk-shelf">
+      <ul aria-label="Les espaces de l’app" className="sk-tray">
         {MODULES.map((m) => (
           <li key={m.id} data-theme={m.theme}>
-            <span aria-hidden className="sk-app-icon size-12">
-              <Glyph icon={m.icon} className="size-7" />
+            <span aria-hidden className="sk-app-icon size-11">
+              <Glyph icon={m.icon} className="size-6" />
             </span>
-            <span className="sk-shelf-label">{m.label}</span>
+            <span className="text-ink-2">{m.label}</span>
           </li>
         ))}
         <li>
-          <span aria-hidden className="sk-app-icon sk-app-icon-soon size-12">
-            <span className="text-2xl leading-none font-bold">+</span>
+          <span aria-hidden className="sk-app-icon sk-app-icon-soon size-11">
+            <span className="text-xl leading-none">+</span>
           </span>
-          <span className="sk-shelf-label">Et plus…</span>
+          Et plus…
         </li>
       </ul>
     </div>
   )
 }
 
-/** Champs empilés dans un même tableau groupé, comme un formulaire d'iOS 6. */
+/** Champs empilés dans un même panneau. */
 export function FieldGroup({ children }: { children: ReactNode }) {
   return <div className="sk-card sk-fields w-full overflow-hidden text-left">{children}</div>
 }

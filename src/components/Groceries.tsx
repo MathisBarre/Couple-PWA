@@ -2,7 +2,7 @@ import { Checkbox } from '@base-ui/react/checkbox'
 import { useRef, useState } from 'react'
 import type { GroceryItem } from '../lib/groceries'
 import { Cross, Glyph } from './icons'
-import { Button, cx } from './ui'
+import { Button, cx, SectionTitle } from './ui'
 
 interface Props {
   items: GroceryItem[]
@@ -14,8 +14,9 @@ interface Props {
 }
 
 /**
- * La liste de courses, sur un bloc-notes ligné : tout tient sur des lignes de 44 px (`sk-ruled`),
- * l'écriture manuscrite se pose sur les lignes, les cases sont dans la marge.
+ * La liste de courses, sur un bloc-notes de papeterie (`sk-block` : papier épais, reliure de toile
+ * verte, perforations) : on écrit sur la première ligne, la liste suit. Les articles déjà pris
+ * sont sur une feuille à part, en dessous.
  */
 export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone }: Props) {
   const [text, setText] = useState('')
@@ -33,60 +34,59 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
   }
 
   return (
-    <div className="sk-ruled">
-      <form onSubmit={submit} className="sk-ruled-row pr-2.5 pl-14">
-        <input
-          ref={input}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Ajouter… (lait, pain, œufs)"
-          aria-label="Article à ajouter"
-          enterKeyHint="done"
-          autoComplete="off"
-          autoCapitalize="sentences"
-          className="sk-ruled-input"
-        />
-        <Button type="submit" disabled={!text.trim()} className="mt-1 size-9 min-h-0 shrink-0 rounded-full p-0 font-sans text-2xl leading-none after:absolute after:-inset-1" aria-label="Ajouter">
-          +
-        </Button>
-      </form>
+    <div className="flex flex-col gap-6 pt-1">
+      <div className="sk-block [--binding:14px]">
+        <div aria-hidden className="sk-perfs" />
+        <form onSubmit={submit} className="sk-row gap-2 pr-2.5 pl-5">
+          <input
+            ref={input}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Ajouter… (lait, pain, œufs)"
+            aria-label="Article à ajouter"
+            enterKeyHint="done"
+            autoComplete="off"
+            autoCapitalize="sentences"
+            className="sk-bare-input"
+          />
+          <Button type="submit" disabled={!text.trim()} className="size-10 min-h-0 shrink-0 rounded-full p-0 text-2xl leading-none font-normal after:absolute after:-inset-0.5" aria-label="Ajouter">
+            +
+          </Button>
+        </form>
 
-      {!items.length && (
-        <div className="px-6 pt-11 text-center text-ink-2">
-          <Glyph icon="🛒" className="mx-auto size-11 opacity-60" />
-          <p className="sk-hand">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
-        </div>
-      )}
+        {!items.length && (
+          <div className="border-t border-line px-6 py-8 text-center text-ink-2">
+            <Glyph icon="🛒" className="mx-auto size-9 opacity-70" />
+            <p className="mt-2 text-sm">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
+          </div>
+        )}
 
-      {todo.length > 0 && (
-        <section className="mt-11">
-          <h3 className="sk-ruled-title">
-            <span>À acheter · {todo.length}</span>
-          </h3>
-          <ul>
-            {todo.map((i) => (
-              <Row key={i.id} item={i} by={i.added_by ? names[i.added_by] : undefined} onToggle={onToggle} onRemove={onRemove} />
-            ))}
-          </ul>
-        </section>
-      )}
+        {todo.length > 0 && (
+          <section className="border-t border-line pb-1.5">
+            <SectionTitle className="mb-0 px-5 pt-4 pb-1">À acheter · {todo.length}</SectionTitle>
+            <ul className="sk-rows">
+              {todo.map((i) => (
+                <Row key={i.id} item={i} by={i.added_by ? names[i.added_by] : undefined} onToggle={onToggle} onRemove={onRemove} />
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
 
       {done.length > 0 && (
-        <section className="mt-11">
-          <div className="flex items-start justify-between pr-4">
-            <h3 className="sk-ruled-title">
-              <span>Dans le panier · {done.length}</span>
-            </h3>
-            <Button variant="link" onClick={onClearDone} className="sk-hand h-11 px-1 font-hand text-[1.5rem] leading-none">
+        <section>
+          <div className="flex items-center justify-between px-1.5">
+            <SectionTitle className="mb-0">Dans le panier · {done.length}</SectionTitle>
+            <Button variant="link" onClick={onClearDone} className="text-sm">
               Vider
             </Button>
           </div>
-          <ul>
+          <ul className="sk-card sk-rows py-0.5">
             {done.map((i) => (
               <Row key={i.id} item={i} onToggle={onToggle} onRemove={onRemove} />
             ))}
           </ul>
-          <p className="sk-ruled-note pt-2">Toucher un article coché le remet dans la liste.</p>
+          <p className="mt-3 px-1.5 text-xs text-ink-2">Toucher un article coché le remet dans la liste.</p>
         </section>
       )}
     </div>
@@ -105,27 +105,27 @@ function Row({
   onRemove: (item: GroceryItem) => void
 }) {
   return (
-    <li className="sk-ruled-row">
-      <label className="flex min-w-0 flex-1 items-start select-none">
+    <li className="sk-row">
+      <label className="flex min-h-[54px] min-w-0 flex-1 items-center py-2.5 select-none">
         <Checkbox.Root checked={item.done} onCheckedChange={() => onToggle(item)} className="sk-checkbox">
           <Checkbox.Indicator
             render={
-              <svg aria-hidden viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 19c2.5 2 4.5 4.5 6 7.5C15.5 17 21 9.5 29 3.5" />
+              <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3.5 8.5l3 3 6-6.5" />
               </svg>
             }
           />
         </Checkbox.Root>
-        <span className={cx('sk-hand min-w-0 flex-1 pl-2.5 break-words', item.done && 'sk-struck')}>
+        <span className={cx('min-w-0 flex-1 text-[1.06rem] leading-snug break-words', item.done && 'sk-struck')}>
           {item.name}
-          {by && by !== 'vous' && <span className="ml-2.5 text-[1.15rem] text-ink-2">par {by}</span>}
+          {by && by !== 'vous' && <span className="ml-2 text-[0.8rem] text-ink-2">par {by}</span>}
         </span>
       </label>
       <button
         type="button"
         onClick={() => onRemove(item)}
         aria-label={`Retirer ${item.name}`}
-        className="grid size-11 shrink-0 place-items-center text-ink-2/60 outline-none focus-visible:text-accent active:text-ink"
+        className="grid size-11 shrink-0 place-items-center text-ink-2/55 outline-none focus-visible:text-accent active:text-ink"
       >
         <Cross />
       </button>

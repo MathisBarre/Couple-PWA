@@ -34,7 +34,7 @@ export function Setup({ onDone }: { onDone: () => void }) {
     return (
       <CenterLayout>
         <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
-        <p className="sk-engrave font-medium text-ink-2">On rejoint votre espace à deux…</p>
+        <p className="font-medium text-ink-2">On rejoint votre espace à deux…</p>
       </CenterLayout>
     )
   const create = () => run({ action: 'create' })
@@ -47,13 +47,13 @@ export function Setup({ onDone }: { onDone: () => void }) {
     <CenterLayout>
       <Brand compact />
       <div className="mt-1 w-full">
-        <h2 className="sk-section-title text-center !text-[1.15rem]">Votre espace à deux</h2>
-        <p className="sk-engrave text-[0.95rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
+        <h2 className="sk-h2">Votre espace à deux</h2>
+        <p className="mt-1 text-[0.95rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
       </div>
       <Button className="w-full" onClick={create}>
         Créer notre espace
       </Button>
-      <div className="sk-or w-full text-sm font-bold text-ink-2">ou</div>
+      <div className="sk-or w-full text-sm text-ink-2">ou</div>
       <form onSubmit={join} className="flex w-full flex-col gap-3">
         <FieldGroup>
           <input

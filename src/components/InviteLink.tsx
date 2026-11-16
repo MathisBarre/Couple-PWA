@@ -13,7 +13,7 @@ export function InviteLink({ code, from }: { code: string; from: string }) {
   return (
     <div className="flex flex-col gap-2.5 py-2">
       <p>Invitez votre partenaire : en ouvrant ce lien, son compte rejoint directement votre espace.</p>
-      <p className="sk-groove truncate rounded-md px-3 py-2.5 font-mono text-sm text-ink-2 select-all">{inviteUrl(code)}</p>
+      <p className="sk-groove truncate rounded-xl px-3 py-2.5 font-mono text-sm text-ink-2 select-all">{inviteUrl(code)}</p>
       <div className="grid grid-cols-2 gap-2">
         {canShare && (
           <Button onClick={() => shareInvite(code, from).then(done, fail)} className="py-2.5">
