@@ -1,106 +1,69 @@
-// Icônes de l'interface : traits fins (1,7 px), dessinées sur une grille de 24, couleur du texte.
+// Pictogrammes au trait, dessinés comme des vignettes d'imprimerie : un seul trait fin,
+// extrémités droites, aucune couleur propre (ils prennent l'encre du texte).
 import type { ReactNode } from 'react'
 
-const PATHS: Record<string, ReactNode> = {
-  // Espaces
-  drop: <path d="M12 3.2c3 3.5 6 6.8 6 10.4a6 6 0 0 1-12 0c0-3.6 3-6.9 6-10.4Z" />,
-  basket: (
-    <>
-      <path d="M3.5 9.5h17l-1.5 8.3a2.2 2.2 0 0 1-2.2 1.8H7.2A2.2 2.2 0 0 1 5 17.8Z" />
-      <path d="m8.5 9.5 3.5-5.5 3.5 5.5" />
-      <path d="M9.5 13.3v3M14.5 13.3v3" />
-    </>
-  ),
-  sliders: (
-    <>
-      <path d="M4 7.5h9M17.5 7.5H20M4 16.5h2.5M11 16.5h9" />
-      <circle cx="15.2" cy="7.5" r="2.2" />
-      <circle cx="8.8" cy="16.5" r="2.2" />
-    </>
-  ),
-  menu: <path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15" />,
-  // Sous-écrans
-  calendar: (
-    <>
-      <rect x="4" y="5.5" width="16" height="14.5" rx="3.2" />
-      <path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" />
-    </>
-  ),
-  chart: <path d="M5 19.5v-6M10 19.5V5M15 19.5v-9M20 19.5v-4" />,
+const rays = (n: number, r1: number, r2: number, offset = 0) =>
+  Array.from({ length: n }, (_, i) => {
+    const a = offset + (i * 2 * Math.PI) / n
+    const p = (r: number) => `${(12 + r * Math.cos(a)).toFixed(2)} ${(12 + r * Math.sin(a)).toFixed(2)}`
+    return `M${p(r1)}L${p(r2)}`
+  }).join('')
+
+const ICONS = {
+  /** Cycle : une goutte. */
+  drop: <path d="M12 3.5c3.4 4.2 5.5 7.2 5.5 10.2a5.5 5.5 0 0 1-11 0c0-3 2.1-6 5.5-10.200z" />,
+  /** Courses : un panier. */
+  basket: <path d="M3.5 9.500h17l-1.700 10H5.200zM8 9.500l3-5.500M16 9.500l-3-5.500M9.500 13v3.500M12 13v3.500M14.500 13v3.500" />,
+  calendar: <path d="M4 5.500h16v14H4zM4 9.500h16M8 3.500v4M16 3.500v4" />,
+  chart: <path d="M3.500 20h17M7 20v-6M12 20V5M17 20v-10" />,
+  /** Réglages : un cadran à crans. */
   gear: (
     <>
-      <path d="M10.33 3.4a1.7 1.7 0 0 1 3.34 0l.2 1.02a1.7 1.7 0 0 0 2.36 1.23l.95-.43a1.7 1.7 0 0 1 2.36 2.36l-.43.95a1.7 1.7 0 0 0 1.23 2.36l1.02.2a1.7 1.7 0 0 1 0 3.34l-1.02.2a1.7 1.7 0 0 0-1.23 2.36l.43.95a1.7 1.7 0 0 1-2.36 2.36l-.95-.43a1.7 1.7 0 0 0-2.36 1.23l-.2 1.02a1.7 1.7 0 0 1-3.34 0l-.2-1.02a1.7 1.7 0 0 0-2.36-1.23l-.95.43a1.7 1.7 0 0 1-2.36-2.36l.43-.95a1.7 1.7 0 0 0-1.23-2.36l-1.02-.2a1.7 1.7 0 0 1 0-3.34l1.02-.2a1.7 1.7 0 0 0 1.23-2.36l-.43-.95a1.7 1.7 0 0 1 2.36-2.36l.95.43a1.7 1.7 0 0 0 2.36-1.23z" />
-      <circle cx="12" cy="12" r="3.2" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+      <path d={rays(8, 6, 9.500, Math.PI / 8)} />
     </>
   ),
-  list: (
+  list: <path d="M9 6.500h11.500M9 12h11.500M9 17.500h11.500M3.500 5.500h2v2h-2zM3.500 11h2v2h-2zM3.500 16.500h2v2h-2z" />,
+  grid: <path d="M4 4h6.500v6.500H4zM13.500 4H20v6.500h-6.500zM4 13.500h6.500V20H4zM13.500 13.500H20V20h-6.500z" />,
+  /** Apparence : un disque mi-encre, mi-papier. */
+  contrast: (
     <>
-      <path d="M9.5 7h10.5M9.5 12h10.5M9.5 17h10.5" />
-      <path d="M4.5 7h.01M4.5 12h.01M4.5 17h.01" strokeWidth={2.6} />
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none" />
     </>
   ),
-  grid: (
+  bell: <path d="M6.500 17v-6a5.500 5.500 0 0 1 11 0v6M4 17h16M10.500 20h3M12 3.500v2" />,
+  /** Couple : deux anneaux qui se rejoignent (le logo de l'app). */
+  rings: (
     <>
-      <rect x="4" y="4" width="6.8" height="6.8" rx="2" />
-      <rect x="13.2" y="4" width="6.8" height="6.8" rx="2" />
-      <rect x="4" y="13.2" width="6.8" height="6.8" rx="2" />
-      <rect x="13.2" y="13.2" width="6.8" height="6.8" rx="2" />
+      <circle cx="9" cy="12" r="5.500" />
+      <circle cx="15" cy="12" r="5.500" />
     </>
   ),
-  palette: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 3.5a8.5 8.5 0 0 0 0 17Z" fill="currentColor" stroke="none" />
-    </>
-  ),
-  bell: (
-    <>
-      <path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14Z" />
-      <path d="M10.2 21a2 2 0 0 0 3.6 0" />
-    </>
-  ),
-  hearts: (
-    <>
-      <circle cx="9" cy="12" r="5.5" />
-      <circle cx="15" cy="12" r="5.5" />
-    </>
-  ),
-  phone: (
-    <>
-      <rect x="7" y="3" width="10" height="18" rx="2.8" />
-      <path d="M10.8 17.8h2.4" />
-    </>
-  ),
+  phone: <path d="M7 3h10v18H7zM10.500 18h3" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   sun: (
     <>
-      <circle cx="12" cy="12" r="3.8" />
-      <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />
+      <circle cx="12" cy="12" r="3.500" />
+      <path d={rays(8, 6, 8.500)} />
     </>
   ),
-  moon: <path d="M19.5 14.2A8 8 0 0 1 9.8 4.5a8 8 0 1 0 9.7 9.7Z" />,
-  // Petits signes
-  check: <path d="m5.5 12.5 4.2 4.2 8.8-9.4" />,
-  close: <path d="m6.5 6.5 11 11M17.5 6.5l-11 11" />,
-  plus: <path d="M12 5v14M5 12h14" />,
-  'chevron-left': <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />,
-  'chevron-right': <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />,
-  'chevron-down': <path d="m6 9.5 6 6 6-6" />,
-}
+  moon: <path d="M19 14.200A7.500 7.500 0 0 1 9.800 5a7.500 7.500 0 1 0 9.200 9.200z" />,
+  close: <path d="M5.500 5.500l13 13M18.500 5.500l-13 13" />,
+  plus: <path d="M12 4.500v15M4.500 12h15" />,
+  check: <path d="M4.500 12.500l4.700 4.700L19.500 6.500" />,
+  left: <path d="M20 12H4.500M10 6l-6 6 6 6" />,
+  prev: <path d="M14.500 5l-7 7 7 7" />,
+  next: <path d="M9.500 5l7 7-7 7" />,
+} satisfies Record<string, ReactNode>
 
-/** Icône au trait. `name` : une clé de PATHS (les espaces et rubriques de src/modules.ts en portent une). */
-export function Icon({ name, className = 'size-5', strokeWidth = 1.7 }: { name: string; className?: string; strokeWidth?: number }) {
+export type IconName = keyof typeof ICONS
+
+export function Icon({ name, className = 'size-5', strokeWidth = 1.5 }: { name: IconName; className?: string; strokeWidth?: number }) {
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {PATHS[name] ?? PATHS.grid}
+    <svg aria-hidden viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="butt" strokeLinejoin="miter">
+      {ICONS[name]}
     </svg>
   )
 }

@@ -2,10 +2,10 @@ import { Toggle } from '@base-ui/react/toggle'
 import { ToggleGroup } from '@base-ui/react/toggle-group'
 import { useState } from 'react'
 import { getSchemeChoice, setSchemeChoice, type SchemeChoice } from '../lib/scheme'
-import { Icon } from './icons'
+import { Icon, type IconName } from './icons'
 import { cx } from './ui'
 
-const CHOICES: [SchemeChoice, string, string][] = [
+const CHOICES: [SchemeChoice, IconName, string][] = [
   ['system', 'phone', 'Système'],
   ['light', 'sun', 'Clair'],
   ['dark', 'moon', 'Sombre'],
@@ -24,19 +24,19 @@ export function SchemePicker() {
         setChoice(next)
         setSchemeChoice(next)
       }}
-      className="well mt-1 grid grid-cols-3 gap-1 rounded-[1.0625rem] p-1"
+      className="mt-1 grid grid-cols-3 border-t border-l border-ink"
     >
       {CHOICES.map(([id, icon, label]) => (
         <Toggle
           key={id}
           value={id}
           className={cx(
-            'scheme-item flex min-h-16 flex-col items-center justify-center gap-1 rounded-[0.8125rem] py-2.5 text-sm font-medium text-ink-2 transition-colors select-none',
+            'flex flex-col items-center gap-1.5 border-r border-b border-ink py-3 text-[0.98rem] transition-colors select-none',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-            'data-pressed:font-bold data-pressed:text-ink',
+            'data-pressed:bg-ink data-pressed:font-semibold data-pressed:text-bg',
           )}
         >
-          <Icon name={icon} className="size-5.5" />
+          <Icon name={icon} className="size-6" />
           {label}
         </Toggle>
       ))}

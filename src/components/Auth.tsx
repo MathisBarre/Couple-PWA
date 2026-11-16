@@ -1,9 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { api } from '../lib/api'
+import { formatLong, localToday } from '../lib/dates'
 import { pendingInvite } from '../lib/invite'
 import { MODULES } from '../modules'
 import { Icon } from './icons'
-import { Button, cx, inputClass } from './ui'
+import { Button, inputClass, SectionTitle } from './ui'
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
 
 export function Auth({ onDone }: { onDone: () => void }) {
   const invited = pendingInvite()
@@ -29,89 +32,106 @@ export function Auth({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <CenterLayout>
-      <Brand small={Boolean(invited)} />
-      {invited && (
-        <div className="card flex w-full items-start gap-3.5 p-4 text-left">
-          <span aria-hidden className="accent-fill grid size-10 shrink-0 place-items-center rounded-[0.8125rem]">
-            <Icon name="hearts" className="size-5.5" strokeWidth={1.9} />
-          </span>
-          <p className="text-[0.9375rem] leading-snug">
-            <strong className="block">Vous avez été invité·e à rejoindre un espace à deux.</strong>
-            <span className="text-ink-2">Créez votre compte (ou connectez-vous) : vous le rejoindrez automatiquement.</span>
+    <CoverLayout>
+      <Masthead />
+      {invited ? (
+        <div className="border-2 border-ink px-3.5 pt-2.5 pb-3">
+          <div className="etiquette mb-1.5">Invitation</div>
+          <p className="text-[1.1rem] leading-snug">
+            Vous avez été invité·e à rejoindre un espace à deux. Créez votre compte (ou connectez-vous) : vous le rejoindrez automatiquement.
           </p>
         </div>
+      ) : (
+        <Contents />
       )}
-      <form onSubmit={submit} className="card flex w-full flex-col gap-3 p-4 text-left">
-        <h2 className="text-[1.375rem] leading-tight font-bold tracking-[-0.03em]">{mode === 'login' ? 'Se connecter' : 'Créer un compte'}</h2>
-        {mode === 'signup' && (
-          <input aria-label="Prénom" className={inputClass} placeholder="Prénom" autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} required />
-        )}
-        <input aria-label="E-mail" className={inputClass} type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input
-          aria-label="Mot de passe"
-          className={inputClass}
-          type="password"
-          placeholder={mode === 'signup' ? 'Mot de passe (8 caractères minimum)' : 'Mot de passe'}
-          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          minLength={mode === 'signup' ? 8 : undefined}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {msg && <p className="text-sm font-medium text-[#c8323c] dark:text-[#ff8a8a]">{msg}</p>}
-        <Button type="submit" disabled={busy} className="mt-1">
-          {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
+      <section className="border-t-2 border-ink pt-3">
+        <SectionTitle>{mode === 'login' ? 'Se connecter' : 'Créer un compte'}</SectionTitle>
+        <form onSubmit={submit} className="flex w-full flex-col">
+          {mode === 'signup' && <input className={inputClass} placeholder="Prénom" aria-label="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
+          <input
+            className={inputClass + (mode === 'signup' ? ' border-t-0' : '')}
+            type="email"
+            placeholder="E-mail"
+            aria-label="E-mail"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            className={inputClass + ' border-t-0'}
+            type="password"
+            placeholder="Mot de passe"
+            aria-label="Mot de passe"
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            minLength={mode === 'signup' ? 8 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Button type="submit" disabled={busy} className="mt-3">
+            {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
+          </Button>
+        </form>
+        {msg && <p className="mt-2 text-sm font-medium italic">{msg}</p>}
+        <Button variant="link" className="mt-1" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+          {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
         </Button>
-      </form>
-      <Button variant="link" className="!min-h-11 !self-center underline decoration-ink/25 underline-offset-4" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-        {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
-      </Button>
-    </CenterLayout>
+      </section>
+    </CoverLayout>
   )
 }
 
-/**
- * L'app, présentée avant la connexion : le logo dans un halo aux couleurs des espaces, le nom,
- * une phrase, et les espaces qu'on y trouve (ceux de src/modules.ts).
- */
-export function Brand({ compact, small = compact }: { compact?: boolean; small?: boolean }) {
+/** Têtière de couverture : la date du jour entre deux filets, puis le titre de l'almanach en très grand. */
+export function Masthead({ compact }: { compact?: boolean }) {
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <div aria-hidden className="brand-halo absolute -inset-16" />
-        <img
-          src="/logo.svg"
-          alt=""
-          className={cx('relative rounded-[22%] shadow-[0_1px_2px_rgb(0_0_0/0.2),0_12px_28px_-8px_rgb(0_0_0/0.45)]', small ? 'size-16' : 'size-20')}
-        />
+    <header>
+      <div className="etiquette flex items-center justify-between border-y border-ink py-2">
+        <span>{formatLong(localToday())}</span>
+        <Icon name="rings" className="h-4 w-6" />
       </div>
-      <h1 className={cx('relative mt-4 leading-none font-extrabold tracking-[-0.045em]', small ? 'text-[2rem]' : 'text-[2.5rem]')}>À deux</h1>
-      {!compact && (
-        <>
-          <p className="relative mt-2.5 text-[1.0625rem] text-ink-2">Notre app de couple, rien qu’à nous deux.</p>
-          <ul className="relative mt-4 flex flex-wrap justify-center gap-2" aria-label="Les espaces de l’app">
-            {MODULES.map((m) => (
-              <li key={m.id} data-theme={m.theme} className="raised flex items-center gap-1.5 rounded-full py-1.5 pr-3 pl-2 text-sm font-semibold text-ink">
-                <Icon name={m.icon} className="size-4.5 text-accent" strokeWidth={2} />
-                {m.label}
-              </li>
-            ))}
-            <li className="flex items-center gap-1 rounded-full border border-dashed border-ink-2/40 py-1.5 pr-3 pl-2 text-sm font-medium text-ink-2">
-              <Icon name="plus" className="size-4" strokeWidth={2} />
-              à venir
-            </li>
-          </ul>
-        </>
-      )}
-    </div>
+      <div className={compact ? 'pt-4 text-[2.75rem] leading-none font-light tracking-[-0.03em]' : 'pt-5 text-[6.25rem] leading-[0.85] font-light tracking-[-0.05em]'}>
+        À deux
+      </div>
+      {!compact && <p className="mt-4 text-[1.3rem] leading-snug italic">Notre app de couple, rien qu’à nous deux : cycle, courses et plus.</p>}
+    </header>
   )
 }
 
-export function CenterLayout({ children }: { children: React.ReactNode }) {
+/** Sommaire de couverture : les espaces de l'app, chacun annoncé par un chiffre romain à son encre. */
+function Contents() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-5 overflow-x-hidden px-4 pt-[calc(env(safe-area-inset-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+24px)] text-center">
+    <ol className="border-t border-ink">
+      {MODULES.map((m, i) => (
+        <li key={m.id} className="flex items-center gap-3.5 border-b border-line py-2.5">
+          <span data-theme={m.theme} aria-hidden className="w-9 shrink-0 text-[2rem] leading-none font-light text-accent italic">
+            {ROMAN[i]}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[1.2rem] leading-tight font-medium">{m.label}</span>
+            <span className="block text-sm text-ink-2 italic">{m.description}</span>
+          </span>
+        </li>
+      ))}
+      <li className="flex items-center gap-3.5 py-2.5 text-ink-2">
+        <span aria-hidden className="w-9 shrink-0 text-[2rem] leading-none font-light italic">
+          …
+        </span>
+        <span className="text-sm italic">Et d’autres espaces à venir.</span>
+      </li>
+    </ol>
+  )
+}
+
+/** Page de couverture (connexion, création de l'espace) : une colonne de texte, alignée à gauche. */
+export function CoverLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="rubriques mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+20px)]">
       {children}
     </div>
   )
+}
+
+export function CenterLayout({ children }: { children: ReactNode }) {
+  return <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-4 py-6 text-center">{children}</div>
 }

@@ -12,12 +12,14 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 
 const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
 
+// Boutons : un aplat d'encre de couleur (primary), un cadre au filet noir (secondary, outline),
+// ou un simple mot souligné (link, ghost). Coins droits, aucune ombre.
 const buttonVariants = {
-  primary: 'accent-fill font-bold active:translate-y-px',
-  secondary: 'raised text-ink font-semibold active:translate-y-px',
-  outline: 'raised text-ink font-semibold active:translate-y-px',
-  link: 'bg-transparent text-accent font-semibold !p-0 !min-h-0 self-start active:opacity-60',
-  ghost: 'bg-transparent text-ink-2 font-medium !p-0 !min-h-0 active:opacity-60',
+  primary: 'bg-accent text-on-accent font-semibold',
+  secondary: 'border border-ink bg-transparent text-ink font-semibold',
+  outline: 'border border-ink bg-transparent text-ink font-semibold',
+  link: 'bg-transparent text-accent font-medium underline decoration-1 underline-offset-4 !px-0 !py-2 !min-h-11 self-start text-left',
+  ghost: 'bg-transparent text-ink-2 font-medium underline decoration-1 underline-offset-4 !px-0 !py-2 !min-h-11',
 }
 
 export function Button({
@@ -28,7 +30,7 @@ export function Button({
   return (
     <BaseButton
       className={cx(
-        'min-h-12 rounded-2xl px-4 py-3 tracking-[-0.01em] select-none transition-[transform,box-shadow,opacity] duration-150 disabled:opacity-45 disabled:saturate-50',
+        'min-h-12 px-4 py-3 leading-tight select-none transition-opacity active:opacity-60 disabled:opacity-40',
         focus,
         buttonVariants[variant],
         className as string,
@@ -41,21 +43,21 @@ export function Button({
 export function IconButton({ className, ...props }: ComponentProps<typeof BaseButton>) {
   return (
     <BaseButton
-      className={cx('raised grid size-10 place-items-center rounded-full text-ink transition-[box-shadow,transform] active:scale-95', focus, className as string)}
+      className={cx('grid size-11 place-items-center text-ink transition-opacity active:opacity-50', focus, className as string)}
       {...props}
     />
   )
 }
 
 export function Card({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cx('card p-4', className)} {...props} />
+  return <div className={cx('border-t border-ink pt-3 pb-1.5', className)} {...props} />
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h3 className="eyebrow mb-2">{children}</h3>
+  return <h3 className="rubrique-titre etiquette mb-2.5 text-ink">{children}</h3>
 }
 
-export const inputClass = 'field'
+export const inputClass = cx('w-full rounded-none border border-ink bg-transparent px-3 py-3 text-ink placeholder:text-ink-2 placeholder:italic', focus)
 
 /** Choix unique parmi des options (flux, douleur…) : un nouvel appui sur l'option active ne la désélectionne pas. */
 export function SingleChoice<T extends number>({
@@ -107,8 +109,8 @@ export function MultiChoice({
           key={o}
           value={o}
           className={cx(
-            'raised min-h-10 rounded-full px-3.5 py-2 text-sm font-medium transition-[box-shadow,color]',
-            'data-pressed:bg-accent-soft data-pressed:bg-none data-pressed:font-bold data-pressed:text-accent data-pressed:shadow-[inset_0_0_0_1.5px_var(--color-accent)]',
+            'min-h-11 border border-ink px-3 py-2 text-[0.95rem]',
+            'data-pressed:bg-ink data-pressed:font-medium data-pressed:text-bg',
             focus,
           )}
         >
@@ -121,18 +123,18 @@ export function MultiChoice({
 
 export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label className="flex min-h-11 items-center justify-between gap-3 py-2">
-      <span className="font-medium">{label}</span>
+    <label className="flex min-h-12 items-center justify-between gap-3 py-2">
+      <span>{label}</span>
       <BaseSwitch.Root
         checked={checked}
         onCheckedChange={onChange}
         className={cx(
-          // Pouce centré : 3 px de marge tout autour, il glisse de 50 − 2×3 − 24 = 20 px.
-          'well relative inline-flex h-7.5 w-12.5 shrink-0 items-center rounded-full p-0.75 transition-colors duration-200 data-checked:bg-accent data-checked:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]',
+          // Interrupteur à glissière : un cadre au filet, un plomb carré qui glisse de 50 − 2×(1+3) − 20 = 22 px.
+          'group relative inline-flex h-7 w-12.5 shrink-0 items-center border border-ink p-0.75 transition-colors data-checked:bg-accent data-checked:border-accent',
           focus,
         )}
       >
-        <BaseSwitch.Thumb className="block size-6 rounded-full bg-linear-to-b from-white to-[#f1eff0] shadow-[inset_0_1px_0_#fff,0_1px_2px_rgb(0_0_0/0.25),0_2px_5px_rgb(0_0_0/0.18)] transition-transform duration-200 ease-out data-checked:translate-x-5" />
+        <BaseSwitch.Thumb className="block size-5 bg-ink transition-transform duration-200 ease-out data-checked:translate-x-5.5 data-checked:bg-on-accent" />
       </BaseSwitch.Root>
     </label>
   )
@@ -150,29 +152,29 @@ export function Select<T extends string | number>({
   label: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
-      <span className="font-medium">{label}</span>
+    <div className="flex min-h-12 items-center justify-between gap-3 py-2">
+      <span>{label}</span>
       <BaseSelect.Root items={items} value={value} onValueChange={(v) => v != null && onChange(v as T)}>
         <BaseSelect.Trigger
           aria-label={label}
-          className={cx('raised flex min-h-11 min-w-32 items-center justify-between gap-3 rounded-[0.875rem] px-3.5 py-2.5 font-medium', focus)}
+          className={cx('flex min-h-11 min-w-32 items-center justify-between gap-3 border border-ink px-3 py-2', focus)}
         >
           <BaseSelect.Value />
-          <BaseSelect.Icon className="text-ink-2">
-            <Icon name="chevron-down" className="size-4" strokeWidth={2} />
+          <BaseSelect.Icon className="rotate-90 text-ink">
+            <Icon name="next" className="size-3.5" />
           </BaseSelect.Icon>
         </BaseSelect.Trigger>
         <BaseSelect.Portal>
           <BaseSelect.Positioner className="z-50 outline-none" sideOffset={6}>
-            <BaseSelect.Popup className="max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) floating overflow-y-auto rounded-2xl p-1 text-ink transition-[scale,opacity] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <BaseSelect.Popup className="max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto border border-ink bg-bg py-1 text-ink transition-[scale,opacity] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
               {items.map((i) => (
                 <BaseSelect.Item
                   key={i.value}
                   value={i.value}
-                  className="grid min-h-10 cursor-default grid-cols-[1rem_1fr] items-center gap-2 rounded-xl px-3 py-2 outline-none select-none data-highlighted:bg-surface-2"
+                  className="grid cursor-default grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2.5 outline-none select-none data-highlighted:bg-surface-2"
                 >
                   <BaseSelect.ItemIndicator className="col-start-1 text-accent">
-                    <Icon name="check" className="size-4" strokeWidth={2.4} />
+                    <Icon name="check" className="size-4" strokeWidth={2} />
                   </BaseSelect.ItemIndicator>
                   <BaseSelect.ItemText className="col-start-2">{i.label}</BaseSelect.ItemText>
                 </BaseSelect.Item>
@@ -202,13 +204,13 @@ export function Sheet({
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-black opacity-[calc(0.45*(1-var(--drawer-swipe-progress)))] transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0" />
         <Drawer.Viewport className="fixed inset-0 z-40 flex items-end justify-center">
-          <Drawer.Popup className="-mb-12 max-h-[calc(88dvh+3rem)] w-full max-w-xl overflow-y-auto overscroll-contain sheet rounded-t-[1.75rem] px-4 pt-2.5 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none">
-            <div className="mx-auto mb-3 h-1.25 w-10 rounded-full bg-ink/15" />
+          <Drawer.Popup className="-mb-12 max-h-[calc(88dvh+3rem)] rubriques w-full max-w-xl overflow-y-auto overscroll-contain border-t-2 border-ink bg-bg px-4 pt-2.5 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none">
+            <div className="mx-auto mb-2 h-0.5 w-10 bg-ink" />
             <Drawer.Content>
-              <div className="mb-2 flex items-center justify-between">
-                <Drawer.Title className="text-[1.375rem] font-bold tracking-[-0.025em] first-letter:uppercase">{title}</Drawer.Title>
-                <Drawer.Close className={cx('raised grid size-10 place-items-center rounded-full text-ink-2', focus)} aria-label="Fermer">
-                  <Icon name="close" className="size-4.5" strokeWidth={2} />
+              <div className="mb-4 flex items-center justify-between border-b border-ink pb-1">
+                <Drawer.Title className="text-[1.6rem] leading-tight font-medium tracking-[-0.01em] first-letter:uppercase">{title}</Drawer.Title>
+                <Drawer.Close className={cx('-mr-2.5 grid size-11 shrink-0 place-items-center active:opacity-50', focus)} aria-label="Fermer">
+                  <Icon name="close" />
                 </Drawer.Close>
               </div>
               {children}

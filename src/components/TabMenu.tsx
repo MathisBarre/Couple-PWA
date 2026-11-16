@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { haptic } from '../lib/haptics'
 import type { View } from '../modules'
-import { Icon } from './icons'
+import { Icon, type IconName } from './icons'
 import { cx } from './ui'
 
 export interface MenuItem {
   key: string
   label: string
-  icon: string
+  icon: IconName
   current?: boolean
 }
 
@@ -148,15 +148,15 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
       <div
         aria-hidden
         onClick={onClose}
-        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/30 motion-reduce:animate-none"
+        className="absolute inset-0 animate-[fade-in_200ms_ease-out] bg-black/35 motion-reduce:animate-none"
       />
       <div
         role="menu"
         aria-label="Aller directement à"
         style={{ left, width: WIDTH, bottom: innerHeight - rect.top + 10, transformOrigin: `${center - left}px 100%` }}
-        className="absolute animate-[menu-in_260ms_cubic-bezier(0.2,0.9,0.3,1.15)] floating overflow-hidden rounded-[1.375rem] p-1.5 text-ink motion-reduce:animate-[fade-in_120ms_ease-out]"
+        className="absolute animate-[menu-in_200ms_ease-out] overflow-hidden border border-ink bg-bg text-ink motion-reduce:animate-[fade-in_120ms_ease-out]"
       >
-        {items.map((item) => (
+        {items.map((item, i) => (
           <button
             key={item.key}
             type="button"
@@ -164,14 +164,16 @@ function TabMenuPopup({ open, hover, onClose, onPick }: { open: Open; hover: str
             data-menu-item={item.key}
             onClick={() => onPick(item.key)}
             className={cx(
-              'flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 py-3 text-left font-medium transition-colors duration-100 outline-none select-none focus-visible:bg-surface-2',
-              item.current && 'text-accent',
+              'flex w-full items-center gap-3 px-4 py-3.5 text-left text-[1.05rem] transition-colors duration-100 outline-none select-none focus-visible:bg-surface-2',
+              i > 0 && 'border-t border-ink',
               hover === item.key && 'bg-surface-2',
             )}
           >
-            <Icon name={item.icon} className={cx('size-5', !item.current && 'text-ink-2')} />
-            <span className={cx('flex-1', item.current && 'font-bold')}>{item.label}</span>
-            {item.current && <Icon name="check" className="size-4.5" strokeWidth={2.2} />}
+            <Icon name={item.icon} />
+            <span className={cx('flex-1', item.current && 'font-semibold')}>{item.label}</span>
+            {item.current && (
+              <span aria-hidden className="size-2 bg-accent" />
+            )}
           </button>
         ))}
       </div>

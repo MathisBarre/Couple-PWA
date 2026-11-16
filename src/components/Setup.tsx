@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, logout } from '../lib/api'
 import { clearInvite, pendingInvite } from '../lib/invite'
-import { Brand, CenterLayout } from './Auth'
+import { CenterLayout, CoverLayout, Masthead } from './Auth'
 import { Icon } from './icons'
-import { Button, cx, inputClass } from './ui'
+import { Button, inputClass, SectionTitle } from './ui'
 
 export function Setup({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState(() => pendingInvite() ?? '')
@@ -34,10 +34,8 @@ export function Setup({ onDone }: { onDone: () => void }) {
   if (joining)
     return (
       <CenterLayout>
-        <div className="animate-[pulse-soft_1.2s_ease-in-out_infinite]">
-          <Brand compact />
-        </div>
-        <p className="text-ink-2">On rejoint votre espace à deux…</p>
+        <Icon name="rings" className="size-20 animate-[pulse-soft_1.2s_ease-in-out_infinite]" strokeWidth={0.75} />
+        <p className="text-[1.15rem] text-ink-2 italic">On rejoint votre espace à deux…</p>
       </CenterLayout>
     )
   const create = () => run({ action: 'create' })
@@ -47,54 +45,45 @@ export function Setup({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <CenterLayout>
-      <Brand compact />
-      <div>
-        <h2 className="text-[1.75rem] leading-tight font-extrabold tracking-[-0.035em]">Votre espace à deux</h2>
-        <p className="mx-auto mt-2 max-w-[20rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
+    <CoverLayout>
+      <Masthead compact />
+      <div className="border-t-2 border-ink pt-4">
+        <h1 className="text-[3.25rem] leading-[0.92] tracking-[-0.025em] text-balance">Votre espace à deux</h1>
+        <p className="mt-4 text-[1.3rem] leading-snug italic">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
       </div>
-      <div className="card flex w-full flex-col gap-3 p-4 text-left">
-        <div className="flex items-center gap-3.5">
-          <span aria-hidden className="accent-fill grid size-10 shrink-0 place-items-center rounded-[0.8125rem]">
-            <Icon name="plus" className="size-5.5" strokeWidth={2} />
-          </span>
-          <p className="text-[0.9375rem] leading-snug">
-            <strong className="block">Vous êtes le ou la première</strong>
-            <span className="text-ink-2">Créez l’espace, puis invitez votre partenaire.</span>
-          </p>
-        </div>
+      <section className="border-t border-ink pt-3">
+        <SectionTitle>Créer</SectionTitle>
         <Button className="w-full" onClick={create}>
           Créer notre espace
         </Button>
+      </section>
+      <div className="-my-2 flex items-center gap-3 text-ink-2 italic">
+        <span className="h-px flex-1 bg-line" />
+        ou
+        <span className="h-px flex-1 bg-line" />
       </div>
-      <div className="flex w-full items-center gap-3 text-sm font-medium text-ink-2 before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">ou</div>
-      <form onSubmit={join} className="card flex w-full flex-col gap-3 p-4 text-left">
-        <div className="flex items-center gap-3.5">
-          <span aria-hidden className="raised grid size-10 shrink-0 place-items-center rounded-[0.8125rem] text-ink">
-            <Icon name="hearts" className="size-5.5" strokeWidth={1.9} />
-          </span>
-          <p className="text-[0.9375rem] leading-snug">
-            <strong className="block">Votre partenaire a déjà créé l’espace</strong>
-            <span className="text-ink-2">Saisissez le code qu’il ou elle vous a donné.</span>
-          </p>
-        </div>
-        <input
-          className={cx(inputClass, 'text-center font-mono text-lg tracking-[0.2em] uppercase placeholder:font-sans placeholder:text-base placeholder:tracking-normal placeholder:normal-case')}
-          placeholder="Code de votre partenaire"
-          autoCapitalize="characters"
-          autoComplete="off"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          required
-        />
-        <Button type="submit" variant="secondary">
-          Rejoindre
-        </Button>
-      </form>
-      {msg && <p className="text-sm font-medium text-[#c8323c] dark:text-[#ff8a8a]">{msg}</p>}
-      <Button variant="link" className="!min-h-11 !self-center underline decoration-ink/25 underline-offset-4" onClick={() => logout().then(onDone)}>
+      <section className="border-t border-ink pt-3">
+        <SectionTitle>Rejoindre</SectionTitle>
+        <form onSubmit={join} className="flex w-full flex-col gap-3">
+          <input
+            className={inputClass + ' font-mono tracking-[0.12em] placeholder:font-serif placeholder:tracking-normal'}
+            placeholder="Code de votre partenaire"
+            aria-label="Code de votre partenaire"
+            autoCapitalize="characters"
+            autoComplete="off"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+          />
+          <Button type="submit" variant="secondary">
+            Rejoindre
+          </Button>
+        </form>
+        {msg && <p className="mt-2 text-sm font-medium italic">{msg}</p>}
+      </section>
+      <Button variant="link" className="mt-auto !text-ink-2" onClick={() => logout().then(onDone)}>
         Se déconnecter
       </Button>
-    </CenterLayout>
+    </CoverLayout>
   )
 }

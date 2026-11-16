@@ -7,6 +7,7 @@ import { Today } from './Today'
 export type CycleTab = 'today' | 'stats'
 
 interface Props {
+  folio?: string
   tab: CycleTab
   onTab: (t: CycleTab) => void
   today: string
@@ -20,11 +21,12 @@ interface Props {
 }
 
 /** Espace « Cycle » : suivi (saisie du jour + calendrier) et analyse ; ses réglages sont derrière ⚙️. */
-export function Cycle({ tab, onTab, today, logs, couple, onSettings, names, onSave, onDelete }: Props) {
+export function Cycle({ folio, tab, onTab, today, logs, couple, onSettings, names, onSave, onDelete }: Props) {
   const common = { today, logs, defaultCycle: couple.default_cycle_length }
   return (
     <SpaceTabs
       title="Cycle"
+      folio={folio}
       onSettings={onSettings}
       tab={tab}
       onTab={onTab}

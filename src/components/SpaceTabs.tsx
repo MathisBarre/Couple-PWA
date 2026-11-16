@@ -21,8 +21,11 @@ export function SpaceTabs<T extends string>({
   tab,
   onTab,
   onSettings,
+  folio,
 }: {
   title: string
+  /** Numéro de rubrique affiché en regard du titre (ex. « N° 1 »). */
+  folio?: string
   tabs: SpaceTab<T>[]
   tab: T
   onTab: (t: T) => void
@@ -54,25 +57,22 @@ export function SpaceTabs<T extends string>({
   if (tabs.length === 1)
     return (
       <>
-        <ScreenHeader title={title} action={action} />
+        <ScreenHeader title={title} action={action} folio={folio} />
         {tabs[0].node}
       </>
     )
 
   const list = (
-    <Tabs.List
-      className="well relative grid gap-1 rounded-[0.9375rem] p-1"
-      style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
-    >
-      {/* Pastille qui glisse sous l'onglet actif, comme un sélecteur iOS. */}
-      <Tabs.Indicator className="absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) raised rounded-[0.6875rem] transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
+    <Tabs.List className="relative flex gap-7">
+      {/* Marqueur d'encre qui glisse sous le mot de l'onglet actif. */}
+      <Tabs.Indicator className="absolute bottom-0 left-(--active-tab-left) h-[3px] w-(--active-tab-width) bg-accent transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
       {tabs.map(({ id, label }) => (
         <Tabs.Tab
           key={id}
           value={id}
           className={cx(
-            'relative z-10 min-h-9 truncate rounded-[0.6875rem] px-1 py-1.5 text-[0.9375rem] font-medium text-ink-2 transition-colors outline-none select-none',
-            'focus-visible:outline-2 focus-visible:outline-accent data-active:font-bold data-active:text-ink',
+            'etiquette relative z-10 h-11 truncate text-ink-2 transition-colors outline-none select-none',
+            'focus-visible:outline-2 focus-visible:outline-accent data-active:text-ink',
           )}
         >
           {label}
@@ -83,12 +83,13 @@ export function SpaceTabs<T extends string>({
 
   return (
     <Tabs.Root value={tab} onValueChange={(v) => onTab(v as T)}>
-      <ScreenHeader title={title} action={action} sticky={list} />
-      <div className="relative">
+      <ScreenHeader title={title} action={action} folio={folio} sticky={list} />
+      <div className="relative pt-0">
         {tabs.map(({ id, node }) => (
           <Tabs.Panel
             key={id}
             keepMounted
+            className="rubriques"
             value={id}
             ref={(el: HTMLElement | null) => {
               panels.current[id] = el

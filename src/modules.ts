@@ -1,3 +1,4 @@
+import type { IconName } from './components/icons'
 import { syncStatusBar } from './lib/scheme'
 
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
@@ -39,7 +40,7 @@ export const MODULES = [
 ] as const satisfies readonly {
   id: string
   label: string
-  icon: string
+  icon: IconName
   description: string
   theme: Theme
   /** Si l'espace a son propre onglet « Réglages » (en haut) : ce qu'on y trouve, affiché dans les réglages globaux. */
@@ -50,15 +51,15 @@ export const MODULES = [
 export interface Section {
   id: string
   label: string
-  icon: string
+  icon: IconName
 }
 
 /** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
   { id: 'espaces', label: 'Réglages des espaces', icon: 'grid' },
-  { id: 'apparence', label: 'Apparence', icon: 'palette' },
+  { id: 'apparence', label: 'Apparence', icon: 'contrast' },
   { id: 'notifications', label: 'Notifications', icon: 'bell' },
-  { id: 'couple', label: 'Couple', icon: 'hearts' },
+  { id: 'couple', label: 'Couple', icon: 'rings' },
   { id: 'app', label: 'Application', icon: 'phone' },
 ]
 
@@ -78,7 +79,7 @@ const IN_BAR = 3
 export interface NavItem {
   id: View
   label: string
-  icon: string
+  icon: IconName
 }
 
 export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: 'gear' }

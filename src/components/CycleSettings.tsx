@@ -20,11 +20,11 @@ export function CycleSettings({ couple, other, onChange }: { couple: Couple; oth
   }
 
   return (
-    <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-7">
       <Card>
         <SectionTitle>Suivi</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0 font-medium">Pose du stérilet</span>
+          <span className="shrink-0">Pose du stérilet</span>
           <input
             type="date"
             className={cx(inputClass, 'max-w-[55%] py-2.5')}
@@ -38,7 +38,7 @@ export function CycleSettings({ couple, other, onChange }: { couple: Couple; oth
           items={CYCLES}
           onChange={(default_cycle_length) => updateCouple({ default_cycle_length })}
         />
-        <p className="text-sm text-ink-2">Utilisé tant qu’il n’y a pas deux cycles complets notés.</p>
+        <p className="text-sm text-ink-2 italic">Utilisé tant qu’il n’y a pas deux cycles complets notés.</p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
 
