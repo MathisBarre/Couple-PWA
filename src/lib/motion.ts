@@ -127,56 +127,159 @@ export function animateStack(
   return finish
 }
 
-const PAGE_MS = 360
-/** La feuille se soulève depuis la reliure du haut et bascule vers nous, jusqu'à passer par-dessus. */
-const LIFTED = 'rotateX(97deg)'
-const FLAT = 'rotateX(0deg)'
+const PAGE_MS = 440
+/** Nombre de bandes horizontales de la feuille qui se courbe. */
+const STRIPS = 14
+/** Largeur du pli, en bandes : plus c'est grand, plus la courbure est ample. */
+const BEND = 6
+/** Angle total de la feuille retournée par-dessus la reliure. */
+const FOLDED = 166
+/** Instants calculés (le navigateur interpole entre eux). */
+const SAMPLES = 16
 
 const shadeOf = (pageEl: HTMLElement) => pageEl.querySelector<HTMLElement>(':scope > [data-shade]')
+const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x))
+const r2 = (n: number) => Math.round(n * 100) / 100
+
+interface Strip {
+  el: HTMLElement
+  /**
+   * Ombres du recto et du verso de la bande (opacité). Deux dégradés par face, l'un plein en haut,
+   * l'autre plein en bas : en réglant l'opacité de chacun, l'ombre passe sans marche d'une bande à
+   * la suivante.
+   */
+  front: [HTMLElement, HTMLElement]
+  back: [HTMLElement, HTMLElement]
+}
+
+/**
+ * Copie de la feuille découpée en bandes horizontales emboîtées (chaque bande est accrochée au bas
+ * de la précédente et pivote autour de cette charnière) : en les faisant tourner un peu chacune,
+ * la feuille se courbe. Chaque bande montre sa tranche de la copie au recto, du papier nu au verso.
+ */
+function buildCurl(source: HTMLElement): { root: HTMLElement; strips: Strip[] } {
+  const width = source.offsetWidth
+  const height = source.offsetHeight
+  const h = height / STRIPS
+  const proto = source.cloneNode(true) as HTMLElement
+  proto.removeAttribute('style')
+  proto.className = 'sk-page'
+  // Rien ne se retrace sur la copie.
+  proto.querySelectorAll('.sk-ink-today-draw').forEach((e) => e.classList.remove('sk-ink-today-draw'))
+  proto.querySelectorAll('[data-tracing]').forEach((e) => e.removeAttribute('data-tracing'))
+  const div = (className: string, parent: HTMLElement) => {
+    const el = document.createElement('div')
+    el.className = className
+    parent.append(el)
+    return el
+  }
+  const root = document.createElement('div')
+  root.className = 'sk-curl'
+  root.inert = true
+  root.setAttribute('aria-hidden', 'true')
+  const strips: Strip[] = []
+  let parent = root
+  for (let i = 0; i < STRIPS; i++) {
+    const el = div('sk-curl-strip', parent)
+    el.style.cssText = `top:${i ? h : 0}px;height:${h}px`
+    const front = div('sk-curl-face', el)
+    // Un demi-pixel de recouvrement : pas de jour entre deux bandes.
+    front.style.height = `${h + 0.6}px`
+    const slice = proto.cloneNode(true) as HTMLElement
+    slice.style.cssText = `position:absolute;left:0;top:${-i * h}px;width:${width}px;height:${height}px`
+    front.append(slice)
+    const back = div('sk-curl-face sk-curl-back', el)
+    back.style.height = `${h + 0.6}px`
+    if (i === 0) back.dataset.edge = 'top'
+    if (i === STRIPS - 1) back.dataset.edge = 'bottom'
+    strips.push({
+      el,
+      front: [div('sk-curl-shade', front), div('sk-curl-shade sk-curl-shade-low', front)],
+      back: [div('sk-curl-shade', back), div('sk-curl-shade sk-curl-shade-low', back)],
+    })
+    parent = el
+  }
+  return { root, strips }
+}
+
+/**
+ * Le geste, instant par instant : le pli part du bas de la feuille et remonte vers la reliure.
+ * Au-dessus du pli la feuille est encore à plat ; en dessous elle est déjà retournée. Pour chaque
+ * instant : l'angle de chaque bande par rapport à la précédente, et l'ombre de ses deux faces
+ * (le recto s'assombrit en se détournant de la lumière, le verso reste un ton plus sombre).
+ */
+function curlFrames(n: number) {
+  return Array.from({ length: SAMPLES + 1 }, (_, k) => {
+    const at = k / SAMPLES
+    // Départ retenu (la feuille se décolle), puis elle file.
+    const e = at * at * (2.2 - 1.2 * at)
+    const fold = n + BEND / 2 - e * (n + BEND + 0.5)
+    const angle = (i: number) => FOLDED * smooth((i - fold) / BEND + 0.5)
+    const sin = (i: number) => Math.sin((angle(i) * Math.PI) / 180)
+    const turn: number[] = []
+    const front: [number, number][] = []
+    const back: [number, number][] = []
+    for (let i = 0; i < n; i++) {
+      turn.push(r2(angle(i) - (i ? angle(i - 1) : 0)))
+      // Ombre au bord haut et au bord bas de la bande (le verso est retourné : haut et bas échangés).
+      const top = sin(i - 0.5)
+      const low = sin(i + 0.5)
+      front.push([r2(0.38 * top), r2(0.38 * low)])
+      back.push([r2(0.07 + 0.3 * low), r2(0.07 + 0.3 * top)])
+    }
+    return { at, turn, front, back }
+  })
+}
 
 /**
  * Tourne la page du bloc calendrier (voir .sk-pages dans src/skeuo.css). `page` porte déjà le
  * nouveau mois ; `ghost` est la feuille qu'on quitte, posée exactement au même endroit.
- * - `dir` = 1 (mois suivant) : l'ancienne feuille se soulève depuis la reliure et s'en va, la
- *   nouvelle est dessous ;
- * - `dir` = -1 (mois précédent) : la feuille revient se poser par-dessus celle qu'on quitte.
- * Seulement `transform` et `opacity`. L'ombre suit : la feuille du dessous s'éclaircit à mesure
- * que l'autre se soulève. Renvoie de quoi tout arrêter net (nouvel appui pendant que ça tourne).
+ * - `dir` = 1 (mois suivant) : l'ancienne feuille se décolle par le bas, s'enroule en remontant
+ *   vers la reliure et passe derrière le bloc ; la nouvelle est dessous ;
+ * - `dir` = -1 (mois précédent) : le même geste à l'envers, la feuille revient se dérouler
+ *   par-dessus celle qu'on quitte.
+ * La courbure vient d'une copie de la feuille découpée en bandes (buildCurl). Seulement `transform`
+ * et `opacity`. Renvoie de quoi tout arrêter net (nouvel appui pendant que ça tourne).
  */
 export function turnPage(page: HTMLElement, ghost: HTMLElement, dir: 1 | -1, done: () => void): Cleanup {
   const anims: Animation[] = []
+  let curl: HTMLElement | null = null
   if (reducedMotion()) {
     ghost.style.zIndex = '2'
     anims.push(ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, easing: 'ease-out', fill: 'forwards' }))
   } else {
     const turning = dir === 1 ? ghost : page
     const under = dir === 1 ? page : ghost
-    turning.style.zIndex = '2'
-    under.style.zIndex = '1'
     const opts: KeyframeAnimationOptions = { duration: PAGE_MS, fill: 'both', direction: dir === 1 ? 'normal' : 'reverse' }
-    // Vers l'avant : départ doux puis la feuille part vite. Au retour, la même courbe à l'envers : elle arrive vite et se pose.
-    const easing = 'cubic-bezier(0.5, 0, 0.85, 0.6)'
-    anims.push(
-      turning.animate(
-        [
-          { transform: FLAT, opacity: 1, easing },
-          { transform: 'rotateX(62deg)', opacity: 1, offset: 0.62, easing: 'linear' },
-          { transform: LIFTED, opacity: 0 },
-        ],
-        opts,
-      ),
-    )
-    const own = shadeOf(turning)
+    // La feuille qui tourne est remplacée, le temps du geste, par sa copie découpée en bandes.
+    const built = buildCurl(turning)
+    curl = built.root
+    turning.parentElement!.append(curl)
+    turning.style.visibility = 'hidden'
+    const frames = curlFrames(built.strips.length)
+    built.strips.forEach((s, i) => {
+      anims.push(s.el.animate(frames.map((f) => ({ transform: `rotateX(${f.turn[i]}deg)`, offset: f.at })), opts))
+      for (const g of [0, 1] as const) {
+        anims.push(s.front[g].animate(frames.map((f) => ({ opacity: f.front[i][g], offset: f.at })), opts))
+        anims.push(s.back[g].animate(frames.map((f) => ({ opacity: f.back[i][g], offset: f.at })), opts))
+      }
+    })
+    // Passée par-dessus la reliure, la feuille file derrière le bloc (.sk-pages la coupe à son bord).
+    anims.unshift(curl.animate([{ opacity: 1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], opts))
+    // Son ombre sur la feuille du dessous, et celle de la reliure sur la feuille qui se soulève.
     const cast = shadeOf(under)
-    // La feuille qui se soulève tourne le dos à la lumière ; son ombre s'allonge puis se détache.
-    if (own) anims.push(own.animate([{ opacity: 0 }, { opacity: 0.5 }], { ...opts, easing }))
-    if (cast) anims.push(cast.animate([{ opacity: 0.05 }, { opacity: 0.55, offset: 0.35 }, { opacity: 0 }], opts))
+    if (cast) anims.push(cast.animate([{ opacity: 0 }, { opacity: 0.4, offset: 0.3 }, { opacity: 0.25, offset: 0.7 }, { opacity: 0 }], opts))
+    const binding = page.closest('.sk-block')?.querySelector<HTMLElement>('[data-binding-shade]')
+    if (binding) anims.push(binding.animate([{ opacity: 0 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], opts))
   }
   let ended = false
   const stop = () => {
     if (ended) return
     ended = true
     anims.forEach((a) => a.cancel())
+    curl?.remove()
+    // La feuille quittée (ghost) reste cachée : React la retire au rendu suivant.
+    page.style.visibility = ''
     page.style.zIndex = ''
   }
   anims[0].onfinish = () => {
