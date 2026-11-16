@@ -3,6 +3,7 @@ import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, push
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
 import { SPACES_WITH_SETTINGS, type ModuleId } from '../modules'
 import { AppUpdate } from './AppUpdate'
+import { Icon } from './icons'
 import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
@@ -45,30 +46,28 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
     <>
       {!embedded && <ScreenHeader title="Réglages" />}
       <div className="flex flex-col gap-3.5">
-      {embedded && <h2 className="text-xl font-bold">Réglages</h2>}
+      {embedded && <h2 className="text-[1.375rem] leading-tight font-bold tracking-[-0.03em]">Réglages</h2>}
 
       {SPACES_WITH_SETTINGS.length > 0 && (
         <section id="reglages-espaces" className="scroll-mt-4">
           <SectionTitle>Réglages des espaces</SectionTitle>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="card overflow-hidden">
             {SPACES_WITH_SETTINGS.map((m) => (
-              <li key={m.id} className="border-b border-line last:border-b-0">
+              <li key={m.id} className="relative after:absolute after:right-0 after:bottom-0 after:left-[4.25rem] after:h-px after:bg-line last:after:hidden">
                 <button
                   type="button"
                   onClick={() => onOpenSpace(m.id)}
-                  className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors outline-none select-none focus-visible:bg-surface-2 active:bg-surface-2"
+                  className="flex min-h-16 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors outline-none select-none focus-visible:bg-surface-2 active:bg-surface-2"
                 >
                   {/* Pastille aux couleurs de l'espace (son thème s'applique à elle seule). */}
-                  <span data-theme={m.theme} aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-lg">
-                    {m.icon}
+                  <span data-theme={m.theme} aria-hidden className="accent-fill grid size-10 shrink-0 place-items-center rounded-[0.8125rem]">
+                    <Icon name={m.icon} className="size-5.5" strokeWidth={1.9} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{m.label}</span>
+                    <span className="block font-bold tracking-[-0.01em]">{m.label}</span>
                     <span className="block truncate text-sm text-ink-2">{m.settings}</span>
                   </span>
-                  <span aria-hidden className="text-xl text-ink-2/60">
-                    ›
-                  </span>
+                  <Icon name="chevron-right" className="size-4 text-ink-2/60" strokeWidth={2.2} />
                 </button>
               </li>
             ))}
@@ -109,8 +108,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
           </>
         )}
         <p className="mt-2 text-sm text-ink-2">
-          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans ses propres réglages (⚙️ en haut de
-          l’espace).
+          Active les notifications de l’app sur ce téléphone. Ce que chaque espace envoie se règle dans ses propres réglages (<Icon name="gear" className="inline size-4 align-[-0.15em]" /> en haut de l’espace).
         </p>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>
@@ -118,7 +116,7 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
       <Card id="reglages-couple" className="scroll-mt-4">
         <SectionTitle>Couple</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0">Mon prénom</span>
+          <span className="shrink-0 font-medium">Mon prénom</span>
           <input
             className={cx(inputClass, 'max-w-[55%] py-2.5')}
             value={name}

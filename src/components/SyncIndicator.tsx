@@ -47,12 +47,12 @@ export function SyncIndicator({ pending }: { pending: number }) {
       role="status"
       aria-live="polite"
       className={cx(
-        'pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+76px)] left-1/2 z-50 -translate-x-1/2 transition-[opacity,translate] duration-300 motion-reduce:transition-none',
+        'pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+92px)] left-1/2 z-50 -translate-x-1/2 transition-[opacity,translate] duration-300 motion-reduce:transition-none',
         visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0',
       )}
     >
       {visible && (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-soon/95 px-3 py-1 text-xs font-medium text-on-soon shadow-md backdrop-blur">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-soon px-3 py-1.5 text-xs font-semibold text-on-soon shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_6px_16px_-4px_rgb(0_0_0/0.25)]">
           <span aria-hidden className={cx('size-1.5 rounded-full bg-current', online && 'animate-pulse')} />
           {label}
         </span>

@@ -12,6 +12,7 @@ import { Settings } from './components/Settings'
 import { Setup } from './components/Setup'
 import { Stack, type StackHandle } from './components/Stack'
 import { useTabMenu, type MenuItem } from './components/TabMenu'
+import { Icon } from './components/icons'
 import { cx } from './components/ui'
 import { fetchMe, type Me } from './lib/api'
 import { localToday } from './lib/dates'
@@ -320,11 +321,12 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           </div>
         ))}
       </div>
+      {/* Barre du bas : une pilule flottante. Derrière elle, le contenu se fond dans le fond de l'écran. */}
       <nav
         aria-label="Navigation principale"
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/90 px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+6px)] backdrop-blur-md transition-colors duration-300"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-linear-to-t from-bg from-35% to-transparent px-4 pt-7 pb-[max(12px,calc(env(safe-area-inset-bottom)-6px))]"
       >
-        <div className="mx-auto flex max-w-xl">
+        <div className="floating pointer-events-auto mx-auto flex max-w-sm gap-1 rounded-full p-1.5">
           {BAR.map(({ id, label, icon }) => {
             const badge = badges[id] ?? 0
             return (
@@ -334,17 +336,12 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                 onClick={() => openTab(id)}
                 {...tabMenu.bind(id)}
                 aria-current={tab === id ? 'page' : undefined}
-                className="group flex touch-none [-webkit-touch-callout:none] flex-1 flex-col items-center gap-0.5 py-1 text-[0.72rem] text-ink-2 outline-none select-none focus-visible:text-accent aria-[current=page]:font-semibold aria-[current=page]:text-accent"
+                className="group flex min-h-13 flex-1 touch-none [-webkit-touch-callout:none] flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] font-semibold tracking-[0.01em] text-ink-2 transition-[background-color,color] duration-200 outline-none select-none focus-visible:text-accent aria-[current=page]:bg-accent-soft aria-[current=page]:font-bold aria-[current=page]:text-accent"
               >
-                <span
-                  aria-hidden
-                  className="relative text-xl transition-transform duration-200 ease-out group-active:scale-85 motion-reduce:transition-none"
-                >
-                  <span className="opacity-70 grayscale transition-[opacity,filter] duration-200 group-aria-[current=page]:opacity-100 group-aria-[current=page]:grayscale-0">
-                    {icon}
-                  </span>
+                <span aria-hidden className="relative transition-transform duration-200 ease-out group-active:scale-85 motion-reduce:transition-none">
+                  <Icon name={icon} className="size-[1.375rem]" strokeWidth={tab === id ? 2 : 1.7} />
                   {badge > 0 && (
-                    <span className="absolute -top-1 -right-2.5 min-w-4.5 rounded-full bg-accent px-1 text-center text-[0.65rem] leading-4.5 font-semibold text-on-accent">
+                    <span className="accent-fill num absolute -top-1.5 -right-3 min-w-4.5 rounded-full px-1 text-center text-[0.625rem] leading-4.5 font-bold ring-2 ring-raise">
                       {badge > 99 ? '99+' : badge}
                     </span>
                   )}
@@ -364,7 +361,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 function Splash() {
   return (
     <CenterLayout>
-      <img src="/logo.svg" alt="" className="size-24 animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
+      <img src="/logo.svg" alt="" className="size-20 animate-[pulse-soft_1.2s_ease-in-out_infinite] rounded-[22%]" />
     </CenterLayout>
   )
 }

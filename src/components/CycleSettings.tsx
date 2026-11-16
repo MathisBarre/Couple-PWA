@@ -24,7 +24,7 @@ export function CycleSettings({ couple, other, onChange }: { couple: Couple; oth
       <Card>
         <SectionTitle>Suivi</SectionTitle>
         <label className="flex items-center justify-between gap-3 py-2">
-          <span className="shrink-0">Pose du stérilet</span>
+          <span className="shrink-0 font-medium">Pose du stérilet</span>
           <input
             type="date"
             className={cx(inputClass, 'max-w-[55%] py-2.5')}

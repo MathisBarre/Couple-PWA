@@ -14,26 +14,26 @@ export const MODULES = [
   {
     id: 'cycle',
     label: 'Cycle',
-    icon: '💧',
+    icon: 'drop',
     description: 'Suivi des règles, calendrier et analyse',
     theme: 'rose',
     settings: 'Stérilet, durée du cycle, rappels',
     sections: [
-      { id: 'today', label: 'Suivi', icon: '📅' },
-      { id: 'stats', label: 'Analyse', icon: '📊' },
-      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+      { id: 'today', label: 'Suivi', icon: 'calendar' },
+      { id: 'stats', label: 'Analyse', icon: 'chart' },
+      { id: 'settings', label: 'Réglages', icon: 'gear' },
     ],
   },
   {
     id: 'groceries',
     label: 'Courses',
-    icon: '🛒',
+    icon: 'basket',
     description: 'La liste de courses commune',
     theme: 'verdure',
     settings: 'Notifications des courses',
     sections: [
-      { id: 'list', label: 'Liste', icon: '📝' },
-      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+      { id: 'list', label: 'Liste', icon: 'list' },
+      { id: 'settings', label: 'Réglages', icon: 'gear' },
     ],
   },
 ] as const satisfies readonly {
@@ -55,11 +55,11 @@ export interface Section {
 
 /** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
-  { id: 'espaces', label: 'Réglages des espaces', icon: '🧩' },
-  { id: 'apparence', label: 'Apparence', icon: '🎨' },
-  { id: 'notifications', label: 'Notifications', icon: '🔔' },
-  { id: 'couple', label: 'Couple', icon: '💞' },
-  { id: 'app', label: 'Application', icon: '📲' },
+  { id: 'espaces', label: 'Réglages des espaces', icon: 'grid' },
+  { id: 'apparence', label: 'Apparence', icon: 'palette' },
+  { id: 'notifications', label: 'Notifications', icon: 'bell' },
+  { id: 'couple', label: 'Couple', icon: 'hearts' },
+  { id: 'app', label: 'Application', icon: 'phone' },
 ]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
@@ -81,8 +81,8 @@ export interface NavItem {
   icon: string
 }
 
-export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: '⚙️' }
-const MORE_ITEM: NavItem = { id: 'more', label: 'Plus', icon: '☰' }
+export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: 'gear' }
+const MORE_ITEM: NavItem = { id: 'more', label: 'Plus', icon: 'menu' }
 
 const fitsInBar = MODULES.length <= IN_BAR
 export const BAR: NavItem[] = fitsInBar ? [...MODULES, SETTINGS_ITEM] : [...MODULES.slice(0, IN_BAR), MORE_ITEM]

@@ -1,55 +1,103 @@
 @import 'tailwindcss';
 
-/* Jetons de couleur : redéfinis en mode sombre, utilisables en classes Tailwind
-   (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…). */
+/* `dark:` suit le choix fait dans Réglages (html[data-scheme]), pas seulement le téléphone. */
+@custom-variant dark (&:where([data-scheme='dark'], [data-scheme='dark'] *));
+
+/* Manrope (variable, 200–800), embarquée dans le bundle : l'app marche hors ligne.
+   Seuls les sous-ensembles latins sont déclarés (pas de cyrillique, grec… à pré-cacher). */
+@font-face {
+  font-family: 'Manrope Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Manrope Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('@fontsource-variable/manrope/files/manrope-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Jetons de couleur : redéfinis en mode sombre et par thème d'espace, utilisables en classes
+   Tailwind (bg-bg, bg-surface, text-ink-2, bg-flow-3, border-line…).
+
+   Principe : les fonds sont presque neutres (blanc ou noir à peine teinté) ; la couleur de
+   l'espace vit dans les accents (actions, données, halos). La profondeur vient de trois niveaux :
+   - `bg` : le fond de l'écran ;
+   - `surface` : les cartes posées dessus (classe .card) ;
+   - `raise` : ce qui flotte ou se presse (boutons, pastilles, barre du bas : .raised, .floating) ;
+   - `well` : ce qui est en creux (champs, pistes de sélecteur : .well, .field). */
 @theme {
-  --color-bg: #fff6f3;
+  --color-bg: #fcfafa;
   --color-surface: #ffffff;
-  --color-surface-2: #fbeae6;
-  --color-ink: #2b1a1d;
-  --color-ink-2: #6e5559;
-  --color-line: #f0dcd8;
-  --color-accent: #d9416a;
+  --color-surface-lo: #fdfbfb;
+  --color-surface-2: #f5f1f2;
+  --color-raise: #ffffff;
+  --color-raise-lo: #f9f6f7;
+  --color-well: #f4f0f1;
+  --color-ink: #1b1517;
+  --color-ink-2: #736a6d;
+  --color-line: #ece6e7;
+  --color-accent: #e03468;
+  --color-accent-hi: #f0588a;
+  --color-accent-edge: #f884aa;
+  --color-accent-soft: #fdeaf0;
   --color-on-accent: #ffffff;
-  --color-soon: #fff0d9;
+  --color-soon: #fff4e2;
   --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
+  --color-warn: #fff7ea;
   /* Intensité du flux : une seule teinte, du clair au foncé */
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
-  --color-flow-4: #c43a5a;
-  --color-flow-5: #8a1d3b;
+  --color-flow-1: #f9d3dc;
+  --color-flow-2: #f3a3b7;
+  --color-flow-3: #e8648a;
+  --color-flow-4: #cf3562;
+  --color-flow-5: #931b40;
   --color-on-flow: #ffffff;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Mode sombre : html[data-scheme="dark"], posé par src/lib/scheme.ts selon le choix
-   fait dans Réglages (Système / Clair / Sombre). */
+   fait dans Réglages (Système / Clair / Sombre). En sombre, la profondeur passe par des
+   surfaces plus claires que le fond et un liseré lumineux, pas par des ombres. */
 :root[data-scheme='dark'] {
-  --color-bg: #1e1416;
-  --color-surface: #2a1d20;
-  --color-surface-2: #362529;
-  --color-ink: #f6e9eb;
-  --color-ink-2: #bfa5aa;
-  --color-line: #3f2c30;
-  --color-accent: #ff7a95;
-  --color-on-accent: #2b0d15;
-  --color-soon: #3d2c12;
+  --color-bg: #0d0b0c;
+  --color-surface: #1a1718;
+  --color-surface-lo: #151213;
+  --color-surface-2: #242021;
+  --color-raise: #2b2628;
+  --color-raise-lo: #221e20;
+  --color-well: #070506;
+  --color-ink: #f6f1f2;
+  --color-ink-2: #a59c9f;
+  --color-line: #2c2729;
+  --color-accent: #ff6f98;
+  --color-accent-hi: #ff8fb0;
+  --color-accent-edge: #ffbdd0;
+  --color-accent-soft: #42192a;
+  --color-on-accent: #2a0712;
+  --color-soon: #33260f;
   --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-  --color-flow-1: #5a3a41;
-  --color-flow-2: #8a4656;
-  --color-flow-3: #c25270;
-  --color-flow-4: #e66d8b;
-  --color-flow-5: #ffa3b8;
-  --color-on-flow: #2b0d15;
+  --color-warn: #2a2114;
+  --color-flow-1: #4b2a34;
+  --color-flow-2: #80394f;
+  --color-flow-3: #cf5079;
+  --color-flow-4: #f2749a;
+  --color-flow-5: #ffb0c6;
+  --color-on-flow: #2a0712;
   color-scheme: dark;
 }
 /* Avant le chargement du script : suivre le téléphone, pour éviter un flash blanc. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-scheme]) {
-    --color-bg: #1e1416;
+    --color-bg: #0d0b0c;
     color-scheme: dark;
   }
 }
@@ -60,87 +108,170 @@
    l'autre. « rose » = les couleurs ci-dessus, répétées ici pour un écran rose posé
    dans une page verte. Pour un nouveau thème, copier un bloc (clair + sombre). */
 [data-theme='rose'] {
-  --color-bg: #fff6f3;
+  --color-bg: #fcfafa;
   --color-surface: #ffffff;
-  --color-surface-2: #fbeae6;
-  --color-ink: #2b1a1d;
-  --color-ink-2: #6e5559;
-  --color-line: #f0dcd8;
-  --color-accent: #d9416a;
+  --color-surface-lo: #fdfbfb;
+  --color-surface-2: #f5f1f2;
+  --color-raise: #ffffff;
+  --color-raise-lo: #f9f6f7;
+  --color-well: #f4f0f1;
+  --color-ink: #1b1517;
+  --color-ink-2: #736a6d;
+  --color-line: #ece6e7;
+  --color-accent: #e03468;
+  --color-accent-hi: #f0588a;
+  --color-accent-edge: #f884aa;
+  --color-accent-soft: #fdeaf0;
   --color-on-accent: #ffffff;
-  --color-soon: #fff0d9;
+  --color-soon: #fff4e2;
   --color-on-soon: #7a4a00;
-  --color-warn: #fff4e5;
-  --color-flow-1: #f7cdd3;
-  --color-flow-2: #f0a3b0;
-  --color-flow-3: #e3687e;
-  --color-flow-4: #c43a5a;
-  --color-flow-5: #8a1d3b;
+  --color-warn: #fff7ea;
+  --color-flow-1: #f9d3dc;
+  --color-flow-2: #f3a3b7;
+  --color-flow-3: #e8648a;
+  --color-flow-4: #cf3562;
+  --color-flow-5: #931b40;
   --color-on-flow: #ffffff;
 }
 [data-scheme='dark'] [data-theme='rose'],
 [data-scheme='dark'][data-theme='rose'] {
-  --color-bg: #1e1416;
-  --color-surface: #2a1d20;
-  --color-surface-2: #362529;
-  --color-ink: #f6e9eb;
-  --color-ink-2: #bfa5aa;
-  --color-line: #3f2c30;
-  --color-accent: #ff7a95;
-  --color-on-accent: #2b0d15;
-  --color-soon: #3d2c12;
+  --color-bg: #0d0b0c;
+  --color-surface: #1a1718;
+  --color-surface-lo: #151213;
+  --color-surface-2: #242021;
+  --color-raise: #2b2628;
+  --color-raise-lo: #221e20;
+  --color-well: #070506;
+  --color-ink: #f6f1f2;
+  --color-ink-2: #a59c9f;
+  --color-line: #2c2729;
+  --color-accent: #ff6f98;
+  --color-accent-hi: #ff8fb0;
+  --color-accent-edge: #ffbdd0;
+  --color-accent-soft: #42192a;
+  --color-on-accent: #2a0712;
+  --color-soon: #33260f;
   --color-on-soon: #ffd699;
-  --color-warn: #3a2a17;
-  --color-flow-1: #5a3a41;
-  --color-flow-2: #8a4656;
-  --color-flow-3: #c25270;
-  --color-flow-4: #e66d8b;
-  --color-flow-5: #ffa3b8;
-  --color-on-flow: #2b0d15;
+  --color-warn: #2a2114;
+  --color-flow-1: #4b2a34;
+  --color-flow-2: #80394f;
+  --color-flow-3: #cf5079;
+  --color-flow-4: #f2749a;
+  --color-flow-5: #ffb0c6;
+  --color-on-flow: #2a0712;
 }
 [data-theme='verdure'] {
-  --color-bg: #f3f8f0;
+  --color-bg: #fafcfa;
   --color-surface: #ffffff;
-  --color-surface-2: #e2eedb;
-  --color-ink: #1b2a1c;
-  --color-ink-2: #546a55;
-  --color-line: #d5e4ce;
-  --color-accent: #3c8a4b;
+  --color-surface-lo: #fbfdfb;
+  --color-surface-2: #f0f4f1;
+  --color-raise: #ffffff;
+  --color-raise-lo: #f6f9f7;
+  --color-well: #eff3f0;
+  --color-ink: #141a16;
+  --color-ink-2: #667169;
+  --color-line: #e4eae5;
+  --color-accent: #23904b;
+  --color-accent-hi: #3aac63;
+  --color-accent-edge: #6ccb8d;
+  --color-accent-soft: #e6f5eb;
   --color-on-accent: #ffffff;
 }
 [data-scheme='dark'] [data-theme='verdure'],
 [data-scheme='dark'][data-theme='verdure'] {
-  --color-bg: #131b14;
-  --color-surface: #1b261c;
-  --color-surface-2: #243225;
-  --color-ink: #e7f1e5;
-  --color-ink-2: #a3b9a4;
-  --color-line: #2d3d2e;
-  --color-accent: #7cc98a;
-  --color-on-accent: #0e2313;
+  --color-bg: #0a0c0b;
+  --color-surface: #161a18;
+  --color-surface-lo: #121513;
+  --color-surface-2: #1f2421;
+  --color-raise: #272c29;
+  --color-raise-lo: #1e2320;
+  --color-well: #050706;
+  --color-ink: #f0f5f1;
+  --color-ink-2: #99a49c;
+  --color-line: #272d29;
+  --color-accent: #5fd088;
+  --color-accent-hi: #7fdd9f;
+  --color-accent-edge: #b4f0c8;
+  --color-accent-soft: #163824;
+  --color-on-accent: #062010;
 }
 
 /* Neutre : réglages et « Plus », qui n'appartiennent à aucun espace. */
 [data-theme='neutre'] {
-  --color-bg: #f5f5f4;
+  --color-bg: #fbfbfb;
   --color-surface: #ffffff;
-  --color-surface-2: #ebebea;
-  --color-ink: #1c1c1e;
-  --color-ink-2: #6b6b70;
-  --color-line: #e2e2e0;
-  --color-accent: #3f3f46;
+  --color-surface-lo: #fcfcfc;
+  --color-surface-2: #f2f2f3;
+  --color-raise: #ffffff;
+  --color-raise-lo: #f7f7f8;
+  --color-well: #f1f1f2;
+  --color-ink: #18181b;
+  --color-ink-2: #6c6c73;
+  --color-line: #e8e8ea;
+  --color-accent: #27272a;
+  --color-accent-hi: #45454c;
+  --color-accent-edge: #6a6a73;
+  --color-accent-soft: #ededf0;
   --color-on-accent: #ffffff;
 }
 [data-scheme='dark'] [data-theme='neutre'],
 [data-scheme='dark'][data-theme='neutre'] {
-  --color-bg: #161618;
-  --color-surface: #1f1f22;
-  --color-surface-2: #2a2a2e;
-  --color-ink: #f2f2f3;
-  --color-ink-2: #a1a1a8;
-  --color-line: #323236;
-  --color-accent: #d4d4d8;
+  --color-bg: #0b0b0c;
+  --color-surface: #18181a;
+  --color-surface-lo: #131314;
+  --color-surface-2: #222224;
+  --color-raise: #29292c;
+  --color-raise-lo: #202022;
+  --color-well: #050506;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #9e9ea6;
+  --color-line: #2a2a2d;
+  --color-accent: #e4e4e7;
+  --color-accent-hi: #f7f7f8;
+  --color-accent-edge: #ffffff;
+  --color-accent-soft: #3a3a40;
   --color-on-accent: #18181b;
+}
+
+/* Élévation : ombres multicouches teintées par l'accent (clair), liserés lumineux (sombre).
+   Déclarées sur chaque élément thémé pour se résoudre avec ses propres couleurs. */
+:root,
+[data-theme] {
+  /* Teinte des ombres : l'accent très assombri. */
+  --tint: color-mix(in srgb, var(--color-accent) 45%, #1a1014);
+  --glow: color-mix(in srgb, var(--color-accent) 42%, transparent);
+  --halo: color-mix(in srgb, var(--color-accent) 13%, transparent);
+  --elev-card:
+    0 0 0 1px color-mix(in srgb, var(--tint) 7%, transparent), 0 1px 2px color-mix(in srgb, var(--tint) 5%, transparent),
+    0 4px 10px -2px color-mix(in srgb, var(--tint) 5%, transparent), 0 16px 32px -12px color-mix(in srgb, var(--tint) 12%, transparent);
+  --elev-raise:
+    inset 0 1px 0 #fff, 0 0 0 1px color-mix(in srgb, var(--tint) 9%, transparent), 0 1px 2px color-mix(in srgb, var(--tint) 10%, transparent),
+    0 3px 6px -2px color-mix(in srgb, var(--tint) 10%, transparent);
+  --elev-raise-pressed: inset 0 1px 2px color-mix(in srgb, var(--tint) 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--tint) 10%, transparent);
+  --elev-float:
+    0 0 0 1px color-mix(in srgb, var(--tint) 8%, transparent), 0 2px 4px color-mix(in srgb, var(--tint) 5%, transparent),
+    0 10px 20px -4px color-mix(in srgb, var(--tint) 10%, transparent), 0 28px 48px -12px color-mix(in srgb, var(--tint) 20%, transparent);
+  --elev-well:
+    inset 0 1px 2px color-mix(in srgb, var(--tint) 10%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--tint) 5%, transparent), 0 1px 0 #fff;
+  --elev-accent:
+    inset 0 1px 0 var(--color-accent-edge), inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 60%, transparent),
+    0 1px 2px color-mix(in srgb, var(--tint) 30%, transparent), 0 8px 18px -6px var(--glow);
+  --elev-accent-pressed: inset 0 2px 4px color-mix(in srgb, var(--tint) 35%, transparent);
+}
+[data-scheme='dark'],
+[data-scheme='dark'] [data-theme] {
+  --glow: color-mix(in srgb, var(--color-accent) 34%, transparent);
+  --halo: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --elev-card:
+    inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 0 0 1px rgb(255 255 255 / 0.045), 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 28px -10px rgb(0 0 0 / 0.7);
+  --elev-raise:
+    inset 0 1px 0 rgb(255 255 255 / 0.13), inset 0 0 0 1px rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.6), 0 3px 8px -2px rgb(0 0 0 / 0.5);
+  --elev-raise-pressed: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px rgb(255 255 255 / 0.04);
+  --elev-float:
+    inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 2px 6px rgb(0 0 0 / 0.5), 0 16px 36px -8px rgb(0 0 0 / 0.85);
+  --elev-well: inset 0 1px 3px rgb(0 0 0 / 0.8), inset 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 0 rgb(255 255 255 / 0.055);
+  --elev-accent: inset 0 1px 0 var(--color-accent-edge), 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 22px -6px var(--glow);
+  --elev-accent-pressed: inset 0 2px 5px rgb(0 0 0 / 0.35);
 }
 
 @layer base {
@@ -149,6 +280,8 @@
     @apply min-h-full bg-bg text-ink antialiased transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
+    font-feature-settings: 'calt', 'ss01';
+    letter-spacing: -0.006em;
     /* Comme une app native : pas de sélection de texte ni de bulle « Copier » sur un appui
        long (sinon iOS sélectionne toute la page en restant appuyé sur la barre du bas). */
     -webkit-user-select: none;
@@ -165,6 +298,144 @@
   }
   button {
     @apply cursor-pointer;
+  }
+  strong {
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* Surface posée sur le fond : léger dégradé vertical, ombre douce, liseré en haut (sombre). */
+  .card {
+    border-radius: 1.5rem;
+    background-image: linear-gradient(180deg, var(--color-surface), var(--color-surface-lo));
+    box-shadow: var(--elev-card);
+  }
+  /* Petit élément en relief qu'on presse (bouton rond, tuile de choix, pastille de sélecteur). */
+  .raised {
+    background-image: linear-gradient(180deg, var(--color-raise), var(--color-raise-lo));
+    box-shadow: var(--elev-raise);
+  }
+  button.raised:active {
+    box-shadow: var(--elev-raise-pressed);
+  }
+  /* Surface flottante (barre du bas, menus, feuilles). */
+  .floating {
+    background-image: linear-gradient(180deg, var(--color-raise), var(--color-raise-lo));
+    box-shadow: var(--elev-float);
+  }
+  /* En creux : pistes de sélecteur, champs. */
+  .well {
+    background-color: var(--color-well);
+    box-shadow: var(--elev-well);
+  }
+  .field {
+    width: 100%;
+    border-radius: 0.875rem;
+    background-color: var(--color-well);
+    box-shadow: var(--elev-well);
+    padding: 0.75rem 0.875rem;
+    color: var(--color-ink);
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    transition:
+      outline-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .field::placeholder {
+    color: color-mix(in srgb, var(--color-ink-2) 75%, transparent);
+  }
+  .field:focus-visible {
+    outline-color: var(--color-accent);
+    box-shadow:
+      var(--elev-well),
+      0 0 0 5px var(--halo);
+  }
+  /* Action principale : dégradé d'accent, arête claire en haut, halo coloré dessous. */
+  .accent-fill {
+    background-image: linear-gradient(180deg, var(--color-accent-hi), var(--color-accent));
+    color: var(--color-on-accent);
+    box-shadow: var(--elev-accent);
+  }
+  button.accent-fill:active:not(:disabled) {
+    background-image: linear-gradient(180deg, var(--color-accent), var(--color-accent));
+    box-shadow: var(--elev-accent-pressed);
+  }
+  /* Carte héros (jour du cycle) : halo et dégradé maillé très discrets, aux couleurs de l'accent. */
+  .hero {
+    --hero: var(--color-accent);
+    background-image:
+      radial-gradient(60% 46% at 50% 42%, color-mix(in srgb, var(--hero) 12%, transparent), transparent 100%),
+      radial-gradient(75% 60% at 0% 0%, color-mix(in srgb, #ff9a62 10%, transparent), transparent 100%),
+      radial-gradient(75% 60% at 100% 0%, color-mix(in srgb, var(--hero) 10%, transparent), transparent 100%),
+      linear-gradient(180deg, var(--color-surface), var(--color-surface-lo));
+  }
+  .hero-soon {
+    --hero: #f5a524;
+  }
+  /* Tuile de flux choisie : pleine couleur, arête claire, halo. */
+  .flow-tile[data-pressed] {
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      inset 0 0 0 1px rgb(0 0 0 / 0.06),
+      0 1px 2px color-mix(in srgb, var(--tint) 25%, transparent),
+      0 8px 16px -6px var(--glow);
+  }
+  .pain-item[data-pressed] {
+    background-image: linear-gradient(180deg, var(--color-accent-hi), var(--color-accent));
+    box-shadow: var(--elev-accent);
+  }
+  /* Case à cocher ronde : en creux vide, pastille d'accent en relief une fois cochée. */
+  .check[data-checked] {
+    border-color: transparent;
+    background-image: linear-gradient(180deg, var(--color-accent-hi), var(--color-accent));
+    box-shadow:
+      inset 0 1px 0 var(--color-accent-edge),
+      0 1px 2px color-mix(in srgb, var(--tint) 30%, transparent),
+      0 3px 8px -2px var(--glow);
+  }
+  /* Jour de règles dans le calendrier : léger volume. */
+  .day-flow {
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0));
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05);
+  }
+  .scheme-item[data-pressed] {
+    background-image: linear-gradient(180deg, var(--color-raise), var(--color-raise-lo));
+    box-shadow: var(--elev-raise);
+  }
+  /* Halo derrière le logo, avant la connexion : les deux couleurs des espaces, très diluées. */
+  .brand-halo {
+    background-image:
+      radial-gradient(closest-side at 36% 50%, rgb(240 104 130 / 0.22), transparent), radial-gradient(closest-side at 64% 50%, rgb(93 187 115 / 0.2), transparent);
+    pointer-events: none;
+  }
+  /* Feuille qui monte du bas : un cran au-dessus du fond (plus claire que lui en sombre). */
+  .sheet {
+    background-color: var(--color-bg);
+    box-shadow:
+      0 -1px 0 color-mix(in srgb, var(--tint) 8%, transparent),
+      0 -16px 48px rgb(0 0 0 / 0.16);
+  }
+  [data-scheme='dark'] .sheet {
+    background-color: var(--color-surface-lo);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.09),
+      0 -16px 48px rgb(0 0 0 / 0.6);
+  }
+  /* Petit libellé de section : capitales espacées. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-ink-2);
+  }
+  /* Chiffres : largeur fixe, pour que les colonnes et les compteurs ne dansent pas. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum', 'calt';
   }
 }
 

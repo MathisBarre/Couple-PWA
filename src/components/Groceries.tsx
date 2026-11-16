@@ -1,6 +1,7 @@
 import { Checkbox } from '@base-ui/react/checkbox'
 import { useRef, useState } from 'react'
 import type { GroceryItem } from '../lib/groceries'
+import { Icon } from './icons'
 import { Button, Card, cx, inputClass, SectionTitle } from './ui'
 
 interface Props {
@@ -29,7 +30,7 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
 
   return (
     <div className="flex flex-col gap-3.5">
-      <form onSubmit={submit} className="flex gap-2">
+      <form onSubmit={submit} className="flex gap-2.5">
         <input
           ref={input}
           value={text}
@@ -41,22 +42,24 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
           autoCapitalize="sentences"
           className={inputClass}
         />
-        <Button type="submit" disabled={!text.trim()} className="shrink-0 px-5" aria-label="Ajouter">
-          +
+        <Button type="submit" disabled={!text.trim()} className="grid w-12 shrink-0 place-items-center !px-0" aria-label="Ajouter">
+          <Icon name="plus" className="size-5.5" strokeWidth={2.2} />
         </Button>
       </form>
 
       {!items.length && (
-        <Card className="text-center text-ink-2">
-          <p className="text-3xl">🛒</p>
-          <p className="mt-1 text-sm">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
+        <Card className="flex flex-col items-center px-6 py-8 text-center text-ink-2">
+          <span className="grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
+            <Icon name="basket" className="size-7" />
+          </span>
+          <p className="mt-3 text-sm">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
         </Card>
       )}
 
       {todo.length > 0 && (
         <section>
           <SectionTitle>À acheter · {todo.length}</SectionTitle>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="card overflow-hidden">
             {todo.map((i) => (
               <Row key={i.id} item={i} by={i.added_by ? names[i.added_by] : undefined} onToggle={onToggle} onRemove={onRemove} />
             ))}
@@ -68,11 +71,11 @@ export function Groceries({ items, names, onAdd, onToggle, onRemove, onClearDone
         <section>
           <div className="flex items-baseline justify-between">
             <SectionTitle>Dans le panier · {done.length}</SectionTitle>
-            <Button variant="link" onClick={onClearDone} className="mb-2 text-sm">
+            <Button variant="link" onClick={onClearDone} className="mb-2 !self-auto text-sm">
               Vider
             </Button>
           </div>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="card overflow-hidden">
             {done.map((i) => (
               <Row key={i.id} item={i} onToggle={onToggle} onRemove={onRemove} />
             ))}
@@ -96,27 +99,29 @@ function Row({
   onRemove: (item: GroceryItem) => void
 }) {
   return (
-    <li className="flex items-center border-b border-line last:border-b-0">
-      <label className="flex min-h-13 flex-1 items-center gap-3 px-4 py-2.5 select-none">
+    <li className="relative flex items-center after:absolute after:right-0 after:bottom-0 after:left-[3.25rem] after:h-px after:bg-line last:after:hidden">
+      <label className="flex min-h-13.5 flex-1 items-center gap-3.5 py-2.5 pl-4 select-none">
         <Checkbox.Root
           checked={item.done}
           onCheckedChange={() => onToggle(item)}
-          className="grid size-6 shrink-0 place-items-center rounded-full border-2 border-line bg-surface transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-checked:border-accent data-checked:bg-accent"
+          className="check well grid size-6 shrink-0 place-items-center rounded-full border-[1.5px] border-ink-2/35 transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          <Checkbox.Indicator className="text-sm font-bold text-on-accent">✓</Checkbox.Indicator>
+          <Checkbox.Indicator className="text-on-accent">
+            <Icon name="check" className="size-3.5" strokeWidth={3.2} />
+          </Checkbox.Indicator>
         </Checkbox.Root>
-        <span className={cx('flex-1 break-words', item.done && 'text-ink-2 line-through')}>
+        <span className={cx('min-w-0 flex-1 font-medium break-words', item.done && 'text-ink-2/80 line-through decoration-ink-2/40')}>
           {item.name}
-          {by && by !== 'vous' && <span className="ml-2 text-xs text-ink-2">par {by}</span>}
+          {by && by !== 'vous' && <span className="ml-2 text-xs font-medium text-ink-2">par {by}</span>}
         </span>
       </label>
       <button
         type="button"
         onClick={() => onRemove(item)}
         aria-label={`Retirer ${item.name}`}
-        className="grid size-12 shrink-0 place-items-center text-lg text-ink-2/70 focus-visible:outline-2 focus-visible:outline-accent"
+        className="grid size-12 shrink-0 place-items-center text-ink-2/55 transition-colors focus-visible:outline-2 focus-visible:outline-accent active:text-ink"
       >
-        ×
+        <Icon name="close" className="size-4" strokeWidth={1.9} />
       </button>
     </li>
   )

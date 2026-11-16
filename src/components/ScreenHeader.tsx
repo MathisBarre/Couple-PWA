@@ -47,9 +47,9 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
             <button
               type="button"
               onClick={back.onBack}
-              className="absolute left-0 flex max-w-[40%] items-center gap-0.5 py-2 pr-2 text-[17px] text-accent outline-none focus-visible:underline active:opacity-50"
+              className="absolute left-0 flex min-h-11 max-w-[50%] items-center gap-0.5 py-2 pr-2 text-[1.0625rem] font-semibold text-accent outline-none focus-visible:underline active:opacity-50"
             >
-              <svg aria-hidden viewBox="0 0 12 21" className="h-[21px] w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden viewBox="0 0 12 21" className="h-[19px] w-[11px] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 2 2 10.5 10 19" />
               </svg>
               <span className="ml-1 truncate">{back.label}</span>
@@ -58,11 +58,11 @@ export function ScreenHeader({ title, action, sticky }: { title: string; action?
           {action && <div className="absolute right-0 flex items-center gap-2">{action}</div>}
         </div>
       </div>
-      <h1 ref={titleRef} className="mb-2.5 text-[1.75rem] leading-tight font-bold tracking-tight">
+      <h1 ref={titleRef} className={cx('mt-1 text-[2.125rem] leading-[1.1] font-extrabold tracking-[-0.04em]', sticky ? 'mb-1.5' : 'mb-4')}>
         {title}
       </h1>
       {sticky && (
-        <div className={cx(bar, 'top-[calc(env(safe-area-inset-top)+3rem)] mb-3 pb-2', hairline(collapsed))}>{sticky}</div>
+        <div className={cx(bar, 'top-[calc(env(safe-area-inset-top)+3rem)] mb-3 pt-2 pb-2.5', hairline(collapsed))}>{sticky}</div>
       )}
     </>
   )
@@ -75,7 +75,7 @@ export function HeaderButton({ label, onClick, children }: { label: string; onCl
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-9 place-items-center rounded-full bg-surface-2 text-ink transition outline-none active:scale-90 active:opacity-70 focus-visible:outline-2 focus-visible:outline-accent"
+      className="raised grid size-10 place-items-center rounded-full text-ink-2 transition-[transform,box-shadow] outline-none active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
     >
       {children}
     </button>
@@ -85,7 +85,7 @@ export function HeaderButton({ label, onClick, children }: { label: string; onCl
 /** Engrenage façon SF Symbols, pour les réglages d'un espace. */
 export function GearIcon() {
   return (
-    <svg aria-hidden viewBox="0 0 24 24" className="size-[21px]" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       <path d="M10.33 3.4a1.7 1.7 0 0 1 3.34 0l.2 1.02a1.7 1.7 0 0 0 2.36 1.23l.95-.43a1.7 1.7 0 0 1 2.36 2.36l-.43.95a1.7 1.7 0 0 0 1.23 2.36l1.02.2a1.7 1.7 0 0 1 0 3.34l-1.02.2a1.7 1.7 0 0 0-1.23 2.36l.43.95a1.7 1.7 0 0 1-2.36 2.36l-.95-.43a1.7 1.7 0 0 0-2.36 1.23l-.2 1.02a1.7 1.7 0 0 1-3.34 0l-.2-1.02a1.7 1.7 0 0 0-2.36-1.23l-.95.43a1.7 1.7 0 0 1-2.36-2.36l.43-.95a1.7 1.7 0 0 0-1.23-2.36l-1.02-.2a1.7 1.7 0 0 1 0-3.34l1.02-.2a1.7 1.7 0 0 0 1.23-2.36l-.43-.95a1.7 1.7 0 0 1 2.36-2.36l.95.43a1.7 1.7 0 0 0 2.36-1.23z" />
       <circle cx="12" cy="12" r="3.2" />
     </svg>

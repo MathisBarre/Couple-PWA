@@ -20,8 +20,8 @@ export default defineConfig({
     apple: { sizes: [] },
     appleSplashScreens: withLogoSize(createAppleSplashScreens(
       {
-        resizeOptions: { background: '#F5F5F4', fit: 'contain' },
-        darkResizeOptions: { background: '#161618', fit: 'contain' },
+        resizeOptions: { background: '#FBFBFB', fit: 'contain' },
+        darkResizeOptions: { background: '#0B0B0C', fit: 'contain' },
         linkMediaOptions: { log: true, addMediaScreen: true, basePath: '/', xhtml: false },
         png: { compressionLevel: 9, quality: 60 },
         name: (landscape, size, dark) =>

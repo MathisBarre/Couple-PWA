@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
 import { DayEditor } from './DayEditor'
+import { Icon } from './icons'
 import { cx, flowBg, flowText, IconButton, Sheet } from './ui'
 
 interface Props {
@@ -50,14 +51,20 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
-        <IconButton onClick={() => shift(-1)} aria-label="Mois précédent">‹</IconButton>
-        <h2 className="text-xl font-bold first-letter:uppercase">{formatMonth(month)}</h2>
-        <IconButton onClick={() => shift(1)} aria-label="Mois suivant">›</IconButton>
+        <h2 className="text-[1.375rem] leading-tight font-bold tracking-[-0.03em] first-letter:uppercase">{formatMonth(month)}</h2>
+        <div className="flex gap-2">
+          <IconButton onClick={() => shift(-1)} aria-label="Mois précédent">
+            <Icon name="chevron-left" className="size-4.5" strokeWidth={2} />
+          </IconButton>
+          <IconButton onClick={() => shift(1)} aria-label="Mois suivant">
+            <Icon name="chevron-right" className="size-4.5" strokeWidth={2} />
+          </IconButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((w, i) => (
-          <div key={i} className="py-1 text-center text-xs text-ink-2">{w}</div>
+          <div key={i} className="eyebrow py-1 text-center">{w}</div>
         ))}
         {cells.map((d) => {
           const l = byDay.get(d)
@@ -72,25 +79,25 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
                 setOpen(true)
               }}
               className={cx(
-                'relative flex aspect-square items-center justify-center rounded-xl text-[0.95rem]',
-                flow != null ? cx(flowBg[flow], flowText[flow]) : future ? 'bg-transparent text-ink-2' : 'bg-surface',
-                !l && predicted.has(d) && 'border-2 border-dashed border-flow-3',
-                d.slice(0, 7) !== month.slice(0, 7) && 'opacity-35',
-                d === today && 'font-bold ring-2 ring-ink ring-inset',
+                'relative flex aspect-square items-center justify-center rounded-[0.875rem] text-[0.9375rem] font-medium transition-transform active:scale-90',
+                flow ? cx(flowBg[flow], flowText[flow], 'day-flow font-semibold') : flow === 0 ? 'bg-well text-ink' : future ? 'text-ink-2/70' : 'text-ink',
+                !l && predicted.has(d) && 'bg-accent-soft text-accent outline-[1.5px] -outline-offset-[1.5px] outline-flow-3 outline-dashed',
+                d.slice(0, 7) !== month.slice(0, 7) && 'opacity-30',
+                d === today && 'font-extrabold ring-2 ring-ink ring-inset',
                 open && d === selected && 'ring-2 ring-accent ring-inset',
               )}
             >
               {Number(d.slice(8))}
-              {(l?.pain ?? 0) >= 2 && <span className="absolute bottom-1.5 size-1.5 rounded-full bg-current" />}
+              {(l?.pain ?? 0) >= 2 && <span className="absolute bottom-1.25 size-1 rounded-full bg-current" />}
             </button>
           )
         })}
       </div>
 
-      <div className="flex flex-wrap gap-3.5 text-xs text-ink-2">
+      <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 border-t border-line pt-3 text-xs font-medium text-ink-2">
         <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-flow-1" /> Traces</span>
         <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-flow-3" /> Règles</span>
-        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full border-2 border-dashed border-flow-3" /> Prévu</span>
+        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full border-[1.5px] border-dashed border-flow-3 bg-accent-soft" /> Prévu</span>
         <span className="inline-flex items-center gap-1.5"><i className="size-1.5 rounded-full bg-ink" /> Douleur</span>
       </div>
 

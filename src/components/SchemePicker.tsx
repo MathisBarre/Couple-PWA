@@ -2,12 +2,13 @@ import { Toggle } from '@base-ui/react/toggle'
 import { ToggleGroup } from '@base-ui/react/toggle-group'
 import { useState } from 'react'
 import { getSchemeChoice, setSchemeChoice, type SchemeChoice } from '../lib/scheme'
+import { Icon } from './icons'
 import { cx } from './ui'
 
 const CHOICES: [SchemeChoice, string, string][] = [
-  ['system', '📱', 'Système'],
-  ['light', '☀️', 'Clair'],
-  ['dark', '🌙', 'Sombre'],
+  ['system', 'phone', 'Système'],
+  ['light', 'sun', 'Clair'],
+  ['dark', 'moon', 'Sombre'],
 ]
 
 /** Clair / sombre / comme le téléphone. Choix gardé sur cet appareil, appliqué tout de suite. */
@@ -23,21 +24,19 @@ export function SchemePicker() {
         setChoice(next)
         setSchemeChoice(next)
       }}
-      className="mt-1 grid grid-cols-3 gap-2"
+      className="well mt-1 grid grid-cols-3 gap-1 rounded-[1.0625rem] p-1"
     >
       {CHOICES.map(([id, icon, label]) => (
         <Toggle
           key={id}
           value={id}
           className={cx(
-            'flex flex-col items-center gap-1 rounded-xl border border-line bg-surface py-2.5 text-sm text-ink-2 transition-colors select-none',
+            'scheme-item flex min-h-16 flex-col items-center justify-center gap-1 rounded-[0.8125rem] py-2.5 text-sm font-medium text-ink-2 transition-colors select-none',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-            'data-pressed:border-accent data-pressed:font-semibold data-pressed:text-ink data-pressed:ring-1 data-pressed:ring-accent',
+            'data-pressed:font-bold data-pressed:text-ink',
           )}
         >
-          <span aria-hidden className="text-lg">
-            {icon}
-          </span>
+          <Icon name={icon} className="size-5.5" />
           {label}
         </Toggle>
       ))}

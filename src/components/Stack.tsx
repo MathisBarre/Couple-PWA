@@ -162,12 +162,12 @@ export function Stack({ screens, onPop, ref }: { screens: StackScreen[]; onPop: 
             inert={covered}
             className={cx(
               'absolute inset-0 overflow-hidden bg-bg text-ink transition-colors duration-300',
-              i > 0 && 'shadow-[-6px_0_24px_rgb(0_0_0/0.1)]',
+              i > 0 && 'shadow-[-1px_0_0_rgb(0_0_0/0.06),-12px_0_32px_rgb(0_0_0/0.12)]',
               covered && 'invisible',
             )}
           >
             <div data-scroll className="h-full overflow-x-hidden overflow-y-auto overscroll-contain">
-              <main className="mx-auto w-full max-w-xl px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+88px)]">
+              <main className="mx-auto w-full max-w-xl px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+112px)]">
                 {/* Un écran empilé affiche « ‹ Précédent » dans son en-tête (ScreenHeader). */}
                 <BackContext value={i > 0 ? { label: screens[i - 1].title, onBack: () => pop() } : null}>{s.node}</BackContext>
               </main>
