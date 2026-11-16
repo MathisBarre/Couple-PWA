@@ -1,11 +1,13 @@
 // Données du couple : lecture via l’API avec cache local (consultation
-// hors ligne) et file d'attente des saisies faites sans réseau.
+// hors ligne) et file d'attente des saisies et des effacements faits sans réseau.
 import { useCallback, useEffect, useState } from 'react'
 import type { DayLog } from '../../shared/cycles'
-import { api } from './api'
+import { api, ApiError } from './api'
 
 const cacheKey = (coupleId: string) => `logs:${coupleId}`
 const queueKey = (coupleId: string) => `queue:${coupleId}`
+/** Journées effacées dont l'effacement n'est pas encore arrivé au serveur. */
+const deletesKey = (coupleId: string) => `deletes:${coupleId}`
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -36,23 +38,38 @@ export function hasCache(key: string) {
   }
 }
 
+/** Ce qui attend encore d'être envoyé : saisies et effacements. */
+const waiting = (coupleId: string) => read<Row[]>(queueKey(coupleId), []).length + read<string[]>(deletesKey(coupleId), []).length
+
 async function flushQueue(coupleId: string) {
+  if (!navigator.onLine) return
   const queue = read<Row[]>(queueKey(coupleId), [])
-  if (!queue.length || !navigator.onLine) return
-  try {
-    await api('logs', { method: 'PUT', body: queue })
-    // Ne retire que ce qui a été envoyé (une saisie a pu arriver entre-temps).
-    const sent = new Map(queue.map((q) => [q.day, q.updated_at]))
-    write(queueKey(coupleId), read<Row[]>(queueKey(coupleId), []).filter((q) => sent.get(q.day) !== q.updated_at))
-  } catch {
-    /* hors ligne ou erreur serveur : on réessaiera */
+  if (queue.length)
+    try {
+      await api('logs', { method: 'PUT', body: queue })
+      // Ne retire que ce qui a été envoyé (une saisie a pu arriver entre-temps).
+      const sent = new Map(queue.map((q) => [q.day, q.updated_at]))
+      write(queueKey(coupleId), read<Row[]>(queueKey(coupleId), []).filter((q) => sent.get(q.day) !== q.updated_at))
+    } catch {
+      /* hors ligne ou erreur serveur : on réessaiera */
+    }
+  // Effacements en attente, un par un : celui qui échoue reste dans la file pour la prochaine fois.
+  for (const day of read<string[]>(deletesKey(coupleId), [])) {
+    let done = true
+    try {
+      await api(`logs?day=${day}`, { method: 'DELETE' })
+    } catch (e) {
+      // Refusé pour de bon par le serveur (jour invalide…) : inutile d'insister. Sinon, on réessaiera.
+      done = e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401
+    }
+    if (done) write(deletesKey(coupleId), read<string[]>(deletesKey(coupleId), []).filter((d) => d !== day))
   }
 }
 
 export function useDayLogs(coupleId: string, userId: string) {
   const [logs, setLogs] = useState<DayLog[]>(() => read(cacheKey(coupleId), []))
   const [syncing, setSyncing] = useState(false)
-  const [pending, setPending] = useState(() => read<Row[]>(queueKey(coupleId), []).length)
+  const [pending, setPending] = useState(() => waiting(coupleId))
   // Tant que rien n'est en cache (toute première ouverture), on ne sait pas encore ce qui est noté.
   const [status, setStatus] = useState<LoadStatus>(() => (hasCache(cacheKey(coupleId)) ? 'ready' : 'loading'))
 
@@ -63,6 +80,8 @@ export function useDayLogs(coupleId: string, userId: string) {
         // Les saisies en attente restent prioritaires sur le serveur.
         for (const r of rows) map.set(r.day, r)
         for (const q of read<Row[]>(queueKey(coupleId), [])) map.set(q.day, q)
+        // Une journée effacée ici ne revient pas tant que le serveur n'a pas reçu l'effacement.
+        for (const d of read<string[]>(deletesKey(coupleId), [])) map.delete(d)
         const next = [...map.values()].sort((a, b) => a.day.localeCompare(b.day))
         write(cacheKey(coupleId), next)
         return next
@@ -75,7 +94,7 @@ export function useDayLogs(coupleId: string, userId: string) {
     setSyncing(true)
     setStatus((s) => (s === 'failed' ? 'loading' : s))
     await flushQueue(coupleId)
-    setPending(read<Row[]>(queueKey(coupleId), []).length)
+    setPending(waiting(coupleId))
     try {
       merge(await api<DayLog[]>('logs'), true)
       setStatus('ready')
@@ -107,10 +126,12 @@ export function useDayLogs(coupleId: string, userId: string) {
       const queue = read<Row[]>(queueKey(coupleId), []).filter((q) => q.day !== log.day)
       queue.push(row)
       write(queueKey(coupleId), queue)
+      // Journée renotée après avoir été effacée : l'effacement en attente n'a plus lieu d'être.
+      write(deletesKey(coupleId), read<string[]>(deletesKey(coupleId), []).filter((d) => d !== log.day))
       merge([row])
-      setPending(queue.length)
+      setPending(waiting(coupleId))
       await flushQueue(coupleId)
-      setPending(read<Row[]>(queueKey(coupleId), []).length)
+      setPending(waiting(coupleId))
     },
     [coupleId, userId, merge],
   )
@@ -118,12 +139,16 @@ export function useDayLogs(coupleId: string, userId: string) {
   const remove = useCallback(
     async (day: string) => {
       write(queueKey(coupleId), read<Row[]>(queueKey(coupleId), []).filter((q) => q.day !== day))
+      // L'effacement passe par la file, comme une saisie : hors ligne, il part au retour du réseau.
+      write(deletesKey(coupleId), [...read<string[]>(deletesKey(coupleId), []).filter((d) => d !== day), day])
       setLogs((prev) => {
         const next = prev.filter((l) => l.day !== day)
         write(cacheKey(coupleId), next)
         return next
       })
-      await api(`logs?day=${day}`, { method: 'DELETE' }).catch(() => {})
+      setPending(waiting(coupleId))
+      await flushQueue(coupleId)
+      setPending(waiting(coupleId))
     },
     [coupleId],
   )

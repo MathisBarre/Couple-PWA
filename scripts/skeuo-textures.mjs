@@ -86,43 +86,39 @@ const papers = (mode) => {
   const c = css(ink)
   const k = mode === 'light' ? 1 : 0.42
   return {
-    // Papier épais du bloc calendrier : grain franc, nuages de pâte, fibres longues.
+    // Tout reste discret : on doit sentir le papier sans le voir derrière le texte. Les papiers
+    // se distinguent par des nuances (finesse du grain, quelques fibres), pas par leur force.
+    // Papier épais du bloc calendrier : grain un peu plus présent, de rares fibres pâles.
     cal: tile(280, [
-      noise('c', ink, { freq: 0.012, gain: 0.17 * k, cut: 0.42, octaves: 2, seed: 11 }),
-      noise('g', ink, { freq: 0.75, gain: 0.58 * k, cut: 0.4, seed: 3 }),
-      fibres(280, c, { count: 46, len: [5, 15], width: 0.5, alpha: 0.24 * k, seed: 7 }),
+      noise('c', ink, { freq: 0.012, gain: 0.06 * k, cut: 0.42, octaves: 2, seed: 11 }),
+      noise('g', ink, { freq: 0.95, gain: 0.34 * k, cut: 0.4, seed: 3 }),
+      fibres(280, c, { count: 14, len: [5, 13], width: 0.45, alpha: 0.12 * k, seed: 7 }),
     ]),
-    // Papier d'écriture : lisse, grain très serré, presque pas de fibres.
-    pad: tile(200, [
-      noise('g', ink, { freq: 1.5, gain: 0.34 * k, cut: 0.38, octaves: 2, seed: 21 }),
-      fibres(200, c, { count: 8, len: [3, 7], width: 0.4, alpha: 0.2 * k, seed: 5 }),
-    ]),
+    // Papier d'écriture : lisse, grain très serré, pas de fibres.
+    pad: tile(200, [noise('g', ink, { freq: 1.5, gain: 0.22 * k, cut: 0.38, octaves: 2, seed: 21 })]),
     // Feuille volante : entre les deux.
     leaf: tile(240, [
-      noise('g', ink, { freq: 1.05, gain: 0.42 * k, cut: 0.4, seed: 31 }),
-      fibres(240, c, { count: 18, len: [4, 10], width: 0.45, alpha: 0.22 * k, seed: 9 }),
+      noise('g', ink, { freq: 1.15, gain: 0.26 * k, cut: 0.4, seed: 31 }),
+      fibres(240, c, { count: 6, len: [4, 9], width: 0.4, alpha: 0.1 * k, seed: 9 }),
     ]),
-    // Papier journal de l'éphéméride : grain grossier, un peu sale.
-    ephem: tile(160, [
-      noise('g', ink, { freq: 0.6, gain: 0.62 * k, cut: 0.4, seed: 41 }),
-      fibres(160, c, { count: 14, len: [3, 8], width: 0.5, alpha: 0.3 * k, seed: 13 }),
-    ]),
-    // Carton lourd : pâte nuageuse, mouchetures, grosses fibres.
+    // Papier journal de l'éphéméride : grain un peu plus gros.
+    ephem: tile(160, [noise('g', ink, { freq: 0.75, gain: 0.34 * k, cut: 0.4, seed: 41 })]),
+    // Carton lourd : pâte légèrement nuageuse, quelques mouchetures et fibres.
     card: tile(260, [
-      noise('c', ink, { freq: 0.02, gain: 0.26 * k, cut: 0.4, octaves: 2, seed: 51 }),
-      noise('g', ink, { freq: 0.45, gain: 0.6 * k, cut: 0.42, seed: 53 }),
-      specks(260, c, { count: 90, alpha: 0.5 * k, seed: 17 }),
-      fibres(260, c, { count: 26, len: [6, 18], width: 0.6, alpha: 0.32 * k, seed: 19 }),
+      noise('c', ink, { freq: 0.02, gain: 0.1 * k, cut: 0.4, octaves: 2, seed: 51 }),
+      noise('g', ink, { freq: 0.6, gain: 0.36 * k, cut: 0.42, seed: 53 }),
+      specks(260, c, { count: 36, alpha: 0.3 * k, seed: 17 }),
+      fibres(260, c, { count: 12, len: [6, 15], width: 0.5, alpha: 0.16 * k, seed: 19 }),
     ]),
-    // Pense-bête : papier fin, fibres dans le sens du bloc.
+    // Pense-bête : papier fin, de rares fibres dans le sens du bloc.
     postit: tile(200, [
-      noise('g', ink, { freq: 1.2, gain: 0.55 * k, cut: 0.4, octaves: 2, seed: 61 }),
-      fibres(200, c, { count: 22, len: [4, 11], width: 0.4, alpha: 0.2 * k, seed: 23, vertical: true }),
+      noise('g', ink, { freq: 1.2, gain: 0.3 * k, cut: 0.4, octaves: 2, seed: 61 }),
+      fibres(200, c, { count: 8, len: [4, 10], width: 0.4, alpha: 0.1 * k, seed: 23, vertical: true }),
     ]),
-    // Papier vergé des feuilles de saisie : fines lignes d'eau horizontales, grain doux.
+    // Papier vergé des feuilles de saisie : lignes d'eau à peine visibles, grain doux.
     sheet: tile(240, [
-      noise('g', ink, { freq: 0.9, gain: 0.5 * k, cut: 0.4, seed: 71 }),
-      noise('v', ink, { freq: '0.004 0.42', gain: 0.34 * k, cut: 0.45, octaves: 1, seed: 73 }),
+      noise('g', ink, { freq: 1, gain: 0.26 * k, cut: 0.4, seed: 71 }),
+      noise('v', ink, { freq: '0.004 0.42', gain: 0.16 * k, cut: 0.45, octaves: 1, seed: 73 }),
     ]),
   }
 }

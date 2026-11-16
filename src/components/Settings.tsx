@@ -7,7 +7,7 @@ import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
 import { Chevron, Glyph } from './icons'
-import { Button, cx, Group, inputClass, SectionTitle, Switch } from './ui'
+import { Button, cx, Group, inputClass, Notice, SectionTitle, Switch } from './ui'
 
 interface Props {
   couple: Couple
@@ -23,7 +23,30 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
   const [pushOn, setPushOn] = useState(false)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
+  const [nameError, setNameError] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const partner = members.find((m) => m.id !== profile.id)
+
+  // Le prénom s'enregistre en quittant le champ. En cas d'échec, la saisie reste et on peut réessayer.
+  const saveName = async () => {
+    const next = name.trim()
+    if (savingName) return
+    if (!next) {
+      // Champ vidé : on remet le prénom actuel plutôt que d'envoyer du vide.
+      setName(profile.display_name)
+      return setNameError('')
+    }
+    if (next === profile.display_name) return setNameError('')
+    setSavingName(true)
+    try {
+      await api('auth', { method: 'PATCH', body: { display_name: next } })
+      setNameError('')
+      onChange()
+    } catch (e) {
+      setNameError(`Le prénom « ${next} » n’a pas été enregistré. ${(e as Error).message}`)
+    }
+    setSavingName(false)
+  }
 
   useEffect(() => {
     currentSubscription().then((s) => setPushOn(Boolean(s)))
@@ -120,11 +143,18 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
             className={cx(inputClass, 'max-w-[55%] py-2.5')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onBlur={async () => {
-              if (name.trim() && name !== profile.display_name) await api('auth', { method: 'PATCH', body: { display_name: name } }).then(onChange, () => {})
-            }}
+            maxLength={40}
+            aria-invalid={nameError ? true : undefined}
+            onBlur={saveName}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
           />
         </label>
+        {/* L'enregistrement a échoué : on le dit, la saisie reste dans le champ. */}
+        {nameError && (
+          <Notice action="Réessayer" onAction={saveName} busy={savingName} className="mt-1 mb-2">
+            {nameError}
+          </Notice>
+        )}
         {partner ? (
           <p className="py-2">
             Partagé avec <strong>{partner.display_name}</strong>.
