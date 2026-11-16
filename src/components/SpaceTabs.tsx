@@ -7,6 +7,8 @@ export interface SpaceTab<T extends string> {
   id: T
   label: string
   node: ReactNode
+  /** Barre propre à cet onglet, collée sous les onglets quand on fait défiler (ex. le jour du planning). */
+  bar?: ReactNode
 }
 
 /**
@@ -72,7 +74,16 @@ export function SpaceTabs<T extends string>({
 
   return (
     <Tabs.Root value={tab} onValueChange={(v) => onTab(v as T)}>
-      <ScreenHeader title={title} action={action} sticky={list} />
+      <ScreenHeader
+        title={title}
+        action={action}
+        sticky={
+          <>
+            {list}
+            {tabs.find((t) => t.id === tab)?.bar}
+          </>
+        }
+      />
       <div className="relative">
         {tabs.map(({ id, node }) => (
           <Tabs.Panel

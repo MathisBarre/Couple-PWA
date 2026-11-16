@@ -316,7 +316,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           />
         )
       case 'sport':
-        return <UcpaSpace ucpa={ucpa} tab={subTabs.sport} onTab={setSubTab('sport')} other={other} onSettings={() => openSpaceSettings('sport')} />
+        return <UcpaSpace ucpa={ucpa} tab={subTabs.sport} onTab={setSubTab('sport')} other={other} onSettings={() => openSpaceSettings('sport')} visible={view === 'sport'} />
       case 'sport:settings':
         return <UcpaSettings ucpa={ucpa} other={other} />
       case 'cycle:settings':

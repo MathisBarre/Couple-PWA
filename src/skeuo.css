@@ -1381,7 +1381,7 @@
   .sk-ticket-qr {
     display: block;
     width: 100%;
-    max-width: 17rem;
+    max-width: min(100%, 21rem);
     margin-inline: auto;
     aspect-ratio: 1;
     image-rendering: pixelated;
