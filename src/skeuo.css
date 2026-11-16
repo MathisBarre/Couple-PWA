@@ -268,19 +268,33 @@
     --paper: color-mix(in srgb, var(--color-surface), #dfe9dc 12%);
     --tex: var(--tex-pad);
   }
-  /* Reliure collée en tête du bloc : une bande de toile à la couleur de l'espace. */
+  /* Reliure collée en tête du bloc : une bande de toile à la couleur de l'espace. Le calque fait
+     toute la taille du bloc et en reprend les arrondis : la bande est donc coupée exactement au
+     contour du papier (elle ne dépasse pas aux coins). Seul son haut est peint : la toile sur
+     --binding de haut, puis son ombre portée sur la première feuille. */
   .sk-block::before {
     content: '';
     position: absolute;
     z-index: 3;
-    inset: 0 0 auto;
-    height: var(--binding, 8px);
-    border-radius: 24px 24px 0 0 / var(--binding, 8px) var(--binding, 8px) 0 0;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    --cloth: color-mix(in srgb, var(--color-btn), #8a8080 26%);
     background:
-      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px),
-      linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.1)),
-      color-mix(in srgb, var(--color-btn), #8a8080 26%);
-    box-shadow: 0 1px 2px rgb(var(--shade) / calc(0.22 * var(--lift)));
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px) 0 0 / 100% var(--binding, 8px) no-repeat,
+      linear-gradient(rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.12)) 0 0 / 100% var(--binding, 8px) no-repeat,
+      linear-gradient(var(--cloth), var(--cloth)) 0 0 / 100% var(--binding, 8px) no-repeat,
+      linear-gradient(rgb(var(--shade) / calc(0.2 * var(--lift))), rgb(var(--shade) / 0)) 0 var(--binding, 8px) / 100% 3px no-repeat;
+  }
+  /* Ombre de la reliure sur la feuille qui se soulève : plus marquée pendant que la page tourne. */
+  .sk-binding-shade {
+    position: absolute;
+    z-index: 3;
+    inset: var(--binding, 8px) 0 auto;
+    height: 16px;
+    background: linear-gradient(rgb(var(--shade) / calc(0.3 * var(--lift))), rgb(var(--shade) / 0));
+    opacity: 0;
+    pointer-events: none;
   }
   /* Pense-bête : papier jaune pâle, un coin qui se soulève. */
   .sk-postit {
@@ -804,6 +818,9 @@
     position: relative;
     perspective: 1500px;
     perspective-origin: 50% 0;
+    /* La feuille retournée par-dessus la reliure passe derrière le bloc : on ne la voit plus. */
+    overflow: hidden;
+    border-radius: 24px;
   }
   .sk-page {
     position: relative;
@@ -818,6 +835,51 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+  }
+  /* La feuille qui tourne : sa copie découpée en bandes emboîtées (buildCurl, src/lib/motion.ts).
+     Chaque bande pivote autour de son bord haut, accrochée au bas de la précédente : ensemble
+     elles dessinent la courbure. Recto = la tranche de la feuille, verso = papier nu. */
+  .sk-curl {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    transform-style: preserve-3d;
+  }
+  .sk-curl-strip {
+    position: absolute;
+    inset-inline: 0;
+    transform-origin: 50% 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .sk-curl-face {
+    position: absolute;
+    inset: 0 0 auto;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .sk-curl-back {
+    background-color: var(--paper);
+    background-image: var(--tex);
+    transform: rotateX(180deg);
+  }
+  /* Le verso est retourné : ses coins du bas sont ceux du haut de la feuille, et inversement. */
+  .sk-curl-back[data-edge='top'] {
+    border-radius: 0 0 24px 24px;
+  }
+  .sk-curl-back[data-edge='bottom'] {
+    border-radius: 24px 24px 0 0;
+  }
+  .sk-curl-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgb(var(--shade)), rgb(var(--shade) / 0));
+    opacity: 0;
+  }
+  .sk-curl-shade-low {
+    background: linear-gradient(rgb(var(--shade) / 0), rgb(var(--shade)));
   }
   /* Ombre d'une feuille sur l'autre, et dos de la feuille qui se détourne de la lumière. */
   .sk-page-shade {
@@ -1187,6 +1249,10 @@
   [data-scheme='dark'] .sk-block {
     --paper: var(--color-surface);
     --tex: var(--tex-cal-dark);
+  }
+  /* Verso de la feuille qui tourne : un ton plus clair, sinon il se confond avec le bloc. */
+  [data-scheme='dark'] .sk-curl-back {
+    background-color: color-mix(in srgb, var(--paper), #fff 8%);
   }
   [data-scheme='dark'] .sk-pad {
     --paper: color-mix(in srgb, var(--color-surface), #1f2b23 40%);

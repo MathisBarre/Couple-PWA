@@ -96,6 +96,7 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
             <div data-shade className="sk-page-shade" />
           </div>
         </div>
+        <div data-binding-shade aria-hidden className="sk-binding-shade" />
         <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
           <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
             <Chevron dir="left" />
