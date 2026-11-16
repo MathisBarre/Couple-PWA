@@ -34,6 +34,9 @@
     "api/groceries.ts": {
       "maxDuration": 60
     },
+    "api/ucpa.ts": {
+      "maxDuration": 60
+    },
     "api/join.ts": {
       "includeFiles": "dist/index.html"
     },

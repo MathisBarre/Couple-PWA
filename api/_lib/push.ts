@@ -15,7 +15,7 @@ async function configure() {
 }
 
 /** Types de notifications que chacun peut couper dans Réglages. */
-export const NOTIFICATION_KINDS = ['reminders', 'cycle', 'groceries'] as const
+export const NOTIFICATION_KINDS = ['reminders', 'cycle', 'groceries', 'sport'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 export interface Payload extends Reminder {

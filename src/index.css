@@ -174,6 +174,67 @@
   --knob: linear-gradient(#3e4840, #2a322c);
 }
 
+/* UCPA (Sport) : les couleurs d'UCPA Sport Station (violet #4D33B8, rouge d'action #D53720, barre
+   oblique orangée #EB532C, ardoise #222F37) posées sur le gris clair du site. Objet : un billet
+   d'entrée cartonné (le QR) et un tableau d'horaires imprimé. */
+[data-theme='ucpa'] {
+  --color-bg: #f1f1f3;
+  --color-surface: #fffeff;
+  --color-surface-2: #e5e4ec;
+  --color-ink: #222f37;
+  --color-ink-2: #687079;
+  --color-line: #e3e2ea;
+  --color-accent: #4d33b8;
+  --color-on-accent: #ffffff;
+  --color-btn: #d53720;
+  --color-on-btn: #ffffff;
+  --color-signal: #eb532c;
+  --color-chrome: #f1f1f3;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --color-flow-1: #ddd6f6;
+  --color-flow-2: #b9aaee;
+  --color-flow-3: #8a71dc;
+  --color-flow-4: #4d33b8;
+  --color-flow-5: #3f2ea0;
+  --color-on-flow: #ffffff;
+  --shade: 40 34 70;
+  --lift: 1;
+  --paper-tex: var(--tex-card);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #ebeaf0);
+}
+[data-scheme='dark'] [data-theme='ucpa'],
+[data-scheme='dark'][data-theme='ucpa'] {
+  --color-bg: #121119;
+  --color-surface: #1e1c29;
+  --color-surface-2: #0c0b11;
+  --color-ink: #eeedf5;
+  --color-ink-2: #9d9aae;
+  --color-line: #302d3f;
+  --color-accent: #ac9cff;
+  --color-on-accent: #1a1240;
+  --color-btn: #e04a30;
+  --color-on-btn: #ffffff;
+  --color-signal: #ff6b3f;
+  --color-chrome: #121119;
+  --color-soon: #3d3212;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2f14;
+  --color-flow-1: #3a3260;
+  --color-flow-2: #4f4290;
+  --color-flow-3: #6a55c4;
+  --color-flow-4: #8f7bf0;
+  --color-flow-5: #b9abff;
+  --color-on-flow: #140e33;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-card-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#46425a, #2f2c3e);
+}
+
 /* Neutre (réglages, « Plus », connexion) : gris chaud mat, graphite, un seul voyant orange. */
 [data-theme='neutre'] {
   --color-bg: #f0efec;

@@ -70,6 +70,26 @@ const SCHEMA = [
     created_at text not null default (datetime('now'))
   )`,
   `create index if not exists activity_events_key on activity_events (couple_id, author_id, kind, id)`,
+  // Espace UCPA : la session UCPA de chacun, chiffrée (voir _lib/ucpa/session.ts). Jamais de mot de passe.
+  `create table if not exists ucpa_accounts (
+    user_id text primary key references users(id) on delete cascade,
+    holder text not null default '',
+    sealed text not null,
+    version integer not null default 0,
+    expires_at integer not null,
+    synced_at integer,
+    created_at text not null default (datetime('now'))
+  )`,
+  // Séances UCPA réservées par chacun (nom et horaires seulement), pour les montrer à l'autre.
+  `create table if not exists ucpa_bookings (
+    user_id text not null references users(id) on delete cascade,
+    session_id text not null,
+    day text not null,
+    name text not null,
+    start_ms integer not null,
+    end_ms integer not null,
+    primary key (user_id, session_id)
+  )`,
 ]
 
 /** Client prêt à l'emploi ; crée les tables au premier appel (aucune migration à lancer). */
