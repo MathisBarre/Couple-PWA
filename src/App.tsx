@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { Auth, CenterLayout, Logo } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
+import { UcpaSettings, UcpaSpace, type UcpaTab } from './components/Ucpa'
 import { More } from './components/More'
 import { NotificationSwitches } from './components/NotificationSwitches'
 import { CycleSettings } from './components/CycleSettings'
@@ -18,6 +19,7 @@ import { fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
+import { useUcpa } from './lib/ucpa'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
 import {
@@ -111,7 +113,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
   // Onglet affiché en haut de chaque espace.
-  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab }>({ cycle: 'today' })
+  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; sport: UcpaTab }>({ cycle: 'today', sport: 'seances' })
   const setSubTab =
     <K extends keyof typeof subTabs>(id: K) =>
     (t: (typeof subTabs)[K]) =>
@@ -120,6 +122,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(couple.id, profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
+  const ucpa = useUcpa(view === 'sport' || view === 'sport:settings')
   const pending = pendingLogs + groceries.pending
   const partner = members.find((m) => m.id !== profile.id)
   const other = partner?.display_name || 'votre partenaire'
@@ -197,6 +200,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     if (depth) return stackRefs.current[v]?.pop(depth)
     stackRefs.current[v]?.scrollToTop()
     if (v === 'cycle') setSubTab('cycle')('today')
+    if (v === 'sport') setSubTab('sport')('seances')
   }
 
   // Réglages d'un espace (⚙️ dans son en-tête, raccourci des réglages globaux, appui long) :
@@ -231,7 +235,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           : view === t
             ? t === 'cycle'
               ? subTabs.cycle
-              : sections[0]?.id
+              : t === 'sport'
+                ? subTabs.sport
+                : sections[0]?.id
             : null
     return sections.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: current === s.id }))
   }
@@ -255,6 +261,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       // Un autre sous-écran : on revient à l'espace lui-même (sans ses réglages empilés).
       if (stacks[t]?.length) stackRefs.current[t]?.pop(stacks[t]!.length)
       if (t === 'cycle') setSubTab('cycle')(key as CycleTab)
+      if (t === 'sport') setSubTab('sport')(key as UcpaTab)
     }
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
@@ -308,6 +315,10 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             ]}
           />
         )
+      case 'sport':
+        return <UcpaSpace ucpa={ucpa} tab={subTabs.sport} onTab={setSubTab('sport')} other={other} onSettings={() => openSpaceSettings('sport')} />
+      case 'sport:settings':
+        return <UcpaSettings ucpa={ucpa} other={other} />
       case 'cycle:settings':
         return (
           <>

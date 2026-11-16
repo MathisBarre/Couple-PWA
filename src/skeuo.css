@@ -1323,3 +1323,128 @@
     }
   }
 }
+
+/* ───────── Espace UCPA ─────────
+   Le QR est imprimé sur un billet d'entrée cartonné : bandeau violet en tête avec la barre oblique
+   orangée d'UCPA devant le titre, encoches rondes et pointillés de découpe entre le QR et le talon.
+   Le planning est un tableau d'horaires imprimé : chaque séance est une ligne, l'heure en colonne. */
+@layer components {
+  .sk-ticket {
+    --notch: 11px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    background-color: #fffefd;
+    background-image: var(--tex-card);
+    color: #222f37;
+    box-shadow:
+      var(--sh-object),
+      inset 0 1px 0 rgb(255 255 255 / 0.9);
+    /* Encoches de chaque côté, à hauteur des pointillés. */
+    -webkit-mask:
+      radial-gradient(circle at 0 var(--cut, 75%), transparent var(--notch), #000 calc(var(--notch) + 0.5px)) left / 51% 100% no-repeat,
+      radial-gradient(circle at 100% var(--cut, 75%), transparent var(--notch), #000 calc(var(--notch) + 0.5px)) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle at 0 var(--cut, 75%), transparent var(--notch), #000 calc(var(--notch) + 0.5px)) left / 51% 100% no-repeat,
+      radial-gradient(circle at 100% var(--cut, 75%), transparent var(--notch), #000 calc(var(--notch) + 0.5px)) right / 51% 100% no-repeat;
+  }
+  .sk-ticket-band {
+    padding: 0.8rem 1.1rem 0.75rem;
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.05) 0 1px, transparent 1px 3px),
+      linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 60%),
+      #4d33b8;
+    color: #fff;
+  }
+  /* Titre en capitales espacées, précédé de la barre oblique orangée. */
+  .sk-slash {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .sk-slash::before {
+    content: '';
+    width: 0.32rem;
+    height: 1.05rem;
+    border-radius: 1px;
+    background: #eb532c;
+    transform: skewX(-18deg);
+  }
+  .sk-ticket-cut {
+    margin: 0 calc(var(--notch) + 6px);
+    border-top: 2px dashed rgb(34 47 55 / 0.18);
+  }
+  .sk-ticket-qr {
+    display: block;
+    width: 100%;
+    max-width: 17rem;
+    margin-inline: auto;
+    aspect-ratio: 1;
+    image-rendering: pixelated;
+    /* Le QR reste noir sur blanc, même en mode sombre : les lecteurs de l'accueil en ont besoin. */
+    background: #fff;
+    border-radius: 6px;
+  }
+  [data-scheme='dark'] .sk-ticket {
+    background-color: #f4f2ee;
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 18px 40px -16px rgb(0 0 0 / 0.8);
+  }
+
+  /* Tableau d'horaires : colonne de l'heure, trait fin entre les lignes. */
+  .sk-timetable > li + li {
+    border-top: 1px solid var(--color-line);
+  }
+  .sk-hour {
+    flex-shrink: 0;
+    width: 3.6rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+    line-height: 1.15;
+  }
+  /* Tampon « réservée » : encre violette, un peu de travers. */
+  .sk-stamp {
+    display: inline-block;
+    padding: 0.1rem 0.45rem 0.12rem;
+    border: 1.5px solid currentColor;
+    border-radius: 5px;
+    color: var(--color-accent);
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: rotate(-3deg);
+    opacity: 0.92;
+  }
+  /* L'autre y va : pastille à la couleur de l'autre espace (orange UCPA). */
+  .sk-with {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.12rem 0.5rem 0.14rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-signal), transparent 86%);
+    color: color-mix(in srgb, var(--color-signal), var(--color-ink) 35%);
+    font-size: 0.72rem;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+  .sk-chip {
+    min-height: 36px;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 550;
+    white-space: nowrap;
+  }
+  .sk-chip[data-pressed] {
+    background-color: var(--color-flow-1);
+    color: var(--color-ink);
+    font-weight: 650;
+  }
+}

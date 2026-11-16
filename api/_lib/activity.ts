@@ -25,7 +25,18 @@ export interface GroceryActivity {
   checked?: number
   removed?: number
 }
-type Activity = { kind: 'cycle'; data: CycleActivity } | { kind: 'groceries'; data: GroceryActivity }
+/** Une séance UCPA réservée ou annulée (nom et horaires). */
+export interface SportSlot {
+  id: string
+  name: string
+  start: number
+  end: number
+}
+export interface SportActivity {
+  booked?: SportSlot[]
+  cancelled?: SportSlot[]
+}
+type Activity = { kind: 'cycle'; data: CycleActivity } | { kind: 'groceries'; data: GroceryActivity } | { kind: 'sport'; data: SportActivity }
 
 /** À appeler après une saisie réussie ; ne bloque pas la réponse. */
 export function notifyActivity(user: User & { couple_id: string }, activity: Activity) {
@@ -59,7 +70,8 @@ async function record(user: User & { couple_id: string }, { kind, data }: Activi
   })
   const payloads = rows.map((r) => JSON.parse(String(r.payload)))
   const name = user.display_name.trim() || 'Votre partenaire'
-  const message = kind === 'cycle' ? await cycleMessage(user.couple_id, name, payloads) : groceryMessage(name, payloads)
+  const message =
+    kind === 'cycle' ? await cycleMessage(user.couple_id, name, payloads) : kind === 'sport' ? sportMessage(name, payloads) : groceryMessage(name, payloads)
   if (message) {
     await sendToUsers(
       others.rows.map((r) => String(r.id)),
@@ -144,5 +156,43 @@ async function cycleMessage(coupleId: string, name: string, payloads: CycleActiv
     const title = deleted.length === 1 ? 'une journée' : plural(deleted.length, 'journée')
     return { title: `💧 ${name} a effacé ${title}`, body: `Du suivi du cycle : ${list(deleted.map(dateFr))}`, url }
   }
+  return null
+}
+
+const hour = new Intl.DateTimeFormat('fr-FR', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' })
+const parisDay = (ms: number) => new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(ms)
+const weekday = new Intl.DateTimeFormat('fr-FR', { timeZone: TIME_ZONE, weekday: 'long', day: 'numeric', month: 'short' })
+
+/** « Demain · 18:30 – 19:30 », « jeudi 20 nov. · 12:15 – 13:00 » */
+export function slotWhen(slot: SportSlot, now = Date.now()) {
+  const today = parisDay(now)
+  const day = parisDay(slot.start)
+  const tomorrow = parisDay(now + 86400_000) === day
+  const label = day === today ? 'Aujourd’hui' : tomorrow ? 'Demain' : weekday.format(slot.start).replace(/^./, (c) => c.toUpperCase())
+  // UCPA donne la dernière seconde de la séance : la fin affichée est la seconde suivante.
+  return `${label} · ${hour.format(slot.start)} – ${hour.format(slot.end + 1000)}`
+}
+
+export function sportMessage(name: string, payloads: SportActivity[], now = Date.now()): Omit<Payload, 'kind'> | null {
+  // Le dernier geste sur une séance l'emporte (réservée puis annulée = annulée).
+  const last = new Map<string, { slot: SportSlot; action: 'booked' | 'cancelled' }>()
+  for (const p of payloads) {
+    for (const slot of p.booked ?? []) last.set(slot.id, { slot, action: 'booked' })
+    for (const slot of p.cancelled ?? []) last.set(slot.id, { slot, action: 'cancelled' })
+  }
+  const upcoming = [...last.values()].filter((e) => e.slot.end > now).sort((a, b) => a.slot.start - b.slot.start)
+  const booked = upcoming.filter((e) => e.action === 'booked').map((e) => e.slot)
+  const cancelled = upcoming.filter((e) => e.action === 'cancelled').map((e) => e.slot)
+  const url = '/?open=sport'
+  const extra = cancelled.length ? ` · ${plural(cancelled.length, 'séance')} annulée${cancelled.length > 1 ? 's' : ''}` : ''
+  if (booked.length === 1) return { title: `🏸 ${name} a réservé ${booked[0].name}`, body: slotWhen(booked[0], now) + extra, url }
+  if (booked.length)
+    return {
+      title: `🏸 ${name} a réservé ${plural(booked.length, 'séance')}`,
+      body: list(booked.map((s) => `${s.name} (${slotWhen(s, now).toLowerCase()})`), 3) + extra,
+      url,
+    }
+  if (cancelled.length === 1) return { title: `🏸 ${name} a annulé ${cancelled[0].name}`, body: slotWhen(cancelled[0], now), url }
+  if (cancelled.length) return { title: `🏸 ${name} a annulé ${plural(cancelled.length, 'séance')}`, body: list(cancelled.map((s) => s.name), 3), url }
   return null
 }

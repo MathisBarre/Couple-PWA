@@ -36,6 +36,19 @@ export const MODULES = [
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
+  {
+    id: 'sport',
+    label: 'UCPA',
+    icon: '🎟️',
+    description: 'QR d’accès, réservations UCPA et séances de l’autre',
+    theme: 'ucpa',
+    settings: 'Compte UCPA, notifications des séances',
+    sections: [
+      { id: 'seances', label: 'Séances', icon: '🎟️' },
+      { id: 'reserver', label: 'Réserver', icon: '📅' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    ],
+  },
 ] as const satisfies readonly {
   id: string
   label: string
@@ -63,7 +76,7 @@ export const SETTINGS_SECTIONS: Section[] = [
 ]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
-export type Theme = 'rose' | 'verdure' | 'neutre'
+export type Theme = 'rose' | 'verdure' | 'ucpa' | 'neutre'
 
 export type ModuleId = (typeof MODULES)[number]['id']
 /** Réglages propres à un espace (écran empilé, ouvert par ⚙️ dans son en-tête). */

@@ -15,6 +15,13 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M9 11V7.5a3 3 0 0 1 6 0V11" />
     </>
   ),
+  // Billet d'entrée (espace UCPA)
+  '🎟️': (
+    <>
+      <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v2.1a2.4 2.4 0 0 0 0 4.8v2.1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-2.1a2.4 2.4 0 0 0 0-4.8Z" />
+      <path d="M14.5 6.5v1.6m0 2.4v3m0 2.4v1.6" />
+    </>
+  ),
   // Curseurs de réglage
   '⚙️': (
     <>
