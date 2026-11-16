@@ -126,3 +126,71 @@ export function animateStack(
   anims[0].onfinish = finish
   return finish
 }
+
+const PAGE_MS = 360
+/** La feuille se soulève depuis la reliure du haut et bascule vers nous, jusqu'à passer par-dessus. */
+const LIFTED = 'rotateX(97deg)'
+const FLAT = 'rotateX(0deg)'
+
+const shadeOf = (pageEl: HTMLElement) => pageEl.querySelector<HTMLElement>(':scope > [data-shade]')
+
+/**
+ * Tourne la page du bloc calendrier (voir .sk-pages dans src/skeuo.css). `page` porte déjà le
+ * nouveau mois ; `ghost` est la feuille qu'on quitte, posée exactement au même endroit.
+ * - `dir` = 1 (mois suivant) : l'ancienne feuille se soulève depuis la reliure et s'en va, la
+ *   nouvelle est dessous ;
+ * - `dir` = -1 (mois précédent) : la feuille revient se poser par-dessus celle qu'on quitte.
+ * Seulement `transform` et `opacity`. L'ombre suit : la feuille du dessous s'éclaircit à mesure
+ * que l'autre se soulève. Renvoie de quoi tout arrêter net (nouvel appui pendant que ça tourne).
+ */
+export function turnPage(page: HTMLElement, ghost: HTMLElement, dir: 1 | -1, done: () => void): Cleanup {
+  const anims: Animation[] = []
+  if (reducedMotion()) {
+    ghost.style.zIndex = '2'
+    anims.push(ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, easing: 'ease-out', fill: 'forwards' }))
+  } else {
+    const turning = dir === 1 ? ghost : page
+    const under = dir === 1 ? page : ghost
+    turning.style.zIndex = '2'
+    under.style.zIndex = '1'
+    const opts: KeyframeAnimationOptions = { duration: PAGE_MS, fill: 'both', direction: dir === 1 ? 'normal' : 'reverse' }
+    // Vers l'avant : départ doux puis la feuille part vite. Au retour, la même courbe à l'envers : elle arrive vite et se pose.
+    const easing = 'cubic-bezier(0.5, 0, 0.85, 0.6)'
+    anims.push(
+      turning.animate(
+        [
+          { transform: FLAT, opacity: 1, easing },
+          { transform: 'rotateX(62deg)', opacity: 1, offset: 0.62, easing: 'linear' },
+          { transform: LIFTED, opacity: 0 },
+        ],
+        opts,
+      ),
+    )
+    const own = shadeOf(turning)
+    const cast = shadeOf(under)
+    // La feuille qui se soulève tourne le dos à la lumière ; son ombre s'allonge puis se détache.
+    if (own) anims.push(own.animate([{ opacity: 0 }, { opacity: 0.5 }], { ...opts, easing }))
+    if (cast) anims.push(cast.animate([{ opacity: 0.05 }, { opacity: 0.55, offset: 0.35 }, { opacity: 0 }], opts))
+  }
+  let ended = false
+  const stop = () => {
+    if (ended) return
+    ended = true
+    anims.forEach((a) => a.cancel())
+    page.style.zIndex = ''
+  }
+  anims[0].onfinish = () => {
+    stop()
+    done()
+  }
+  return stop
+}
+
+/**
+ * Déplacement de mise en page (« FLIP ») : l'élément repart de là où il était avant le rendu et
+ * glisse jusqu'à sa nouvelle place. `dy` = ancienne position moins la nouvelle.
+ */
+export function slideFrom(el: HTMLElement, dy: number, { duration = 260, delay = 0 } = {}) {
+  if (!dy || reducedMotion()) return
+  el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration, delay, easing: EASE, fill: 'backwards' })
+}

@@ -1,8 +1,9 @@
 // Liste de courses partagée : même principe que les journées (cache local +
 // file d'attente hors ligne), mais en opérations (ajout, coche, suppression)
 // pour que deux personnes puissent modifier la liste en même temps.
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
+import { hasCache, type LoadStatus } from './store'
 
 export interface GroceryItem {
   id: string
@@ -62,7 +63,11 @@ export const normalize = (s: string) =>
 
 export function useGroceries(coupleId: string, userId: string, active: boolean) {
   const [items, setItems] = useState<GroceryItem[]>(() => applyOps(read(cacheKey(coupleId), []), read(queueKey(coupleId), []), userId))
-  const [pending, setPending] = useState(() => read<GroceryOp[]>(queueKey(coupleId), []).length)
+  // File d'attente : ce qui n'est pas encore parti (hors ligne). On en tire le compte et les articles concernés.
+  const [queued, setQueued] = useState(() => read<GroceryOp[]>(queueKey(coupleId), []))
+  const pending = queued.length
+  const waiting = useMemo(() => new Set(queued.map((o) => o.id)), [queued])
+  const [status, setStatus] = useState<LoadStatus>(() => (hasCache(cacheKey(coupleId)) ? 'ready' : 'loading'))
   const itemsRef = useRef(items)
   useEffect(() => {
     itemsRef.current = items
@@ -74,13 +79,15 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
       write(cacheKey(coupleId), server)
       const queue = read<GroceryOp[]>(queueKey(coupleId), [])
       setItems(applyOps(server, queue, userId))
-      setPending(queue.length)
+      setQueued(queue)
+      setStatus('ready')
     },
     [coupleId, userId],
   )
 
   const sync = useCallback(async () => {
     const queue = read<GroceryOp[]>(queueKey(coupleId), [])
+    setStatus((s) => (s === 'failed' ? 'loading' : s))
     try {
       if (queue.length && navigator.onLine) {
         const server = await api<GroceryItem[]>('groceries', { method: 'POST', body: { ops: queue } })
@@ -89,7 +96,8 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
         adopt(server)
       } else adopt(await api<GroceryItem[]>('groceries'))
     } catch {
-      /* hors ligne : on garde le cache local et la file d'attente */
+      /* hors ligne : on garde le cache local et la file d'attente (sans cache, on le dit) */
+      setStatus((s) => (s === 'loading' ? 'failed' : s))
     }
   }, [coupleId, adopt])
 
@@ -114,7 +122,9 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
       const queue = [...read<GroceryOp[]>(queueKey(coupleId), []), ...ops]
       write(queueKey(coupleId), queue)
       setItems((prev) => applyOps(prev, ops, userId))
-      setPending(queue.length)
+      setQueued(queue)
+      // Une liste qu'on vient de modifier n'est plus « en attente de chargement ».
+      setStatus('ready')
       sync()
     },
     [coupleId, userId, sync],
@@ -139,5 +149,5 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
     [run],
   )
 
-  return { items, pending, add, toggle, remove, clearDone, refresh: sync }
+  return { items, pending, waiting, status, add, toggle, remove, clearDone, refresh: sync }
 }

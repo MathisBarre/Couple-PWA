@@ -1,6 +1,14 @@
-// Génère src/textures.css : le grain du papier, sous forme de petites tuiles SVG en data URI
-// répétées en fond. Aucune image bitmap. Le filtre SVG (feTurbulence) n'est calculé qu'une fois
-// par tuile, pas à chaque défilement.
+// Génère src/textures.css : les papiers de l'app, sous forme de tuiles SVG en data URI répétées
+// en fond. Aucune image bitmap. Les filtres SVG (feTurbulence) ne sont calculés qu'une fois par
+// tuile, pas à chaque défilement. Chaque surface de papier a le sien :
+//   --tex-cal     bloc calendrier : papier épais, grain marqué, fibres visibles ;
+//   --tex-pad     bloc de courses : papier d'écriture fin et lisse, grain serré ;
+//   --tex-leaf    feuilles volantes (cartes, tuiles d'analyse) : grain moyen, quelques fibres ;
+//   --tex-ephem   éphéméride : papier journal, grain grossier ;
+//   --tex-card    carton d'invitation : carton lourd, moucheté ;
+//   --tex-postit  pense-bête : grain fin, fibres verticales ;
+//   --tex-sheet   feuilles de saisie : papier vergé (fines lignes d'eau).
+// Chacun existe en clair (traces sombres) et en sombre (suffixe -dark, traces claires).
 //   node scripts/skeuo-textures.mjs
 import { writeFileSync } from 'node:fs'
 
@@ -15,20 +23,120 @@ const uri = (svg) =>
     .replace(/>/g, '%3E')
     .replace(/"/g, "'")}")`
 
-/** Grain de belle papeterie : fibres à peine visibles (sombres sur papier clair, claires sur papier sombre). */
-const grain = (rgb, alpha, freq, seed) =>
-  `<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'>
-    <filter id='p' x='0' y='0' width='100%' height='100%'>
-      <feTurbulence type='fractalNoise' baseFrequency='${freq}' numOctaves='3' seed='${seed}' stitchTiles='stitch'/>
-      <feColorMatrix values='0 0 0 0 ${rgb[0]}  0 0 0 0 ${rgb[1]}  0 0 0 0 ${rgb[2]}  0 0 0 ${alpha} ${-alpha * 0.3}'/>
-    </filter>
-    <rect width='100%' height='100%' filter='url(#p)'/>
-  </svg>`
+/** Générateur pseudo-aléatoire à graine : les tuiles sont identiques d'une génération à l'autre. */
+const rng = (seed) => () => {
+  seed = (seed + 0x6d2b79f5) | 0
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+const r1 = (n) => Math.round(n * 10) / 10
 
+/**
+ * Une couche de bruit : `freq` règle la taille du grain, `gain` et `cut` son contraste (seules les
+ * crêtes du bruit au-dessus de `cut` marquent le papier), `octaves` sa finesse.
+ */
+const noise = (id, rgb, { freq, gain, cut, octaves = 3, seed = 1, type = 'fractalNoise' }) => ({
+  def: `<filter id='${id}' x='0' y='0' width='100%' height='100%'>
+      <feTurbulence type='${type}' baseFrequency='${freq}' numOctaves='${octaves}' seed='${seed}' stitchTiles='stitch'/>
+      <feColorMatrix values='0 0 0 0 ${rgb[0]}  0 0 0 0 ${rgb[1]}  0 0 0 0 ${rgb[2]}  ${gain} 0 0 0 ${r1(-gain * cut * 100) / 100}'/>
+    </filter>`,
+  use: `<rect width='100%' height='100%' filter='url(#${id})'/>`,
+})
+
+/** Fibres : de courts brins courbes, semés au hasard (loin des bords de la tuile, pour le raccord). */
+const fibres = (size, rgbCss, { count, len, width, alpha, seed, vertical = false }) => {
+  const rand = rng(seed)
+  let out = ''
+  for (let i = 0; i < count; i++) {
+    const l = len[0] + rand() * (len[1] - len[0])
+    const x = l + rand() * (size - 2 * l)
+    const y = l + rand() * (size - 2 * l)
+    const a = vertical ? Math.PI / 2 + (rand() - 0.5) * 0.5 : rand() * Math.PI
+    const dx = Math.cos(a) * l
+    const dy = Math.sin(a) * l
+    const bend = (rand() - 0.5) * l * 0.7
+    out += `<path d='M${r1(x)} ${r1(y)}q${r1(dx / 2 - (dy / l) * bend)} ${r1(dy / 2 + (dx / l) * bend)} ${r1(dx)} ${r1(dy)}' stroke-opacity='${r1((0.4 + rand() * 0.6) * alpha * 100) / 100}'/>`
+  }
+  return `<g fill='none' stroke='${rgbCss}' stroke-width='${width}' stroke-linecap='round'>${out}</g>`
+}
+
+/** Mouchetures : petits points de matière (carton recyclé). */
+const specks = (size, rgbCss, { count, alpha, seed }) => {
+  const rand = rng(seed)
+  let out = ''
+  for (let i = 0; i < count; i++)
+    out += `<circle cx='${r1(2 + rand() * (size - 4))}' cy='${r1(2 + rand() * (size - 4))}' r='${r1(0.3 + rand() * 0.6)}' fill-opacity='${r1((0.3 + rand() * 0.7) * alpha * 100) / 100}'/>`
+  return `<g fill='${rgbCss}'>${out}</g>`
+}
+
+const tile = (size, layers) => {
+  const defs = layers.map((l) => l.def ?? '').join('')
+  const body = layers.map((l) => l.use ?? l).join('')
+  return uri(`<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'>${defs}${body}</svg>`)
+}
+
+/** Encres des traces : sombres et chaudes sur papier clair, claires sur papier sombre. */
+const INK = { light: [0.3, 0.22, 0.14], dark: [1, 0.96, 0.9] }
+const css = (rgb) => `rgb(${rgb.map((c) => Math.round(c * 255)).join(' ')})`
+
+/** `k` : force générale des traces (le sombre demande nettement moins). */
+const papers = (mode) => {
+  const ink = INK[mode]
+  const c = css(ink)
+  const k = mode === 'light' ? 1 : 0.42
+  return {
+    // Papier épais du bloc calendrier : grain franc, nuages de pâte, fibres longues.
+    cal: tile(280, [
+      noise('c', ink, { freq: 0.012, gain: 0.17 * k, cut: 0.42, octaves: 2, seed: 11 }),
+      noise('g', ink, { freq: 0.75, gain: 0.58 * k, cut: 0.4, seed: 3 }),
+      fibres(280, c, { count: 46, len: [5, 15], width: 0.5, alpha: 0.24 * k, seed: 7 }),
+    ]),
+    // Papier d'écriture : lisse, grain très serré, presque pas de fibres.
+    pad: tile(200, [
+      noise('g', ink, { freq: 1.5, gain: 0.34 * k, cut: 0.38, octaves: 2, seed: 21 }),
+      fibres(200, c, { count: 8, len: [3, 7], width: 0.4, alpha: 0.2 * k, seed: 5 }),
+    ]),
+    // Feuille volante : entre les deux.
+    leaf: tile(240, [
+      noise('g', ink, { freq: 1.05, gain: 0.42 * k, cut: 0.4, seed: 31 }),
+      fibres(240, c, { count: 18, len: [4, 10], width: 0.45, alpha: 0.22 * k, seed: 9 }),
+    ]),
+    // Papier journal de l'éphéméride : grain grossier, un peu sale.
+    ephem: tile(160, [
+      noise('g', ink, { freq: 0.6, gain: 0.62 * k, cut: 0.4, seed: 41 }),
+      fibres(160, c, { count: 14, len: [3, 8], width: 0.5, alpha: 0.3 * k, seed: 13 }),
+    ]),
+    // Carton lourd : pâte nuageuse, mouchetures, grosses fibres.
+    card: tile(260, [
+      noise('c', ink, { freq: 0.02, gain: 0.26 * k, cut: 0.4, octaves: 2, seed: 51 }),
+      noise('g', ink, { freq: 0.45, gain: 0.6 * k, cut: 0.42, seed: 53 }),
+      specks(260, c, { count: 90, alpha: 0.5 * k, seed: 17 }),
+      fibres(260, c, { count: 26, len: [6, 18], width: 0.6, alpha: 0.32 * k, seed: 19 }),
+    ]),
+    // Pense-bête : papier fin, fibres dans le sens du bloc.
+    postit: tile(200, [
+      noise('g', ink, { freq: 1.2, gain: 0.55 * k, cut: 0.4, octaves: 2, seed: 61 }),
+      fibres(200, c, { count: 22, len: [4, 11], width: 0.4, alpha: 0.2 * k, seed: 23, vertical: true }),
+    ]),
+    // Papier vergé des feuilles de saisie : fines lignes d'eau horizontales, grain doux.
+    sheet: tile(240, [
+      noise('g', ink, { freq: 0.9, gain: 0.5 * k, cut: 0.4, seed: 71 }),
+      noise('v', ink, { freq: '0.004 0.42', gain: 0.34 * k, cut: 0.45, octaves: 1, seed: 73 }),
+    ]),
+  }
+}
+
+const light = papers('light')
+const dark = papers('dark')
 const out = `/* Fichier généré par scripts/skeuo-textures.mjs : ne pas modifier à la main. */
 :root {
-  --tex-paper: ${uri(grain([0.35, 0.28, 0.2], 0.15, 0.9, 3))};
-  --tex-paper-dark: ${uri(grain([1, 0.97, 0.92], 0.07, 0.9, 5))};
+${Object.entries(light)
+  .map(([k, v]) => `  --tex-${k}: ${v};`)
+  .join('\n')}
+${Object.entries(dark)
+  .map(([k, v]) => `  --tex-${k}-dark: ${v};`)
+  .join('\n')}
 }
 `
 writeFileSync(new URL('../src/textures.css', import.meta.url), out)

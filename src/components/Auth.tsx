@@ -3,9 +3,9 @@ import { api } from '../lib/api'
 import { pendingInvite } from '../lib/invite'
 import { MODULES } from '../modules'
 import { Glyph } from './icons'
-import { Button, cx } from './ui'
+import { Button, cx, Notice } from './ui'
 
-export function Auth({ onDone }: { onDone: () => void }) {
+export function Auth({ onDone, notice }: { onDone: () => void | Promise<void>; notice?: string }) {
   const invited = pendingInvite()
   // Arrivé par un lien d'invitation : le plus probable est de créer son compte.
   const [mode, setMode] = useState<'login' | 'signup'>(invited ? 'signup' : 'login')
@@ -17,12 +17,16 @@ export function Auth({ onDone }: { onDone: () => void }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
+    // Pas de double envoi (touche Entrée répétée, double appui).
+    if (busy) return
     setBusy(true)
     setMsg('')
     try {
       await api('auth', { method: 'POST', body: { action: mode, email, password, name } })
-      onDone()
+      // Le bouton reste « en cours » jusqu'à l'arrivée dans l'app.
+      await onDone()
     } catch (err) {
+      // La saisie reste en place : on corrige et on renvoie.
       setMsg((err as Error).message)
     }
     setBusy(false)
@@ -39,9 +43,10 @@ export function Auth({ onDone }: { onDone: () => void }) {
           </p>
         </div>
       )}
+      {notice && !msg && <Notice>{notice}</Notice>}
       <form onSubmit={submit} className="flex w-full flex-col gap-3.5">
         <FieldGroup>
-          {mode === 'signup' && <input className="sk-field" placeholder="Prénom" value={name} onChange={(e) => setName(e.target.value)} required />}
+          {mode === 'signup' && <input className="sk-field" placeholder="Prénom" autoComplete="given-name" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} required />}
           <input className="sk-field" type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input
             className="sk-field"
@@ -54,12 +59,21 @@ export function Auth({ onDone }: { onDone: () => void }) {
             required
           />
         </FieldGroup>
-        <Button type="submit" disabled={busy}>
+        {mode === 'signup' && <p className="-mt-1.5 px-1 text-left text-xs text-ink-2">Mot de passe : 8 caractères minimum.</p>}
+        {msg && <Notice>{msg}</Notice>}
+        <Button type="submit" busy={busy}>
           {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
         </Button>
       </form>
-      {msg && <p className="text-sm font-medium text-accent">{msg}</p>}
-      <Button variant="link" className="min-h-11 !self-center" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+      <Button
+        variant="link"
+        className="min-h-11 !self-center"
+        disabled={busy}
+        onClick={() => {
+          setMsg('')
+          setMode(mode === 'login' ? 'signup' : 'login')
+        }}
+      >
         {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
       </Button>
     </CenterLayout>

@@ -6,7 +6,8 @@ import { Select as BaseSelect } from '@base-ui/react/select'
 import { Switch as BaseSwitch } from '@base-ui/react/switch'
 import { Toggle } from '@base-ui/react/toggle'
 import { ToggleGroup } from '@base-ui/react/toggle-group'
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, CSSProperties, ReactNode } from 'react'
+import { haptic } from '../lib/haptics'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -18,12 +19,48 @@ const buttonVariants = {
   ghost: 'sk-btn-ghost',
 }
 
+/**
+ * `busy` : envoi en cours. Le bouton reste enfoncé, garde sa taille, n'accepte plus d'appui (pas
+ * de double envoi) et montre trois points à la place de son libellé.
+ */
 export function Button({
   variant = 'primary',
   className,
+  busy,
+  disabled,
   ...props
-}: ComponentProps<typeof BaseButton> & { variant?: keyof typeof buttonVariants }) {
-  return <BaseButton className={cx('sk-btn', buttonVariants[variant], className as string)} {...props} />
+}: ComponentProps<typeof BaseButton> & { variant?: keyof typeof buttonVariants; busy?: boolean }) {
+  return (
+    <BaseButton
+      className={cx('sk-btn', buttonVariants[variant], className as string)}
+      disabled={disabled || busy}
+      data-busy={busy || undefined}
+      aria-busy={busy || undefined}
+      {...props}
+    />
+  )
+}
+
+/**
+ * Mot d'erreur ou d'information, sur un pense-bête : ce qui s'est passé, et de quoi réessayer.
+ * `role="alert"` : lu tout de suite par un lecteur d'écran.
+ */
+export function Notice({ children, action, onAction, busy, className }: { children: ReactNode; action?: string; onAction?: () => void; busy?: boolean; className?: string }) {
+  return (
+    <div role="alert" className={cx('sk-postit sk-note text-on-soon', className)}>
+      <p>{children}</p>
+      {action && (
+        <Button variant="link" className="sk-note-action" busy={busy} onClick={onAction}>
+          {action}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+/** Lignes laissées en blanc, le temps que le contenu arrive (trait de crayon très pâle, largeur donnée). */
+export function Blank({ className }: { className?: string }) {
+  return <span aria-hidden className={cx('sk-blank', className)} />
 }
 
 /** Petit bouton rond posé. */
@@ -52,6 +89,11 @@ export function Group({ title, id, className, children }: { title: ReactNode; id
 
 export const inputClass = 'sk-input'
 
+/** Curseur d'un contrôle segmenté (`sk-seg`) : posé sous l'option n° `index` parmi `count` ; aucune choisie = pas de curseur. */
+export function SegPill({ count, index }: { count: number; index: number }) {
+  return <span aria-hidden className="sk-seg-pill" data-on={index >= 0 || undefined} style={{ '--n': count, '--i': Math.max(index, 0) } as CSSProperties} />
+}
+
 /** Choix unique parmi des options (flux, douleur…) : un nouvel appui sur l'option active ne la désélectionne pas. */
 export function SingleChoice<T extends number>({
   value,
@@ -60,6 +102,7 @@ export function SingleChoice<T extends number>({
   label,
   className,
   itemClassName,
+  pill,
 }: {
   value: T | null
   onChange: (v: T) => void
@@ -67,6 +110,8 @@ export function SingleChoice<T extends number>({
   label: string
   className?: string
   itemClassName?: string
+  /** Contrôle segmenté : un curseur glisse sous l'option choisie. */
+  pill?: boolean
 }) {
   return (
     <ToggleGroup
@@ -75,6 +120,7 @@ export function SingleChoice<T extends number>({
       onValueChange={(v) => v.length && onChange(Number(v[0]) as T)}
       className={className}
     >
+      {pill && <SegPill count={options.length} index={options.findIndex((o) => o.value === value)} />}
       {options.map((o) => (
         <Toggle key={o.value} value={String(o.value)} className={cx(itemClassName, o.className)}>
           {o.label}
@@ -115,7 +161,14 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
   return (
     <label className="flex min-h-11 items-center justify-between gap-3 py-2">
       <span>{label}</span>
-      <BaseSwitch.Root checked={checked} onCheckedChange={onChange} className="sk-switch">
+      <BaseSwitch.Root
+        checked={checked}
+        onCheckedChange={(v) => {
+          haptic()
+          onChange(v)
+        }}
+        className="sk-switch"
+      >
         <BaseSwitch.Thumb className="sk-switch-thumb" />
       </BaseSwitch.Root>
     </label>

@@ -14,7 +14,7 @@ import { Stack, type StackHandle } from './components/Stack'
 import { useTabMenu, type MenuItem } from './components/TabMenu'
 import { Glyph } from './components/icons'
 import { cx } from './components/ui'
-import { fetchMe, type Me } from './lib/api'
+import { fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
@@ -73,8 +73,29 @@ export default function App() {
     reload()
   }, [reload])
 
+  // Session expirée en cours d'utilisation (une requête a répondu 401) : retour à la connexion,
+  // avec un mot d'explication. Ce qui était en attente d'envoi reste sur le téléphone.
+  const [expired, setExpired] = useState(false)
+  useEffect(() => {
+    const onExpired = () => {
+      setExpired(true)
+      reload()
+    }
+    window.addEventListener(SESSION_EXPIRED, onExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED, onExpired)
+  }, [reload])
+
   if (me === undefined) return <Splash />
-  if (!me) return <Auth onDone={reload} />
+  if (!me)
+    return (
+      <Auth
+        notice={expired ? 'Votre session a expiré. Reconnectez-vous pour retrouver votre espace : rien de ce que vous aviez noté n’est perdu.' : undefined}
+        onDone={() => {
+          setExpired(false)
+          return reload()
+        }}
+      />
+    )
   if (!me.couple) return <Setup onDone={reload} />
   return <Main me={me as Me & { couple: NonNullable<Me['couple']> }} reload={reload} />
 }
@@ -97,7 +118,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       setSubTabs((s) => ({ ...s, [id]: t }))
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
-  const { logs, save, remove, pending: pendingLogs } = useDayLogs(couple.id, profile.id)
+  const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(couple.id, profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
   const pending = pendingLogs + groceries.pending
   const partner = members.find((m) => m.id !== profile.id)
@@ -254,6 +275,8 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             names={names}
             onSave={save}
             onDelete={remove}
+            load={logsStatus}
+            onRetry={refreshLogs}
           />
         )
       case 'groceries':
@@ -271,6 +294,10 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
                   <Groceries
                     items={groceries.items}
                     names={names}
+                    waiting={groceries.waiting}
+                    loading={groceries.status === 'loading' && !groceries.items.length}
+                    failed={groceries.status === 'failed' && !groceries.items.length}
+                    onRetry={groceries.refresh}
                     onAdd={groceries.add}
                     onToggle={groceries.toggle}
                     onRemove={groceries.remove}

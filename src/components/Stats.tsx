@@ -1,16 +1,20 @@
 import { useMemo } from 'react'
 import { addDays, computeStats, diffDays, FLOW_LABELS, PAIN_LABELS, type DayLog } from '../../shared/cycles'
 import { formatDM, formatLong } from '../lib/dates'
-import { Button, Card, cx, flowBg, Group, SectionTitle } from './ui'
+import type { LoadStatus } from '../lib/store'
+import { Glyph } from './icons'
+import { Blank, Button, Card, cx, flowBg, Group, Notice, SectionTitle } from './ui'
 
 interface Props {
   today: string
   logs: DayLog[]
   defaultCycle: number
   iudInsertedOn: string | null
+  load?: LoadStatus
+  onRetry?: () => void
 }
 
-export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
+export function Stats({ today, logs, defaultCycle, iudInsertedOn, load, onRetry }: Props) {
   const s = useMemo(() => computeStats(logs, today, defaultCycle), [logs, today, defaultCycle])
   const recent = s.cycles.slice(-8).reverse()
   const maxLen = Math.max(35, ...recent.map((c) => c.length ?? diffDays(today, c.start) + 1))
@@ -35,9 +39,29 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn }: Props) {
 
   if (!s.periods.length)
     return (
-      <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-4">
         <h2 className="sk-h2">Analyse</h2>
-        <p className="text-ink-2">Les analyses apparaîtront après quelques jours de règles notés.</p>
+        {load === 'loading' && !logs.length ? (
+          // Premier chargement : les fiches sont là, encore vierges.
+          <div className="grid grid-cols-2 gap-2.5" role="status" aria-label="Chargement des analyses">
+            {[0, 1, 2, 3, 4, 5].map((k) => (
+              <Card key={k} className="p-4">
+                <Blank className="w-3/4 text-xs" />
+                <Blank className="mt-3 mb-2.5 h-[1.1em] w-1/2 text-[1.75rem] opacity-70" />
+                <Blank className="w-2/5 text-xs opacity-60" />
+              </Card>
+            ))}
+          </div>
+        ) : load === 'failed' && !logs.length ? (
+          <Notice action="Réessayer" onAction={onRetry}>
+            Les journées notées n’ont pas pu être chargées. Vérifiez la connexion, puis réessayez.
+          </Notice>
+        ) : (
+          <Card className="px-6 py-8 text-center text-ink-2">
+            <Glyph icon="📊" className="mx-auto size-9 opacity-70" />
+            <p className="mt-2 text-sm">Les analyses apparaîtront après quelques jours de règles notés.</p>
+          </Card>
+        )}
       </div>
     )
 

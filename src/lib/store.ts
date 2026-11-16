@@ -25,6 +25,17 @@ function write(key: string, value: unknown) {
 
 type Row = DayLog
 
+/** `loading` : premier chargement sans cache ; `failed` : il a échoué (rien à montrer) ; `ready` : des données, fraîches ou du cache. */
+export type LoadStatus = 'loading' | 'failed' | 'ready'
+
+export function hasCache(key: string) {
+  try {
+    return localStorage.getItem(key) !== null
+  } catch {
+    return false
+  }
+}
+
 async function flushQueue(coupleId: string) {
   const queue = read<Row[]>(queueKey(coupleId), [])
   if (!queue.length || !navigator.onLine) return
@@ -42,6 +53,8 @@ export function useDayLogs(coupleId: string, userId: string) {
   const [logs, setLogs] = useState<DayLog[]>(() => read(cacheKey(coupleId), []))
   const [syncing, setSyncing] = useState(false)
   const [pending, setPending] = useState(() => read<Row[]>(queueKey(coupleId), []).length)
+  // Tant que rien n'est en cache (toute première ouverture), on ne sait pas encore ce qui est noté.
+  const [status, setStatus] = useState<LoadStatus>(() => (hasCache(cacheKey(coupleId)) ? 'ready' : 'loading'))
 
   const merge = useCallback(
     (rows: DayLog[], replace = false) => {
@@ -60,12 +73,15 @@ export function useDayLogs(coupleId: string, userId: string) {
 
   const refresh = useCallback(async () => {
     setSyncing(true)
+    setStatus((s) => (s === 'failed' ? 'loading' : s))
     await flushQueue(coupleId)
     setPending(read<Row[]>(queueKey(coupleId), []).length)
     try {
       merge(await api<DayLog[]>('logs'), true)
+      setStatus('ready')
     } catch {
-      /* hors ligne : on garde le cache local */
+      /* hors ligne : on garde le cache local (s'il n'y en a pas, on le dit) */
+      setStatus((s) => (s === 'loading' ? 'failed' : s))
     }
     setSyncing(false)
   }, [coupleId, merge])
@@ -112,5 +128,5 @@ export function useDayLogs(coupleId: string, userId: string) {
     [coupleId],
   )
 
-  return { logs, save, remove, refresh, syncing, pending }
+  return { logs, save, remove, refresh, syncing, pending, status }
 }
