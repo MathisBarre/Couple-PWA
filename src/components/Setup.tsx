@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, ApiError, logout } from '../lib/api'
 import { clearInvite, pendingInvite } from '../lib/invite'
 import { Brand, CenterLayout, FieldGroup, Logo } from './Auth'
+import type { ModuleId } from '../modules'
+import { ModulePicker } from './ModulePicker'
 import { Button, Notice } from './ui'
 
 export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
@@ -11,7 +13,11 @@ export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
   // Demande en cours : un seul envoi à la fois, le bouton concerné reste enfoncé.
   const [busy, setBusy] = useState<'create' | 'join' | 'logout' | null>(null)
 
-  const run = async (payload: { action: 'create' } | { action: 'join'; code: string }, fromLink = false) => {
+  // Création : on choisit d'abord les espaces voulus (modifiable ensuite dans Réglages).
+  const [choosing, setChoosing] = useState(false)
+  const [modules, setModules] = useState<ModuleId[]>([])
+
+  const run = async (payload: { action: 'create'; modules: ModuleId[] } | { action: 'join'; code: string }, fromLink = false) => {
     if (busy) return
     setBusy(payload.action)
     setMsg('')
@@ -49,7 +55,33 @@ export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
         </p>
       </CenterLayout>
     )
-  const create = () => run({ action: 'create' })
+  if (choosing)
+    return (
+      <CenterLayout>
+        <Brand compact />
+        <div className="mt-1 w-full">
+          <h2 className="sk-h2">Qu’est-ce que vous voulez suivre ?</h2>
+          <p className="mt-1 text-[0.95rem] text-ink-2">Choisissez seulement ce qui vous sert. Vous pourrez en ajouter ou en retirer à tout moment dans Réglages.</p>
+        </div>
+        {msg && <Notice>{msg}</Notice>}
+        <div className="w-full">
+          <ModulePicker value={modules} onChange={setModules} disabled={busy != null} />
+          {modules.includes('cycle') && (
+            <p className="mt-2 px-1.5 text-left text-sm text-ink-2">Un ou plusieurs cycles (couple de femmes, sœurs…) : ça se règle ensuite dans l’espace Cycle.</p>
+          )}
+        </div>
+        <Button className="w-full" onClick={() => run({ action: 'create', modules })} busy={busy === 'create'} disabled={busy != null || !modules.length}>
+          {modules.length ? 'Créer notre espace' : 'Choisissez au moins un espace'}
+        </Button>
+        <Button variant="link" className="min-h-11 !self-center" disabled={busy != null} onClick={() => setChoosing(false)}>
+          Retour
+        </Button>
+      </CenterLayout>
+    )
+  const create = () => {
+    setMsg('')
+    setChoosing(true)
+  }
   const join = (e: FormEvent) => {
     e.preventDefault()
     run({ action: 'join', code: code.trim() })

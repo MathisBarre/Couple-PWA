@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, isIOS, isStandalone, pushSupported, sendTestPush } from '../lib/push'
 import { api, logout, type Couple, type Me, type Member } from '../lib/api'
-import { SPACES_WITH_SETTINGS, type ModuleId } from '../modules'
+import { withSettings, type Module, type ModuleId } from '../modules'
+import { ModulePicker } from './ModulePicker'
 import { AppUpdate } from './AppUpdate'
 import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
@@ -11,15 +12,33 @@ import { Button, cx, Group, inputClass, Notice, SectionTitle, Switch } from './u
 
 interface Props {
   couple: Couple
+  /** Espaces activés pour cet espace. */
+  enabled: Module[]
   profile: Me['user']
   members: Member[]
-  onChange: () => void
+  onChange: () => void | Promise<void>
   onOpenSpace: (id: ModuleId) => void
   /** Affiché dans l'écran « Plus » (qui a déjà son en-tête) : simple titre de section. */
   embedded?: boolean
 }
 
-export function Settings({ couple, profile, members, onChange, onOpenSpace, embedded }: Props) {
+export function Settings({ couple, enabled, profile, members, onChange, onOpenSpace, embedded }: Props) {
+  // Espaces activés : affichés tout de suite, enregistrés en arrière-plan (remis en cas d'échec).
+  const [modules, setModules] = useState<ModuleId[] | null>(null)
+  const [modulesError, setModulesError] = useState('')
+  const shownModules = modules ?? enabled.map((m) => m.id)
+  const saveModules = async (ids: ModuleId[]) => {
+    setModules(ids)
+    setModulesError('')
+    try {
+      await api('couple', { method: 'PATCH', body: { modules: ids } })
+      await onChange()
+    } catch (e) {
+      setModulesError(`Le choix n’a pas été enregistré. ${(e as Error).message}`)
+    }
+    setModules(null)
+  }
+  const spacesWithSettings = withSettings(enabled)
   const [pushOn, setPushOn] = useState(false)
   const [msg, setMsg] = useState('')
   const [name, setName] = useState(profile.display_name)
@@ -71,11 +90,18 @@ export function Settings({ couple, profile, members, onChange, onOpenSpace, embe
       <div className="flex flex-col gap-5">
       {embedded && <h2 className="sk-h2">Réglages</h2>}
 
-      {SPACES_WITH_SETTINGS.length > 0 && (
+      <section id="reglages-modules" className="sk-group scroll-mt-4">
+        <SectionTitle>Espaces affichés</SectionTitle>
+        <ModulePicker value={shownModules} onChange={saveModules} disabled={modules != null} />
+        <p className="mt-2 px-1.5 text-sm text-ink-2">Pour vous deux. Un espace coupé disparaît de la barre. Ses données sont gardées si vous le rallumez.</p>
+        {modulesError && <Notice className="mt-2">{modulesError}</Notice>}
+      </section>
+
+      {spacesWithSettings.length > 0 && (
         <section id="reglages-espaces" className="sk-group scroll-mt-4">
           <SectionTitle>Réglages des espaces</SectionTitle>
           <ul className="sk-card sk-list">
-            {SPACES_WITH_SETTINGS.map((m) => (
+            {spacesWithSettings.map((m) => (
               <li key={m.id}>
                 <button
                   type="button"

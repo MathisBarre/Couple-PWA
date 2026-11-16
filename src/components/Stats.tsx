@@ -10,11 +10,13 @@ interface Props {
   logs: DayLog[]
   defaultCycle: number
   iudInsertedOn: string | null
+  /** Afficher la section stérilet (masquée pour une personne d'un espace à plusieurs cycles sans date de pose). */
+  showIud?: boolean
   load?: LoadStatus
   onRetry?: () => void
 }
 
-export function Stats({ today, logs, defaultCycle, iudInsertedOn, load, onRetry }: Props) {
+export function Stats({ today, logs, defaultCycle, iudInsertedOn, showIud = true, load, onRetry }: Props) {
   const s = useMemo(() => computeStats(logs, today, defaultCycle), [logs, today, defaultCycle])
   const recent = s.cycles.slice(-8).reverse()
   const maxLen = Math.max(35, ...recent.map((c) => c.length ?? diffDays(today, c.start) + 1))
@@ -137,6 +139,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn, load, onRetry 
         </Group>
       )}
 
+      {showIud && (
       <Group title="Stérilet au cuivre">
         {iudMonths != null && (
           <p>
@@ -151,6 +154,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn, load, onRetry 
           inhabituels (anémie), une douleur persistante, ou un retard de règles.
         </p>
       </Group>
+      )}
 
       <Button variant="secondary" onClick={exportCsv}>
         Exporter en CSV (pour un rendez-vous)

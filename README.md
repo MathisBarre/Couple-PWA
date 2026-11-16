@@ -11,6 +11,8 @@ L'app est organisée en **espaces**, un par onglet dans la barre du bas :
 - **Courses** 🛒 : liste de courses commune, ajout rapide (plusieurs articles d'un coup avec des virgules), cocher au magasin, vider le panier. Fonctionne hors ligne et se synchronise entre les deux téléphones.
 - **Réglages** ⚙️ (réglages communs : apparence Système / Clair / Sombre, notifications sur ce téléphone, couple, mise à jour). Chaque espace a en plus son propre onglet Réglages en haut (Cycle : stérilet, durée de cycle, rappels ; Courses : notifications).
 
+À la création, l'espace choisit les espaces qu'il veut (Cycle, Courses, UCPA…) ; ça se change ensuite dans Réglages → Espaces affichés, et seuls les espaces activés sont dans la barre. Le Cycle peut suivre plusieurs personnes (couple de femmes, sœurs…) : chacune a son calendrier, ses prévisions et ses rappels, et on passe de l'une à l'autre en haut de l'espace (Réglages du cycle → Suivre un autre cycle).
+
 Chaque espace a sa couleur : rose pour le cycle, verdure pour les courses, neutre pour les réglages. Pour ajouter un espace (par exemple les séances de sport) : une entrée dans `src/modules.ts` (avec son thème, défini dans `src/index.css`) et son écran dans `src/App.tsx`. Au-delà de trois espaces, la barre du bas range automatiquement les suivants et les réglages dans un onglet « Plus ».
 
 Le pourquoi de ces choix (effets du stérilet au cuivre, fonctions des autres applis) est dans [docs/RECHERCHE.md](docs/RECHERCHE.md).
@@ -23,11 +25,12 @@ Tout tourne sur **Vercel**, la base est un **SQLite hébergé chez Turso** (offr
 - **API** : fonctions Vercel dans `api/` (format Web `Request`/`Response`).
   - `auth` : comptes e-mail + mot de passe (scrypt), session par cookie signé valable un an.
   - `couple` : créer l'espace, le rejoindre avec un code, réglages.
-  - `logs` : lire, enregistrer, effacer les journées.
+  - `logs` : lire, enregistrer, effacer les journées d'un cycle (`?cycle=…`, le premier par défaut).
+  - `cycles` : ajouter, renommer, régler ou retirer un cycle suivi.
   - `groceries` : lire et modifier la liste de courses.
   - `push` : abonner un appareil aux notifications, envoyer un test.
   - `cron` : rappels quotidiens.
-- **Base** : SQLite (libSQL / Turso). Les tables sont créées automatiquement au premier appel, il n'y a pas de migration à lancer.
+- **Base** : SQLite (libSQL / Turso). Les tables sont créées automatiquement au premier appel, et les migrations (ex. passage à plusieurs cycles par espace, voir `api/_lib/db.ts`) s'y jouent une seule fois : rien à lancer à la main.
 - **Notifications** : Web Push. Une tâche planifiée Vercel appelle `/api/cron` une fois par jour vers 19 h (heure de Paris en hiver, 20 h en été) et envoie au plus un rappel aux deux téléphones.
 - **Hors ligne** : l'app s'ouvre sans réseau, affiche les dernières données et met les saisies en attente jusqu'au retour du réseau. Les saisies de l'autre apparaissent à l'ouverture de l'app (et toutes les minutes tant qu'elle est ouverte).
 - **Logique de cycle** : un seul fichier, `shared/cycles.ts`, utilisé par l'app et par la tâche de rappels, testé par `npm test`.
