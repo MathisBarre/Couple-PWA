@@ -1,15 +1,17 @@
 // POST /api/auth  { action: 'signup' | 'login' | 'logout', email, password, name }
-// GET  /api/auth  -> { user, couple, members } (ou 401)
+// GET  /api/auth  -> { user, couple (avec ses espaces activés et ses cycles), members } (ou 401)
 import { randomUUID } from 'node:crypto'
 import { checkPassword, clearCookie, hashPassword, requireUser, sessionCookie } from './_lib/auth.js'
+import { cyclesOf } from './_lib/cycles.js'
 import { db } from './_lib/db.js'
+import { parseModules } from '../shared/modules.js'
 import { body, error, json } from './_lib/http.js'
 
 export async function GET(req: Request) {
   const user = await requireUser(req)
   if (user instanceof Response) return user
   const conn = await db()
-  let couple = null
+  let couple: Record<string, unknown> | null = null
   let members: unknown[] = []
   if (user.couple_id) {
     // Un seul aller-retour vers la base pour les deux lectures.
@@ -20,7 +22,8 @@ export async function GET(req: Request) {
       ],
       'read',
     )
-    couple = c.rows[0] ?? null
+    const row = c.rows[0]
+    if (row) couple = { ...row, modules: parseModules(row.modules), cycles: await cyclesOf(conn, user.couple_id) }
     members = m.rows
   }
   return json({ user, couple, members })

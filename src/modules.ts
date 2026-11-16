@@ -1,10 +1,14 @@
 import { syncStatusBar } from './lib/scheme'
+import type { ModuleId as SharedModuleId } from '../shared/modules'
 
 // Les espaces de l'app. Pour en ajouter un (ex. les séances de sport) :
 // 1. une entrée ici (avec son thème de couleur, voir src/index.css),
 // 2. son écran dans le `switch` de `render` (App.tsx).
 // S'il a ses propres réglages (`settings`), ils apparaissent tout seuls en raccourci
 // dans les réglages globaux.
+// Chaque espace (le couple, la famille…) choisit à la création les espaces qu'il veut (onboarding),
+// modifiable ensuite dans Réglages : seuls ceux-là apparaissent dans la barre.
+// Ajouter aussi son id à shared/modules.ts (le serveur valide les choix).
 // La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
 // passent dans « Plus », avec les réglages.
 // `sections` : ses onglets du haut, proposés aussi en restant appuyé sur son onglet
@@ -50,7 +54,8 @@ export const MODULES = [
     ],
   },
 ] as const satisfies readonly {
-  id: string
+  /** Doit figurer dans shared/modules.ts. */
+  id: SharedModuleId
   label: string
   icon: string
   description: string
@@ -68,7 +73,8 @@ export interface Section {
 
 /** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
-  { id: 'espaces', label: 'Réglages des espaces', icon: '🧩' },
+  { id: 'modules', label: 'Espaces affichés', icon: '🧩' },
+  { id: 'espaces', label: 'Réglages des espaces', icon: '⚙️' },
   { id: 'apparence', label: 'Apparence', icon: '🎨' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'couple', label: 'Couple', icon: '💞' },
@@ -79,6 +85,7 @@ export const SETTINGS_SECTIONS: Section[] = [
 export type Theme = 'rose' | 'verdure' | 'ucpa' | 'neutre'
 
 export type ModuleId = (typeof MODULES)[number]['id']
+export type Module = (typeof MODULES)[number]
 /** Réglages propres à un espace (écran empilé, ouvert par ⚙️ dans son en-tête). */
 export type SpaceSettingsView = `${ModuleId}:settings`
 export type View = ModuleId | 'settings' | 'more' | SpaceSettingsView
@@ -97,10 +104,18 @@ export interface NavItem {
 export const SETTINGS_ITEM: NavItem = { id: 'settings', label: 'Réglages', icon: '⚙️' }
 const MORE_ITEM: NavItem = { id: 'more', label: 'Plus', icon: '☰' }
 
-const fitsInBar = MODULES.length <= IN_BAR
-export const BAR: NavItem[] = fitsInBar ? [...MODULES, SETTINGS_ITEM] : [...MODULES.slice(0, IN_BAR), MORE_ITEM]
-/** Espaces accessibles seulement depuis « Plus ». */
-export const OVERFLOW = fitsInBar ? [] : MODULES.slice(IN_BAR)
+/** Espaces activés, dans l'ordre de l'app. `null` (espace créé avant le choix des espaces) = tous. */
+export const enabledModules = (ids: readonly string[] | null | undefined): Module[] =>
+  ids ? MODULES.filter((m) => ids.includes(m.id)) : [...MODULES]
+
+/**
+ * Barre du bas pour ces espaces : jusqu'à 3 espaces + Réglages ; au-delà, 3 + « Plus ».
+ * `overflow` : espaces accessibles seulement depuis « Plus ».
+ */
+export function navFor(modules: readonly Module[]): { bar: NavItem[]; overflow: Module[] } {
+  if (modules.length <= IN_BAR) return { bar: [...modules, SETTINGS_ITEM], overflow: [] }
+  return { bar: [...modules.slice(0, IN_BAR), MORE_ITEM], overflow: modules.slice(IN_BAR) }
+}
 
 /** Nom d'un écran (affiché dans le bouton retour « ‹ Plus »). */
 export const labelFor = (view: View): string =>
@@ -119,4 +134,4 @@ export function applyTheme(theme: Theme) {
 }
 
 /** Espaces qui ont leur propre onglet « Réglages », listés en raccourci dans les réglages globaux. */
-export const SPACES_WITH_SETTINGS = MODULES.filter((m) => 'settings' in m && m.settings)
+export const withSettings = (modules: readonly Module[]) => modules.filter((m) => 'settings' in m && m.settings)

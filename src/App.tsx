@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Auth, CenterLayout, Logo } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
@@ -15,7 +15,7 @@ import { Stack, type StackHandle } from './components/Stack'
 import { useTabMenu, type MenuItem } from './components/TabMenu'
 import { Glyph } from './components/icons'
 import { cx } from './components/ui'
-import { fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
+import { cyclesOf, fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
@@ -24,10 +24,10 @@ import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
 import {
   applyTheme,
-  BAR,
+  enabledModules,
   labelFor,
   MODULES,
-  OVERFLOW,
+  navFor,
   SETTINGS_SECTIONS,
   spaceSettings,
   themeFor,
@@ -102,14 +102,44 @@ export default function App() {
   return <Main me={me as Me & { couple: NonNullable<Me['couple']> }} reload={reload} />
 }
 
-function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => void }) {
+function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; reload: () => Promise<void> }) {
   const { couple, user: profile, members } = me
-  // À l'ouverture (et depuis une notification) : directement la saisie du jour.
+  // Seuls les espaces choisis par l'espace (onboarding, puis Réglages) sont dans la barre.
+  const modulesKey = couple.modules?.join(',') ?? '*'
+  const enabled = useMemo(() => enabledModules(modulesKey === '*' ? null : modulesKey.split(',')), [modulesKey])
+  const { bar: BAR, overflow: OVERFLOW } = useMemo(() => navFor(enabled), [enabled])
+  // À l'ouverture (et depuis une notification) : directement le premier espace (la saisie du jour).
   // « ?open=groceries » (notification des courses) ouvre directement cet onglet.
   const [tab, setTab] = useState<View>(() => {
     const open = new URLSearchParams(location.search).get('open')
-    return BAR.find((i) => i.id === open)?.id ?? 'cycle'
+    return BAR.find((i) => i.id === open)?.id ?? BAR[0].id
   })
+  // Espace désactivé alors qu'il était affiché : retour au premier.
+  const tabGone = !BAR.some((b) => b.id === tab)
+  useEffect(() => {
+    if (tabGone) setTab(BAR[0].id)
+  }, [tabGone, BAR])
+
+  // Cycles suivis dans l'espace (un par personne) et celui qu'on regarde, retenu sur ce téléphone.
+  const cycles = cyclesOf(couple)
+  const cycleKey = `cycle:${couple.id}`
+  const [cycleId, setCycleId] = useState(() => {
+    const fromLink = new URLSearchParams(location.search).get('cycle')
+    try {
+      return fromLink ?? localStorage.getItem(cycleKey) ?? ''
+    } catch {
+      return fromLink ?? ''
+    }
+  })
+  const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0]
+  const pickCycle = (id: string) => {
+    setCycleId(id)
+    try {
+      localStorage.setItem(cycleKey, id)
+    } catch {
+      /* stockage indisponible */
+    }
+  }
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
   const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
   // Onglet affiché en haut de chaque espace.
@@ -120,7 +150,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       setSubTabs((s) => ({ ...s, [id]: t }))
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
-  const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(couple.id, profile.id)
+  const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(cycle.id, cycles.map((c) => c.id), profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
   const ucpa = useUcpa(view === 'sport' || view === 'sport:settings')
   const pending = pendingLogs + groceries.pending
@@ -148,13 +178,17 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
 
   // Changement d'onglet : l'écran glisse vers la gauche ou la droite selon la position dans la barre.
   const prevTab = useRef(tab)
+  const barRef = useRef(BAR)
+  useLayoutEffect(() => {
+    barRef.current = BAR
+  })
   useLayoutEffect(() => {
     const from = prevTab.current
     prevTab.current = tab
     const a = tabEls.current[from]
     const b = tabEls.current[tab]
     if (from === tab || !a || !b) return
-    const order = BAR.map((i) => i.id)
+    const order = barRef.current.map((i) => i.id)
     return slideTabs(a, b, order.indexOf(tab) > order.indexOf(from) ? 1 : -1)
   }, [tab])
 
@@ -266,7 +300,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
 
-  const settings = <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
+  const settings = <Settings couple={couple} enabled={enabled} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
 
   const render = (v: View): ReactNode => {
     switch (v) {
@@ -277,7 +311,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
             onTab={setSubTab('cycle')}
             today={today}
             logs={logs}
-            couple={couple}
+            cycles={cycles}
+            cycle={cycle}
+            onCycle={pickCycle}
             onSettings={() => openSpaceSettings('cycle')}
             names={names}
             onSave={save}
@@ -323,7 +359,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         return (
           <>
             <ScreenHeader title="Réglages du cycle" />
-            <CycleSettings couple={couple} other={other} onChange={reload} />
+            <CycleSettings cycles={cycles} cycle={cycle} onCycle={pickCycle} names={members.map((m) => m.display_name)} other={other} onChange={reload} />
           </>
         )
       case 'groceries:settings':
@@ -338,7 +374,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       case 'more':
         return (
           <More modules={OVERFLOW} onOpen={push}>
-            <Settings couple={couple} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} embedded />
+            <Settings couple={couple} enabled={enabled} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} embedded />
           </More>
         )
     }

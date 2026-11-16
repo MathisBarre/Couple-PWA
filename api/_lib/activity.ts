@@ -17,6 +17,8 @@ const WINDOW_MIN = 30
 const TIME_ZONE = 'Europe/Paris'
 
 export interface CycleActivity {
+  /** Cycle concerné (absent : saisie d'avant les cycles multiples, le premier). */
+  cycle?: string
   saved?: string[]
   deleted?: string[]
 }
@@ -120,21 +122,36 @@ function dayLabel(day: string, today: string) {
 }
 
 async function cycleMessage(coupleId: string, name: string, payloads: CycleActivity[]): Promise<Omit<Payload, 'kind'> | null> {
-  // Le dernier geste sur un jour l'emporte (noté puis effacé = effacé).
-  const last = new Map<string, 'saved' | 'deleted'>()
+  const conn = await db()
+  const { rows: cycles } = await conn.execute({
+    sql: 'select id, name from cycles where couple_id = ? order by (id = couple_id) desc, created_at, id',
+    args: [coupleId],
+  })
+  if (!cycles.length) return null
+  const first = String(cycles[0].id)
+  const names = new Map(cycles.map((c) => [String(c.id), String(c.name ?? '').trim()]))
+  // Le dernier geste sur un jour l'emporte (noté puis effacé = effacé). Un jour = un cycle + une date.
+  const last = new Map<string, { cycle: string; day: string; action: 'saved' | 'deleted' }>()
   for (const p of payloads) {
-    for (const d of p.saved ?? []) last.set(d, 'saved')
-    for (const d of p.deleted ?? []) last.set(d, 'deleted')
+    const cycle = p.cycle ?? first
+    if (!names.has(cycle)) continue // cycle retiré depuis
+    for (const day of p.saved ?? []) last.set(`${cycle}|${day}`, { cycle, day, action: 'saved' })
+    for (const day of p.deleted ?? []) last.set(`${cycle}|${day}`, { cycle, day, action: 'deleted' })
   }
-  const saved = [...last].filter(([, v]) => v === 'saved').map(([d]) => d).sort()
-  const deleted = [...last].filter(([, v]) => v === 'deleted').map(([d]) => d).sort()
+  const entries = [...last.values()]
+  const saved = entries.filter((e) => e.action === 'saved').map((e) => e.day).sort()
+  const deleted = entries.filter((e) => e.action === 'deleted').map((e) => e.day).sort()
   const today = todayIn(TIME_ZONE)
-  const url = '/?log=today'
+  const touched = [...new Set(entries.map((e) => e.cycle))]
+  // Plusieurs cycles dans l'espace : on dit lequel (« Mathis a noté aujourd'hui · Léa »).
+  const whose = cycles.length > 1 ? touched.map((c) => names.get(c) || 'Cycle').join(', ') : ''
+  const suffix = whose ? ` · ${whose}` : ''
+  const url = touched.length === 1 ? `/?open=cycle&cycle=${encodeURIComponent(touched[0])}` : '/?open=cycle'
 
   if (saved.length === 1 && !deleted.length) {
-    const { rows } = await (await db()).execute({
-      sql: 'select flow, pain, symptoms, note from day_logs where couple_id = ? and day = ?',
-      args: [coupleId, saved[0]],
+    const { rows } = await conn.execute({
+      sql: 'select flow, pain, symptoms, note from cycle_logs where cycle_id = ? and day = ?',
+      args: [touched[0], saved[0]],
     })
     const r = rows[0]
     const parts: string[] = []
@@ -146,15 +163,15 @@ async function cycleMessage(coupleId: string, name: string, payloads: CycleActiv
       if (r.note) parts.push(`« ${String(r.note).slice(0, 80)} »`)
     }
     const body = parts.join(' · ') || 'Journée mise à jour'
-    return { title: `💧 ${name} a noté ${dayLabel(saved[0], today)}`, body: body[0].toUpperCase() + body.slice(1), url }
+    return { title: `💧 ${name} a noté ${dayLabel(saved[0], today)}${suffix}`, body: body[0].toUpperCase() + body.slice(1), url }
   }
   if (saved.length) {
     const extra = deleted.length ? ` · ${plural(deleted.length, 'jour')} effacé${deleted.length > 1 ? 's' : ''}` : ''
-    return { title: `💧 ${name} a mis à jour le cycle`, body: `${plural(saved.length, 'jour')} : ${list(saved.map(dateFr))}${extra}`, url }
+    return { title: `💧 ${name} a mis à jour le cycle${suffix}`, body: `${plural(saved.length, 'jour')} : ${list([...new Set(saved)].map(dateFr))}${extra}`, url }
   }
   if (deleted.length) {
     const title = deleted.length === 1 ? 'une journée' : plural(deleted.length, 'journée')
-    return { title: `💧 ${name} a effacé ${title}`, body: `Du suivi du cycle : ${list(deleted.map(dateFr))}`, url }
+    return { title: `💧 ${name} a effacé ${title}${suffix}`, body: `Du suivi du cycle : ${list(deleted.map(dateFr))}`, url }
   }
   return null
 }

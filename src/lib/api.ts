@@ -1,11 +1,34 @@
 // Appels à l'API (fonctions Vercel dans /api). La session est un cookie HttpOnly.
 
-export interface Couple {
+import type { ModuleId } from '../../shared/modules'
+
+/** Un cycle suivi dans l'espace (une personne). `name` vide : cycle unique, sans prénom. */
+export interface CycleInfo {
   id: string
-  invite_code: string
+  name: string
   default_cycle_length: number
   iud_inserted_on: string | null
 }
+
+export interface Couple {
+  id: string
+  invite_code: string
+  /** Réglages du premier cycle (ancien format, avant les cycles multiples). */
+  default_cycle_length: number
+  iud_inserted_on: string | null
+  /** Espaces activés ; null = tous. Absent dans un profil gardé en cache par une ancienne version. */
+  modules?: ModuleId[] | null
+  cycles?: CycleInfo[]
+}
+
+/** Cycles suivis ; un profil en cache d'avant les cycles multiples en a un seul, celui de l'espace. */
+export const cyclesOf = (couple: Couple): CycleInfo[] =>
+  couple.cycles?.length
+    ? couple.cycles
+    : [{ id: couple.id, name: '', default_cycle_length: couple.default_cycle_length, iud_inserted_on: couple.iud_inserted_on }]
+
+/** Nom affiché d'un cycle (« Cycle 2 » s'il n'a pas encore de prénom). */
+export const cycleLabel = (cycles: CycleInfo[], c: CycleInfo) => c.name.trim() || `Cycle ${cycles.indexOf(c) + 1}`
 
 export interface Member {
   id: string
