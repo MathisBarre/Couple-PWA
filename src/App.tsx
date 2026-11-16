@@ -152,7 +152,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(cycle.id, cycles.map((c) => c.id), profile.id)
   const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
-  const ucpa = useUcpa(view === 'sport' || view === 'sport:settings')
+  // Comme l'app UCPA d'origine : billets et 14 prochains jours se chargent dès l'ouverture,
+  // quel que soit l'onglet, pour que l'espace UCPA s'ouvre déjà à jour.
+  const ucpa = useUcpa(true)
   const pending = pendingLogs + groceries.pending
   const partner = members.find((m) => m.id !== profile.id)
   const other = partner?.display_name || 'votre partenaire'
