@@ -26,15 +26,32 @@ export class ApiError extends Error {
   }
 }
 
+/** Émis sur `window` quand le serveur ne reconnaît plus la session en cours d'utilisation (cookie expiré). */
+export const SESSION_EXPIRED = 'session-expired'
+
 export async function api<T = unknown>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(`/api/${path}`, {
-    method: init.method ?? 'GET',
-    headers: init.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
-    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
-    credentials: 'same-origin',
-  })
+  let res: Response
+  try {
+    res = await fetch(`/api/${path}`, {
+      method: init.method ?? 'GET',
+      headers: init.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+      credentials: 'same-origin',
+    })
+  } catch {
+    // Pas de réponse du tout (hors ligne, réseau coupé) : statut 0, message lisible.
+    throw new ApiError(
+      navigator.onLine ? 'Impossible de joindre le serveur. Vérifiez la connexion, puis réessayez.' : 'Pas de connexion. Réessayez une fois le réseau revenu.',
+      0,
+    )
+  }
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new ApiError((data as { error?: string }).error ?? `Erreur ${res.status}`, res.status)
+  if (!res.ok) {
+    // Session perdue en cours de route (ailleurs que sur l'écran de connexion) : l'app renvoie à la connexion.
+    if (res.status === 401 && path !== 'auth') window.dispatchEvent(new Event(SESSION_EXPIRED))
+    const fallback = res.status >= 500 ? 'Le serveur a rencontré un problème. Réessayez dans un instant.' : `Erreur ${res.status}`
+    throw new ApiError((data as { error?: string }).error ?? fallback, res.status)
+  }
   return data as T
 }
 

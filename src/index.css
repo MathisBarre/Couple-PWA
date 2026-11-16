@@ -91,7 +91,7 @@
   --color-on-flow: #ffffff;
   --shade: 74 44 44;
   --lift: 1;
-  --paper-tex: var(--tex-paper);
+  --paper-tex: var(--tex-leaf);
   --hi: rgb(255 255 255 / 0.9);
   --knob: linear-gradient(#ffffff, #eeeae7);
 }
@@ -121,7 +121,7 @@
   --color-on-flow: #2b0d15;
   --shade: 0 0 0;
   --lift: 3.2;
-  --paper-tex: var(--tex-paper-dark);
+  --paper-tex: var(--tex-leaf-dark);
   --hi: rgb(255 255 255 / 0.07);
   --knob: linear-gradient(#4a4043, #34292c);
   color-scheme: dark;
@@ -146,7 +146,7 @@
   --color-warn: #fbefc4;
   --shade: 40 56 44;
   --lift: 1;
-  --paper-tex: var(--tex-paper);
+  --paper-tex: var(--tex-pad);
   --hi: rgb(255 255 255 / 0.9);
   --knob: linear-gradient(#ffffff, #ebeee8);
 }
@@ -169,7 +169,7 @@
   --color-warn: #3a2f14;
   --shade: 0 0 0;
   --lift: 3.2;
-  --paper-tex: var(--tex-paper-dark);
+  --paper-tex: var(--tex-pad-dark);
   --hi: rgb(255 255 255 / 0.07);
   --knob: linear-gradient(#3e4840, #2a322c);
 }

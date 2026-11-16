@@ -1,23 +1,33 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { api, logout } from '../lib/api'
+import { api, ApiError, logout } from '../lib/api'
 import { clearInvite, pendingInvite } from '../lib/invite'
 import { Brand, CenterLayout, FieldGroup, Logo } from './Auth'
-import { Button } from './ui'
+import { Button, Notice } from './ui'
 
-export function Setup({ onDone }: { onDone: () => void }) {
+export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
   const [code, setCode] = useState(() => pendingInvite() ?? '')
   const [msg, setMsg] = useState('')
   const [joining, setJoining] = useState(() => Boolean(pendingInvite()))
+  // Demande en cours : un seul envoi à la fois, le bouton concerné reste enfoncé.
+  const [busy, setBusy] = useState<'create' | 'join' | 'logout' | null>(null)
 
-  const run = async (payload: object) => {
+  const run = async (payload: { action: 'create' } | { action: 'join'; code: string }, fromLink = false) => {
+    if (busy) return
+    setBusy(payload.action)
+    setMsg('')
     try {
       await api('couple', { method: 'POST', body: payload })
       clearInvite()
-      onDone()
+      await onDone()
     } catch (e) {
-      setMsg((e as Error).message)
+      const err = e as ApiError
+      // Lien d'invitation refusé par le serveur (pas une simple coupure) : il ne sert plus, on le dit.
+      const dead = fromLink && err.status >= 400 && err.status < 500
+      if (dead) clearInvite()
+      setMsg(dead ? `Ce lien d’invitation n’est plus valable (${err.message.toLowerCase()}). Demandez-en un nouveau à votre partenaire, ou saisissez son code ci-dessous.` : err.message)
       setJoining(false)
     }
+    setBusy(null)
   }
 
   // Arrivé par un lien d'invitation : on rejoint l'espace sans rien demander.
@@ -26,7 +36,7 @@ export function Setup({ onDone }: { onDone: () => void }) {
     const invite = pendingInvite()
     if (!invite || auto.current) return
     auto.current = true
-    run({ action: 'join', code: invite })
+    run({ action: 'join', code: invite }, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -34,13 +44,15 @@ export function Setup({ onDone }: { onDone: () => void }) {
     return (
       <CenterLayout>
         <Logo className="animate-[pulse-soft_1.2s_ease-in-out_infinite]" />
-        <p className="font-medium text-ink-2">On rejoint votre espace à deux…</p>
+        <p role="status" className="font-medium text-ink-2">
+          On rejoint votre espace à deux…
+        </p>
       </CenterLayout>
     )
   const create = () => run({ action: 'create' })
   const join = (e: FormEvent) => {
     e.preventDefault()
-    run({ action: 'join', code })
+    run({ action: 'join', code: code.trim() })
   }
 
   return (
@@ -50,7 +62,8 @@ export function Setup({ onDone }: { onDone: () => void }) {
         <h2 className="sk-h2">Votre espace à deux</h2>
         <p className="mt-1 text-[0.95rem] text-ink-2">L’un de vous crée l’espace, l’autre le rejoint avec le code affiché.</p>
       </div>
-      <Button className="w-full" onClick={create}>
+      {msg && <Notice>{msg}</Notice>}
+      <Button className="w-full" onClick={create} busy={busy === 'create'} disabled={busy != null}>
         Créer notre espace
       </Button>
       <div className="sk-or w-full text-sm text-ink-2">ou</div>
@@ -59,19 +72,31 @@ export function Setup({ onDone }: { onDone: () => void }) {
           <input
             className="sk-field text-center font-mono tracking-[0.12em] uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case"
             placeholder="Code de votre partenaire"
+            aria-label="Code de votre partenaire"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             autoCapitalize="characters"
             autoComplete="off"
+            maxLength={24}
             required
           />
         </FieldGroup>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" busy={busy === 'join'} disabled={busy != null}>
           Rejoindre
         </Button>
       </form>
-      {msg && <p className="text-sm font-medium text-accent">{msg}</p>}
-      <Button variant="link" className="min-h-11 !self-center" onClick={() => logout().then(onDone)}>
+      <Button
+        variant="link"
+        className="min-h-11 !self-center"
+        disabled={busy != null}
+        onClick={() => {
+          setBusy('logout')
+          logout()
+            .then(onDone)
+            .catch((e: Error) => setMsg(e.message))
+            .finally(() => setBusy(null))
+        }}
+      >
         Se déconnecter
       </Button>
     </CenterLayout>

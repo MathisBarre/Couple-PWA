@@ -61,6 +61,7 @@ export function DayEditor({ day, log, onSave, onDelete, authorName }: Props) {
           label="Douleur"
           value={base.pain}
           onChange={(pain) => update({ pain })}
+          pill
           className="sk-seg grid-cols-4"
           itemClassName="sk-seg-item"
           options={PAIN_LABELS.map((label, i) => ({ value: i, label }))}

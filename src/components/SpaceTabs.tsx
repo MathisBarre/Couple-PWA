@@ -61,7 +61,7 @@ export function SpaceTabs<T extends string>({
   const list = (
     <Tabs.List className="sk-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
       {/* Pastille enfoncée qui glisse sous l'onglet actif (contrôle segmenté de barre, iOS 6). */}
-      <Tabs.Indicator className="sk-tabs-pill top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" />
+      <Tabs.Indicator className="sk-tabs-pill top-(--active-tab-top) left-0 h-(--active-tab-height) w-(--active-tab-width) [transform:translateX(var(--active-tab-left))]" />
       {tabs.map(({ id, label }) => (
         <Tabs.Tab key={id} value={id} className="sk-tab">
           {label}

@@ -7,6 +7,10 @@
 @layer components {
   /* Ombres : déclarées ici pour être recalculées dans chaque thème (--shade, --lift). */
   :where([class*='sk-']) {
+    /* Courbes : enfoncement d'une pièce, bascule mécanique (léger dépassement), curseur qui se cale. */
+    --ease-press: cubic-bezier(0.3, 0, 0.3, 1);
+    --ease-snap: cubic-bezier(0.3, 1.55, 0.5, 1);
+    --ease-settle: cubic-bezier(0.25, 1.25, 0.45, 1);
     /* Petite pièce posée (touche, bouton rond, curseur). */
     --sh-key:
       0 0.5px 0.5px rgb(var(--shade) / calc(0.12 * var(--lift))), 0 1px 2px rgb(var(--shade) / calc(0.07 * var(--lift))),
@@ -80,9 +84,7 @@
       var(--sh-key),
       inset 0 1px 0 var(--hi);
     outline: none;
-    transition:
-      transform 0.12s,
-      box-shadow 0.12s;
+    transition: transform 0.12s var(--ease-press);
   }
   .sk-round {
     width: 38px;
@@ -138,13 +140,29 @@
     background: var(--color-surface-2);
     box-shadow: var(--sh-well);
   }
-  .sk-tabs-pill {
+  /* Le curseur glisse avec un peu d'élan : il dépasse à peine sa place, puis s'y cale. */
+  .sk-tabs-pill,
+  .sk-seg-pill {
     position: absolute;
     border-radius: 12px;
     background: var(--knob);
     box-shadow:
       var(--sh-key),
       inset 0 1px 0 var(--hi);
+    transition:
+      transform 0.34s var(--ease-settle),
+      opacity 0.15s;
+  }
+  /* Contrôle segmenté : --n cases, curseur sur la case --i (aucune choisie : pas de curseur). */
+  .sk-seg-pill {
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px - (var(--n) - 1) * 2px) / var(--n));
+    transform: translateX(calc(var(--i) * (100% + 2px)));
+  }
+  .sk-seg-pill:not([data-on]) {
+    opacity: 0;
   }
   .sk-tab,
   .sk-seg-item {
@@ -167,11 +185,9 @@
     color: var(--color-ink);
     font-weight: 650;
   }
-  .sk-seg-item[data-pressed] {
-    background: var(--knob);
-    box-shadow:
-      var(--sh-key),
-      inset 0 1px 0 var(--hi);
+  .sk-tab:active,
+  .sk-seg-item:active {
+    transform: scale(0.97);
   }
   /* Zone tactile de 44 px. */
   .sk-tab::after,
@@ -205,10 +221,14 @@
   }
 
   /* ───────── Feuilles et panneaux ───────── */
+  /* Chaque surface de papier a le sien (tuiles de src/textures.css) : --paper est sa teinte,
+     --tex son grain. En sombre, les mêmes papiers avec des traces claires (blocs en fin de fichier). */
   .sk-card {
+    --paper: var(--color-surface);
+    --tex: var(--paper-tex);
     border-radius: 20px;
-    background-color: var(--color-surface);
-    background-image: var(--paper-tex);
+    background-color: var(--paper);
+    background-image: var(--tex);
     box-shadow:
       var(--sh-card),
       inset 0 1px 0 var(--hi);
@@ -221,33 +241,41 @@
   }
   /* Bloc de papier épais : on voit la tranche des feuilles sous le bloc. */
   .sk-block {
+    /* Papier épais du calendrier : ivoire, fibreux. */
+    --paper: color-mix(in srgb, var(--color-surface), #ecdcb9 12%);
+    --tex: var(--tex-cal);
     position: relative;
     border-radius: 24px;
-    background-color: var(--color-surface);
-    background-image: var(--paper-tex);
+    background-color: var(--paper);
+    background-image: var(--tex);
     box-shadow:
       0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
-      0 2.5px 0 -0.5px var(--color-surface),
+      0 2.5px 0 -0.5px var(--paper),
       0 3px 0 -0.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
-      0 5.5px 0 -1.5px var(--color-surface),
+      0 5.5px 0 -1.5px var(--paper),
       0 6px 0 -1.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
-      0 8.5px 0 -2.5px var(--color-surface),
+      0 8.5px 0 -2.5px var(--paper),
       0 9px 0 -2.5px rgb(var(--shade) / calc(0.22 * var(--lift))),
-      0 11.5px 0 -3.5px var(--color-surface),
+      0 11.5px 0 -3.5px var(--paper),
       0 12px 0 -3.5px rgb(var(--shade) / calc(0.26 * var(--lift))),
       0 18px 20px -8px rgb(var(--shade) / calc(0.14 * var(--lift))),
       0 34px 50px -22px rgb(var(--shade) / calc(0.26 * var(--lift))),
       inset 0 1px 0 var(--hi);
     margin-bottom: 12px;
-    overflow: hidden;
-    /* overflow: hidden ne coupe pas les ombres portées, seulement la reliure aux coins arrondis. */
+  }
+  /* Bloc de courses : papier d'écriture, plus fin, plus lisse, plus blanc. */
+  .sk-pad {
+    --paper: color-mix(in srgb, var(--color-surface), #dfe9dc 12%);
+    --tex: var(--tex-pad);
   }
   /* Reliure collée en tête du bloc : une bande de toile à la couleur de l'espace. */
   .sk-block::before {
     content: '';
     position: absolute;
+    z-index: 3;
     inset: 0 0 auto;
     height: var(--binding, 8px);
+    border-radius: 24px 24px 0 0 / var(--binding, 8px) var(--binding, 8px) 0 0;
     background:
       repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px),
       linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 45%, rgb(0 0 0 / 0.1)),
@@ -259,7 +287,10 @@
     position: relative;
     padding: 1rem 1.05rem 1.05rem;
     border-radius: 3px 3px 22px 3px / 3px 3px 10px 3px;
-    background: linear-gradient(172deg, color-mix(in srgb, var(--color-warn), white 18%), var(--color-warn) 70%);
+    --tex: var(--tex-postit);
+    background:
+      var(--tex),
+      linear-gradient(172deg, color-mix(in srgb, var(--color-warn), white 18%), var(--color-warn) 70%);
     transform: rotate(-0.6deg);
     box-shadow:
       0 0.5px 1px rgb(var(--shade) / calc(0.14 * var(--lift))),
@@ -267,7 +298,55 @@
       14px 22px 20px -18px rgb(var(--shade) / calc(0.4 * var(--lift)));
   }
   [data-scheme='dark'] .sk-postit {
-    background: var(--color-warn);
+    background: var(--tex-postit-dark), var(--color-warn);
+  }
+
+  /* Mot d'erreur ou d'information : un petit pense-bête, avec de quoi réessayer. */
+  .sk-note {
+    width: 100%;
+    padding: 0.8rem 0.95rem 0.85rem;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  .sk-note-action {
+    min-height: 44px;
+    margin-bottom: -0.6rem;
+    color: inherit;
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .sk-note-action[data-busy] {
+    --busy-ink: currentColor;
+    text-decoration: none;
+  }
+  /* Étiquette d'état (hors ligne, envoi en attente) : un petit bout de papier jaune posé au-dessus de la barre. */
+  .sk-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.75rem 0.34rem;
+    border-radius: 5px;
+    background-color: var(--color-soon);
+    color: var(--color-on-soon);
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: rotate(-0.8deg);
+    box-shadow:
+      0 0.5px 1px rgb(var(--shade) / calc(0.16 * var(--lift))),
+      0 6px 12px -5px rgb(var(--shade) / calc(0.3 * var(--lift)));
+  }
+  /* Ligne laissée en blanc en attendant le contenu : un trait de crayon très pâle, qui respire. */
+  .sk-blank {
+    display: block;
+    height: 0.62em;
+    margin: 0.32em 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-ink-2), transparent 80%);
+    animation: sk-breathe 1.4s ease-in-out infinite;
   }
 
   /* ───────── Boutons ───────── */
@@ -283,12 +362,36 @@
     -webkit-user-select: none;
     outline: none;
     transition:
-      transform 0.12s,
-      box-shadow 0.12s,
+      transform 0.12s var(--ease-press),
       opacity 0.15s;
   }
   .sk-btn:disabled {
     opacity: 0.45;
+  }
+  /* En cours d'envoi : le bouton reste enfoncé, trois points d'encre battent à la place du libellé. */
+  .sk-btn[data-busy] {
+    opacity: 1;
+    transform: translateY(1.5px);
+    color: transparent;
+  }
+  .sk-btn[data-busy]::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 999px;
+    color: var(--busy-ink, var(--color-ink));
+    background: currentColor;
+    box-shadow:
+      -13px 0 currentColor,
+      13px 0 currentColor;
+    animation: sk-busy 0.9s ease-in-out infinite;
+  }
+  .sk-btn-primary[data-busy] {
+    --busy-ink: var(--color-on-btn);
   }
   .sk-btn:focus-visible {
     outline: 2px solid var(--color-accent);
@@ -319,8 +422,11 @@
   }
   .sk-btn-primary:active:not(:disabled),
   .sk-btn-secondary:active:not(:disabled),
-  .sk-btn-outline:active:not(:disabled) {
-    transform: translateY(1.5px);
+  .sk-btn-outline:active:not(:disabled),
+  .sk-btn-primary[data-busy],
+  .sk-btn-secondary[data-busy],
+  .sk-btn-outline[data-busy] {
+    transform: translateY(1.5px) scale(0.985);
     box-shadow:
       0 0.5px 0.5px rgb(var(--shade) / calc(0.2 * var(--lift))),
       inset 0 1px 0 rgb(255 255 255 / 0.12);
@@ -349,9 +455,10 @@
       var(--sh-key),
       inset 0 1px 0 var(--hi);
     outline: none;
-    transition:
-      transform 0.12s,
-      box-shadow 0.12s;
+    transition: transform 0.14s var(--ease-press);
+  }
+  .sk-key:active {
+    transform: translateY(1.5px) scale(0.98);
   }
   [data-scheme='dark'] .sk-key:not([data-pressed]) {
     background-image: var(--knob);
@@ -416,14 +523,22 @@
     background: var(--color-surface-2);
     box-shadow: var(--sh-well);
     outline: none;
-    transition: background-color 0.2s;
   }
-  .sk-switch[data-checked] {
+  /* Le voyant : une couche de couleur qui s'allume dans la gorge (opacité seule). */
+  .sk-switch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
     background: var(--color-signal);
     box-shadow:
       inset 0 1px 3px rgb(0 0 0 / 0.28),
-      inset 0 0 0 0.5px rgb(0 0 0 / 0.12),
-      0 1px 0 var(--hi);
+      inset 0 0 0 0.5px rgb(0 0 0 / 0.12);
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+  .sk-switch[data-checked]::before {
+    opacity: 1;
   }
   .sk-switch:focus-visible {
     outline: 2px solid var(--color-accent);
@@ -456,15 +571,17 @@
       0 2px 5px rgb(0 0 0 / 0.22),
       inset 0 0 0 0.5px rgb(0 0 0 / 0.12),
       inset 0 1px 0 rgb(255 255 255 / 0.9);
-    transition: transform 0.22s cubic-bezier(0.3, 0.7, 0.2, 1);
+    /* Bascule mécanique : le bouton part d'un coup, dépasse sa butée d'un cheveu et revient. */
+    transition: transform 0.28s var(--ease-snap);
   }
   .sk-switch-thumb[data-checked] {
     transform: translateX(24px);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .sk-switch-thumb {
-      transition: none;
-    }
+  .sk-switch:active .sk-switch-thumb {
+    transform: scale(0.94);
+  }
+  .sk-switch:active .sk-switch-thumb[data-checked] {
+    transform: translateX(24px) scale(0.94);
   }
 
   /* ───────── Barre du bas : un plateau clair et mat, flottant ───────── */
@@ -493,16 +610,37 @@
     letter-spacing: 0.005em;
     color: var(--color-ink-2);
     outline: none;
-    transition:
-      color 0.2s,
-      background-color 0.2s,
-      box-shadow 0.2s;
   }
-  /* Onglet actif : légèrement enfoncé dans le plateau. */
-  .sk-tabbar-item[aria-current='page'] {
-    color: var(--color-accent);
+  /* Onglet actif : enfoncé dans le plateau. Le creux est une couche à part, qui apparaît en
+     opacité ; l'icône et le libellé descendent d'un cran avec lui. */
+  .sk-tabbar-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
     background: var(--color-surface-2);
     box-shadow: var(--sh-well);
+    opacity: 0;
+    transform: scale(0.9);
+    transition:
+      opacity 0.16s,
+      transform 0.26s var(--ease-settle);
+  }
+  .sk-tabbar-item > * {
+    transition: transform 0.2s var(--ease-settle);
+  }
+  .sk-tabbar-item[aria-current='page'] {
+    color: var(--color-accent);
+  }
+  .sk-tabbar-item[aria-current='page']::before {
+    opacity: 1;
+    transform: none;
+  }
+  .sk-tabbar-item[aria-current='page'] > * {
+    transform: translateY(1px);
+  }
+  .sk-tabbar-item:active > * {
+    transform: translateY(1.5px) scale(0.94);
   }
   .sk-tabbar-item:focus-visible {
     outline: 2px solid var(--color-accent);
@@ -588,6 +726,9 @@
 
   /* Feuille qui monte du bas. */
   .sk-sheet {
+    /* Une feuille de papier vergé, un ton plus clair que le plan de travail. */
+    background-color: color-mix(in srgb, var(--color-bg), var(--color-surface) 45%);
+    background-image: var(--tex-sheet);
     border-radius: 28px 28px 0 0;
     box-shadow:
       0 -0.5px 0 rgb(var(--shade) / calc(0.12 * var(--lift))),
@@ -608,14 +749,17 @@
     margin-bottom: 5px;
     overflow: hidden;
     border-radius: 12px;
-    background-color: var(--color-surface);
-    background-image: var(--paper-tex);
+    /* Papier journal : plus gris, grain grossier. */
+    --paper: color-mix(in srgb, var(--color-surface), #d9d2c4 20%);
+    --tex: var(--tex-ephem);
+    background-color: var(--paper);
+    background-image: var(--tex);
     text-align: center;
     box-shadow:
       0 0 0 0.5px rgb(var(--shade) / calc(0.12 * var(--lift))),
-      0 2.5px 0 -0.5px var(--color-surface),
+      0 2.5px 0 -0.5px var(--paper),
       0 3px 0 -0.5px rgb(var(--shade) / calc(0.18 * var(--lift))),
-      0 5px 0 -1.5px var(--color-surface),
+      0 5px 0 -1.5px var(--paper),
       0 5.5px 0 -1.5px rgb(var(--shade) / calc(0.18 * var(--lift))),
       0 10px 14px -4px rgb(var(--shade) / calc(0.2 * var(--lift)));
   }
@@ -653,12 +797,42 @@
     --ephem: color-mix(in srgb, var(--color-ink-2), var(--color-ink) 25%);
   }
 
-  /* Calendrier : la feuille du mois, sur le bloc. */
+  /* Calendrier : la feuille du mois, sur le bloc. Les feuilles tournent autour de la reliure du
+     haut (turnPage, src/lib/motion.ts) : la perspective est ici, la feuille qui s'en va (ghost)
+     est posée exactement sur la nouvelle. */
+  .sk-pages {
+    position: relative;
+    perspective: 1500px;
+    perspective-origin: 50% 0;
+  }
+  .sk-page {
+    position: relative;
+    padding-bottom: 0.75rem;
+    border-radius: 24px;
+    background-color: var(--paper);
+    background-image: var(--tex);
+    transform-origin: 50% 0;
+    backface-visibility: hidden;
+  }
+  .sk-page-ghost {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* Ombre d'une feuille sur l'autre, et dos de la feuille qui se détourne de la lumière. */
+  .sk-page-shade {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(rgb(var(--shade) / 0.5), rgb(var(--shade) / 0.22) 55%, rgb(var(--shade) / 0.08));
+    opacity: 0;
+    pointer-events: none;
+  }
   .sk-cal-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 28px 16px 8px 20px;
+    min-height: 74px;
+    padding: 28px 110px 8px 20px;
   }
   .sk-cal-head h2 {
     font-size: 1.4rem;
@@ -688,7 +862,7 @@
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     color: var(--color-ink);
-    border-radius: 999px;
+    border-radius: 14px;
     outline: none;
   }
   .sk-day:disabled {
@@ -698,51 +872,75 @@
   .sk-day:active:not(:disabled) {
     background: color-mix(in srgb, var(--color-ink), transparent 93%);
   }
-  .sk-day:focus-visible {
+  .sk-day:focus-visible,
+  .sk-day-picked {
     outline: 2px solid var(--color-accent);
     outline-offset: -2px;
-  }
-  /* Jour noté : une gommette de couleur collée sur la feuille, avec son léger relief. */
-  .sk-mark {
-    position: absolute;
-    inset: 12% 9%;
-    border-radius: 999px;
-    box-shadow:
-      0 0.5px 0.5px rgb(0 0 0 / 0.2),
-      0 2px 4px -1px rgb(var(--shade) / calc(0.25 * var(--lift))),
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      inset 0 -1px 0 rgb(0 0 0 / 0.07);
-  }
-  /* « Rien » noté : une simple empreinte dans le papier. */
-  .sk-mark.bg-surface-2 {
-    box-shadow: var(--sh-well);
-  }
-  /* Jour prévu : cercle en pointillés. */
-  .sk-predict {
-    position: absolute;
-    inset: 13% 10%;
-    border-radius: 999px;
-    border: 1.5px dashed var(--color-flow-3);
-  }
-  /* Aujourd'hui : entouré d'un trait d'encre tracé à la main (SVG en ligne). */
-  .sk-today-ring {
-    position: absolute;
-    inset: 0 -4px;
-    width: calc(100% + 8px);
-    height: 100%;
-    color: var(--color-ink);
-    pointer-events: none;
-    overflow: visible;
   }
   .sk-day-today {
     font-weight: 750;
     z-index: 1;
   }
-  .sk-legend-mark {
-    display: inline-block;
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: 999px;
+  /* Le calque d'encre d'une case (src/components/ink.tsx) : tout y est tracé à la main, dans un
+     carré de 44 × 44 centré sur la case. */
+  .sk-ink {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Flux : colorié au feutre (couleur et largeur de pointe posées par niveau). */
+  .sk-ink-fill {
+    opacity: 0.94;
+  }
+  /* « Rien » : un petit trait de crayon gris sous le chiffre. */
+  .sk-ink-none {
+    stroke: var(--color-ink-2);
+    stroke-width: 1.7;
+    opacity: 0.75;
+  }
+  /* Prévu : pointillés au crayon de couleur. */
+  .sk-ink-predicted {
+    stroke: var(--color-flow-3);
+    stroke-width: 1.5;
+    stroke-dasharray: 3.2 3.6;
+  }
+  /* Douleur : petit éclair à l'encre, dans le coin. */
+  .sk-ink-bolt {
+    stroke: var(--color-ink);
+    stroke-width: 1.5;
+  }
+  /* Aujourd'hui : entouré à l'encre. Le cercle se trace à l'arrivée sur la feuille. */
+  .sk-ink-today {
+    stroke: var(--color-ink);
+    stroke-width: 1.9;
+  }
+  .sk-ink-today-draw {
+    stroke-dasharray: 1;
+    animation: sk-trace 0.4s 0.18s cubic-bezier(0.4, 0, 0.3, 1) backwards;
+  }
+  /* Ce qu'on vient de noter se trace : le feutre colorie, puis l'éclair. */
+  .sk-ink[data-tracing] .sk-ink-fill,
+  .sk-ink[data-tracing] .sk-ink-none,
+  .sk-ink[data-tracing] .sk-ink-bolt {
+    stroke-dasharray: 1;
+    animation: sk-trace 0.38s cubic-bezier(0.35, 0, 0.4, 1) backwards;
+  }
+  .sk-ink[data-tracing] .sk-ink-bolt {
+    animation-duration: 0.16s;
+    animation-delay: 0.3s;
+  }
+  .sk-ink-legend {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* Analyse : jauges en creux. */
@@ -760,9 +958,88 @@
     border-bottom: 1px dashed color-mix(in srgb, var(--color-ink-2), transparent 70%);
   }
   .sk-row {
+    position: relative;
     display: flex;
     align-items: center;
     min-height: 54px;
+  }
+  /* Bloc en attente de sa liste : des lignes vierges, cases à peine marquées. */
+  .sk-rows-blank .sk-checkbox {
+    opacity: 0.45;
+  }
+  /* Coup de crayon sur l'article qu'on coche (un trait par ligne de texte), coup de gomme quand
+     on le décoche. Tracés posés par Groceries.tsx, en pixels de la rangée. */
+  .sk-pencil {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke: var(--color-ink-2);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .sk-pencil path {
+    stroke-dasharray: 1;
+    animation: sk-trace 0.24s cubic-bezier(0.3, 0, 0.5, 1) backwards;
+  }
+  [data-gesture='uncheck'] .sk-pencil path {
+    animation: sk-erase 0.22s ease-in forwards;
+  }
+  /* La coche se dessine juste après le départ du trait. */
+  [data-gesture='check'] .sk-checkbox path {
+    stroke-dasharray: 1;
+    animation: sk-trace 0.18s 0.08s ease-out backwards;
+  }
+  [data-gesture='check'] .sk-checkbox {
+    animation: sk-stamp 0.26s var(--ease-snap);
+  }
+  /* Ligne retirée : la bandelette se déchire du bloc et part sur le côté. Bords dentelés en haut
+     et en bas ; dessous, son ombre, dentelée elle aussi. */
+  .sk-torn {
+    z-index: 2;
+    pointer-events: none;
+    background: none !important;
+    transform-origin: 0 50%;
+    animation: sk-tear 0.33s cubic-bezier(0.45, 0, 0.9, 0.55) both;
+  }
+  .sk-torn[data-over] {
+    position: absolute;
+    inset-inline: 0;
+  }
+  .sk-torn::before,
+  .sk-torn-strip {
+    --teeth: polygon(
+      0 3px, 3% 0, 7% 2.5px, 10% 0.5px, 15% 3px, 19% 0, 24% 2px, 28% 0, 33% 3px, 38% 0.5px, 42% 2.5px, 47% 0, 52% 3px, 56% 0.5px, 61% 2.5px, 66% 0, 70% 3px, 75% 0.5px,
+      80% 2.5px, 84% 0, 89% 3px, 93% 0.5px, 97% 2.5px, 100% 0, 100% calc(100% - 2.5px), 96% 100%, 92% calc(100% - 3px), 87% calc(100% - 0.5px), 83% calc(100% - 3px),
+      78% 100%, 73% calc(100% - 2.5px), 69% 100%, 64% calc(100% - 3px), 59% calc(100% - 0.5px), 54% calc(100% - 3px), 50% 100%, 45% calc(100% - 2.5px), 40% 100%,
+      36% calc(100% - 3px), 31% calc(100% - 0.5px), 26% calc(100% - 3px), 22% 100%, 17% calc(100% - 2.5px), 12% 100%, 8% calc(100% - 3px), 4% calc(100% - 0.5px), 0 calc(100% - 3px)
+    );
+    clip-path: var(--teeth);
+  }
+  .sk-torn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(var(--shade) / calc(0.3 * var(--lift)));
+    transform: translateY(2.5px);
+  }
+  .sk-torn-strip {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+    background-color: var(--paper, var(--color-surface));
+    background-image: var(--tex);
+  }
+  /* Article modifié hors ligne, pas encore envoyé : une petite mention au crayon. */
+  .sk-waiting {
+    margin-left: 0.5rem;
+    font-size: 0.74rem;
+    font-style: italic;
+    color: var(--color-ink-2);
+    white-space: nowrap;
   }
   .sk-rows > li + li {
     /* Ligne très fine, qui commence après la case. */
@@ -780,7 +1057,6 @@
     box-shadow: var(--sh-well);
     color: var(--color-on-btn);
     outline: none;
-    transition: background-color 0.15s;
   }
   .sk-checkbox[data-checked] {
     background-color: var(--color-btn);
@@ -800,10 +1076,14 @@
     width: 16px;
     height: 16px;
   }
+  /* Article barré : un trait de crayon un peu ondulé sur chaque ligne de texte. */
   .sk-struck {
-    color: var(--color-ink-2);
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
+    padding: 0 3px;
+    margin: 0 -3px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 11.6q22-2.4 50-.6t50 .8' fill='none' stroke='%23848a84' stroke-width='1.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
   .sk-bare-input {
     flex: 1;
@@ -859,10 +1139,14 @@
     padding: 1rem 1.1rem 1.05rem;
     border-radius: 6px 6px 26px 6px / 6px 6px 12px 6px;
     text-align: left;
-    background-color: var(--color-surface);
-    background-image: var(--tex-paper);
+    /* Carton lourd, écru, moucheté ; on voit son épaisseur en bas. */
+    --paper: color-mix(in srgb, var(--color-surface), #e2d3b4 30%);
+    background-color: var(--paper);
+    background-image: var(--tex-card);
     box-shadow:
       0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 1.5px 0 var(--paper),
+      0 2px 0 rgb(var(--shade) / calc(0.2 * var(--lift))),
       0 2px 4px rgb(var(--shade) / calc(0.06 * var(--lift))),
       0 12px 20px -10px rgb(var(--shade) / calc(0.2 * var(--lift))),
       16px 26px 24px -20px rgb(var(--shade) / calc(0.45 * var(--lift))),
@@ -870,7 +1154,8 @@
     transform: rotate(-0.5deg);
   }
   [data-scheme='dark'] .sk-invite-card {
-    background-image: var(--tex-paper-dark);
+    --paper: var(--color-surface);
+    background-image: var(--tex-card-dark);
   }
   /* « ou » entre deux filets. */
   .sk-or {
@@ -896,5 +1181,79 @@
     box-shadow:
       0 0.5px 0.5px rgb(0 0 0 / 0.3),
       0 3px 6px -2px rgb(var(--shade) / calc(0.3 * var(--lift)));
+  }
+
+  /* ───────── Papiers en mode sombre : mêmes papiers, traces claires, sans teinte ajoutée ───────── */
+  [data-scheme='dark'] .sk-block {
+    --paper: var(--color-surface);
+    --tex: var(--tex-cal-dark);
+  }
+  [data-scheme='dark'] .sk-pad {
+    --paper: color-mix(in srgb, var(--color-surface), #1f2b23 40%);
+    --tex: var(--tex-pad-dark);
+  }
+  [data-scheme='dark'] .sk-ephem {
+    --paper: color-mix(in srgb, var(--color-surface), #000 12%);
+    --tex: var(--tex-ephem-dark);
+  }
+  [data-scheme='dark'] .sk-sheet {
+    background-image: var(--tex-sheet-dark);
+  }
+
+  /* ───────── Mouvements ───────── */
+  @keyframes sk-trace {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+  @keyframes sk-erase {
+    to {
+      stroke-dashoffset: -1;
+      opacity: 0.3;
+    }
+  }
+  @keyframes sk-stamp {
+    from {
+      transform: scale(0.82);
+    }
+  }
+  @keyframes sk-tear {
+    22% {
+      transform: translate(7px, -1px) rotate(-0.7deg);
+      opacity: 1;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(104%, 14px) rotate(4.5deg);
+      opacity: 0;
+    }
+  }
+  @keyframes sk-breathe {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes sk-busy {
+    50% {
+      opacity: 0.3;
+      transform: scale(0.8);
+    }
+  }
+  /* « Réduire les animations » : plus de tracé, de bascule ni d'élan ; tout change d'un coup
+     (les glissements d'écran deviennent des fondus dans src/lib/motion.ts). */
+  @media (prefers-reduced-motion: reduce) {
+    [class*='sk-'],
+    [class*='sk-']::before,
+    .sk-tabbar-item > *,
+    .sk-pencil path,
+    .sk-checkbox path {
+      animation: none !important;
+      transition: none !important;
+    }
+    .sk-btn[data-busy]::before {
+      animation: sk-busy 1.6s ease-in-out infinite !important;
+    }
   }
 }

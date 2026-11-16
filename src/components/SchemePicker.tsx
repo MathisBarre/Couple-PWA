@@ -3,6 +3,7 @@ import { ToggleGroup } from '@base-ui/react/toggle-group'
 import { useState } from 'react'
 import { getSchemeChoice, setSchemeChoice, type SchemeChoice } from '../lib/scheme'
 import { Glyph } from './icons'
+import { SegPill } from './ui'
 
 const CHOICES: [SchemeChoice, string, string][] = [
   ['system', '📱', 'Système'],
@@ -25,6 +26,7 @@ export function SchemePicker() {
       }}
       className="sk-seg grid-cols-3"
     >
+      <SegPill count={CHOICES.length} index={CHOICES.findIndex(([id]) => id === choice)} />
       {CHOICES.map(([id, icon, label]) => (
         <Toggle
           key={id}

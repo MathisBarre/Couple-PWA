@@ -1,9 +1,12 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
+import { haptic } from '../lib/haptics'
+import { turnPage } from '../lib/motion'
 import { DayEditor } from './DayEditor'
 import { Chevron } from './icons'
-import { cx, flowBg, flowText, Sheet } from './ui'
+import { DayInk, InkBolt, InkPredicted, InkScribble, InkToday } from './ink'
+import { cx, flowText, Sheet } from './ui'
 
 interface Props {
   today: string
@@ -14,14 +17,23 @@ interface Props {
   onDelete: (day: string) => void
   /** Affiché en tête de la saisie d'aujourd'hui (raccourcis « ça continue / c'est fini »). */
   todayExtra?: ReactNode
+  /** Premier chargement, rien en cache : la feuille du mois est là, mais on ne sait pas encore ce qui y est noté. */
+  loading?: boolean
 }
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
-export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, todayExtra }: Props) {
+export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, todayExtra, loading }: Props) {
   const [month, setMonth] = useState(today.slice(0, 7) + '-01')
   const [selected, setSelected] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  // Jour dont le coloriage vient d'être posé : il se trace sous les yeux (et une fois la saisie refermée).
+  const [drawn, setDrawn] = useState<{ day: string; n: number } | null>(null)
+  // Page qu'on vient de quitter : elle reste le temps de tourner.
+  const [flip, setFlip] = useState<{ from: string; dir: 1 | -1; id: number } | null>(null)
+  const flipId = useRef(0)
+  const pageRef = useRef<HTMLDivElement>(null)
+  const ghostRef = useRef<HTMLDivElement>(null)
   const byDay = useMemo(() => new Map(logs.map((l) => [l.day, l])), [logs])
 
   const predicted = useMemo(() => {
@@ -37,91 +49,99 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
     return set
   }, [logs, today, defaultCycle])
 
-  const cells = useMemo(() => {
-    const offset = (toDate(month).getUTCDay() + 6) % 7
-    return Array.from({ length: 42 }, (_, i) => addDays(month, i - offset))
-  }, [month])
-
-  const shift = (n: number) => {
+  const shift = (n: 1 | -1) => {
     const d = toDate(month)
     d.setUTCMonth(d.getUTCMonth() + n)
+    haptic()
+    // L'état change tout de suite ; un nouvel appui pendant que la page tourne la remplace.
+    setFlip({ from: month, dir: n, id: ++flipId.current })
     setMonth(d.toISOString().slice(0, 10))
   }
 
+  useLayoutEffect(() => {
+    if (!flip || !pageRef.current || !ghostRef.current) return
+    const id = flip.id
+    return turnPage(pageRef.current, ghostRef.current, flip.dir, () => setFlip((f) => (f?.id === id ? null : f)))
+  }, [flip])
+
   const sel = selected ? byDay.get(selected) : undefined
+  const page = (m: string, ghost: boolean) => (
+    <MonthPage
+      month={m}
+      today={today}
+      byDay={byDay}
+      predicted={predicted}
+      picked={open && !ghost ? selected : null}
+      drawn={ghost ? null : drawn}
+      still={ghost || loading}
+      onPick={(d) => {
+        setSelected(d)
+        setOpen(true)
+      }}
+    />
+  )
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sk-block pb-3">
-        <div className="sk-cal-head">
-          <h2 className="first-letter:uppercase">{formatMonth(month)}</h2>
-          <div className="flex gap-2">
-            <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
-              <Chevron dir="left" />
-            </button>
-            <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
-              <Chevron />
-            </button>
+      <div className="sk-block" aria-busy={loading || undefined}>
+        <div className="sk-pages">
+          {flip && (
+            <div key={flip.id} ref={ghostRef} aria-hidden inert className="sk-page sk-page-ghost" data-dir={flip.dir}>
+              {page(flip.from, true)}
+              <div data-shade className="sk-page-shade" />
+            </div>
+          )}
+          <div ref={pageRef} className="sk-page">
+            {page(month, false)}
+            <div data-shade className="sk-page-shade" />
           </div>
         </div>
-
-        <div className="sk-cal-grid">
-          {WEEKDAYS.map((w, i) => (
-            <div key={i} className="sk-cal-week">{w}</div>
-          ))}
-        </div>
-        <div className="sk-cal-grid">
-          {cells.map((d) => {
-            const l = byDay.get(d)
-            const flow = l?.flow
-            const future = d > today
-            return (
-              <button
-                key={d}
-                disabled={future}
-                onClick={() => {
-                  setSelected(d)
-                  setOpen(true)
-                }}
-                className={cx(
-                  'sk-day',
-                  flow != null && flow > 0 && flowText[flow],
-                  d.slice(0, 7) !== month.slice(0, 7) && 'opacity-35',
-                  d === today && 'sk-day-today',
-                  open && d === selected && 'ring-2 ring-accent ring-inset',
-                )}
-              >
-                {/* Jour noté : gommette (du rose pâle au bordeaux) ; « rien » : simple empreinte. */}
-                {flow != null && <i aria-hidden className={cx('sk-mark', flowBg[flow])} />}
-                {!l && predicted.has(d) && <i aria-hidden className="sk-predict" />}
-                {d === today && (
-                  <svg aria-hidden viewBox="0 0 50 46" preserveAspectRatio="none" className="sk-today-ring" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round">
-                    <path d="M30 5.5C17 2 5.5 9 4.5 22 3.5 35 13 43 26 42.5 39 42 47 33 46 21 45 9.5 36 3.5 22 4.5" vectorEffect="non-scaling-stroke" />
-                  </svg>
-                )}
-                <span className="relative">{Number(d.slice(8))}</span>
-                {(l?.pain ?? 0) >= 2 && <span className="absolute bottom-[9%] size-[5px] rounded-full bg-current" />}
-              </button>
-            )
-          })}
+        <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
+          <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
+            <Chevron dir="left" />
+          </button>
+          <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
+            <Chevron />
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 px-1 text-xs text-ink-2">
-        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark bg-flow-1" /> Traces</span>
-        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark bg-flow-3" /> Règles</span>
-        <span className="inline-flex items-center gap-1.5"><i className="sk-legend-mark border-[1.5px] border-dashed border-flow-3" /> Prévu</span>
-        <span className="inline-flex items-center gap-1.5"><i className="size-1.5 rounded-full bg-ink" /> Douleur</span>
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 px-1 text-xs text-ink-2">
+        <Legend label="Traces">
+          <InkScribble day="legende-1" level={1} />
+        </Legend>
+        <Legend label="Règles">
+          <InkScribble day="legende-3" level={3} />
+        </Legend>
+        <Legend label="Prévu">
+          <InkPredicted day="legende-p" />
+        </Legend>
+        <Legend label="Douleur">
+          <g transform="translate(22 22) scale(1.7) translate(-39.2 -5.7)">
+            <InkBolt />
+          </g>
+        </Legend>
       </div>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={selected ? formatLong(selected) : ''}>
+      <Sheet
+        open={open}
+        onClose={() => {
+          setOpen(false)
+          // La feuille de saisie cachait le calendrier : on retrace ce qui vient d'y être noté.
+          setDrawn((d) => (d && d.day === selected ? { day: d.day, n: d.n + 1 } : d))
+        }}
+        title={selected ? formatLong(selected) : ''}
+      >
         {selected === today && todayExtra}
         {selected && (
           <DayEditor
             key={selected}
             day={selected}
             log={sel}
-            onSave={onSave}
+            onSave={(log) => {
+              if (log.flow !== sel?.flow || (log.pain ?? 0) >= 2 !== (sel?.pain ?? 0) >= 2) setDrawn((d) => ({ day: log.day, n: (d?.n ?? 0) + 1 }))
+              onSave(log)
+            }}
             onDelete={(d) => {
               onDelete(d)
               setOpen(false)
@@ -131,5 +151,90 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
         )}
       </Sheet>
     </div>
+  )
+}
+
+function Legend({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <svg aria-hidden viewBox="4 4 36 36" className="sk-ink-legend">
+        {children}
+      </svg>
+      {label}
+    </span>
+  )
+}
+
+/** La feuille d'un mois : son nom, les jours de la semaine, six semaines de cases. */
+function MonthPage({
+  month,
+  today,
+  byDay,
+  predicted,
+  picked,
+  drawn,
+  still,
+  onPick,
+}: {
+  month: string
+  today: string
+  byDay: Map<string, DayLog>
+  predicted: Set<string>
+  picked: string | null
+  drawn: { day: string; n: number } | null
+  /** Feuille qui s'en va (ou en attente des données) : rien ne s'y trace. */
+  still?: boolean
+  onPick: (day: string) => void
+}) {
+  const cells = useMemo(() => {
+    const offset = (toDate(month).getUTCDay() + 6) % 7
+    return Array.from({ length: 42 }, (_, i) => addDays(month, i - offset))
+  }, [month])
+
+  return (
+    <>
+      <div className="sk-cal-head">
+        <h2 className="first-letter:uppercase">{formatMonth(month)}</h2>
+      </div>
+      <div className="sk-cal-grid">
+        {WEEKDAYS.map((w, i) => (
+          <div key={i} className="sk-cal-week">
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="sk-cal-grid">
+        {cells.map((d) => {
+          const l = byDay.get(d)
+          const flow = l?.flow
+          const pain = (l?.pain ?? 0) >= 2
+          const tracing = !still && drawn?.day === d
+          return (
+            <button
+              key={d}
+              disabled={d > today}
+              onClick={() => onPick(d)}
+              className={cx(
+                'sk-day',
+                flow != null && flow > 0 && flowText[flow],
+                d.slice(0, 7) !== month.slice(0, 7) && 'opacity-35',
+                d === today && 'sk-day-today',
+                d === picked && 'sk-day-picked',
+              )}
+            >
+              {/* Tout ce qui est écrit à la main sur la case : coloriage au feutre (flux), petit
+                  trait (« rien »), pointillés (prévu), éclair (douleur), cercle d'encre (aujourd'hui). */}
+              <DayInk key={tracing ? drawn.n : 0} tracing={tracing}>
+                {flow != null && <InkScribble day={d} level={flow} />}
+                {!l && predicted.has(d) && <InkPredicted day={d} />}
+                {pain && <InkBolt />}
+                {d === today && <InkToday still={still} />}
+              </DayInk>
+              <span className="relative">{Number(d.slice(8))}</span>
+            </button>
+          )
+        })}
+      </div>
+    </>
   )
 }
