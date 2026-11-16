@@ -346,37 +346,50 @@ export function useUcpa(active: boolean) {
     }
   }, [update])
 
-  const refreshTickets = useCallback(async () => {
-    setTicketsLoad('loading')
-    try {
-      const { tickets } = await serial(() => call<{ tickets: Ticket[] }>('?view=tickets'))
-      // Une réponse valide vide efface le QR ; une erreur garde la copie.
-      update((c) => ({ ...c, tickets, ticketsAt: Date.now(), ticket: Math.min(c.ticket ?? 0, Math.max(0, tickets.length - 1)) }))
-      setTicketsLoad('idle')
-    } catch (e) {
-      setTicketsLoad('failed')
-      onError(e)
-    }
-  }, [update, onError])
+  // Une lecture déjà en cours est partagée, jamais relancée (comme isFetching dans l'app d'origine).
+  const flights = useRef<{ tickets?: Promise<void>; upcoming?: Promise<void> }>({})
+  const once = (key: 'tickets' | 'upcoming', run: () => Promise<void>) =>
+    (flights.current[key] ??= run().finally(() => {
+      flights.current[key] = undefined
+    }))
+
+  const refreshTickets = useCallback(
+    () =>
+      once('tickets', async () => {
+        setTicketsLoad('loading')
+        try {
+          const { tickets } = await serial(() => call<{ tickets: Ticket[] }>('?view=tickets'))
+          // Une réponse valide vide efface le QR ; une erreur garde la copie.
+          update((c) => ({ ...c, tickets, ticketsAt: Date.now(), ticket: Math.min(c.ticket ?? 0, Math.max(0, tickets.length - 1)) }))
+          setTicketsLoad('idle')
+        } catch (e) {
+          setTicketsLoad('failed')
+          onError(e)
+        }
+      }),
+    [update, onError],
+  )
 
   const refreshUpcoming = useCallback(async () => {
     if (writingRef.current || pendingRef.current) return
-    setUpcomingLoad('loading')
-    const startedAt = Date.now()
-    try {
-      const contractId = cacheRef.current.contractId ?? ''
-      const res = await serial(() => call<Upcoming>(`?view=upcoming&contractId=${encodeURIComponent(contractId)}`))
-      const at = Date.now()
-      update((c) => ({ ...c, contractId: res.contractId, contracts: res.contracts, upcomingAt: at }))
-      storeDays(
-        res.days.map((d) => ({ ...d, contractId: res.contractId, at })),
-        { startedAt },
-      )
-      setUpcomingLoad('idle')
-    } catch (e) {
-      setUpcomingLoad('failed')
-      onError(e)
-    }
+    return once('upcoming', async () => {
+      setUpcomingLoad('loading')
+      const startedAt = Date.now()
+      try {
+        const contractId = cacheRef.current.contractId ?? ''
+        const res = await serial(() => call<Upcoming>(`?view=upcoming&contractId=${encodeURIComponent(contractId)}`))
+        const at = Date.now()
+        update((c) => ({ ...c, contractId: res.contractId, contracts: res.contracts, upcomingAt: at }))
+        storeDays(
+          res.days.map((d) => ({ ...d, contractId: res.contractId, at })),
+          { startedAt },
+        )
+        setUpcomingLoad('idle')
+      } catch (e) {
+        setUpcomingLoad('failed')
+        onError(e)
+      }
+    })
   }, [update, onError, storeDays])
 
   const loadDay = useCallback(
@@ -404,7 +417,8 @@ export function useUcpa(active: boolean) {
 
   const connected = Boolean(cache.overview?.account)
 
-  // À l'ouverture de l'espace et au retour dans l'app : ce qui est périmé, et seulement ça.
+  // À l'ouverture de l'app, au retour au premier plan ou du réseau, et toutes les 30 s :
+  // ce qui est périmé (billets 24 h, 14 jours 10 min), et seulement ça.
   const tick = useCallback(() => {
     const c = cacheRef.current
     if (!c.overview?.account || writingRef.current || navigator.onLine === false) return
