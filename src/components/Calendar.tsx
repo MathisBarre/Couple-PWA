@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
 import { DayEditor } from './DayEditor'
@@ -12,14 +12,19 @@ interface Props {
   names: Record<string, string>
   onSave: (log: DayLog) => void
   onDelete: (day: string) => void
+  /** Jour dont la saisie est ouverte (feuille du bas), piloté par l'écran Suivi. */
+  selected: string | null
+  open: boolean
+  onOpen: (day: string) => void
+  onClose: () => void
+  /** Affiché en tête de la saisie d'aujourd'hui (raccourcis pendant les règles). */
+  todayTop?: ReactNode
 }
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
-export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }: Props) {
+export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, selected, open, onOpen, onClose, todayTop }: Props) {
   const [month, setMonth] = useState(today.slice(0, 7) + '-01')
-  const [selected, setSelected] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
   const byDay = useMemo(() => new Map(logs.map((l) => [l.day, l])), [logs])
 
   const predicted = useMemo(() => {
@@ -62,7 +67,7 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
         {WEEKDAYS.map((w, i) => (
           <div key={i} className="eyebrow py-1 text-center">{w}</div>
         ))}
@@ -74,16 +79,15 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
             <button
               key={d}
               disabled={future}
-              onClick={() => {
-                setSelected(d)
-                setOpen(true)
-              }}
+              onClick={() => onOpen(d)}
+              aria-current={d === today ? 'date' : undefined}
               className={cx(
-                'relative flex aspect-square items-center justify-center rounded-[0.875rem] text-[0.9375rem] font-medium transition-transform active:scale-90',
-                flow ? cx(flowBg[flow], flowText[flow], 'day-flow font-semibold') : flow === 0 ? 'bg-well text-ink' : future ? 'text-ink-2/70' : 'text-ink',
+                'relative flex aspect-square items-center justify-center rounded-[0.9375rem] text-base font-medium transition-transform active:scale-90',
+                flow ? cx(flowBg[flow], flowText[flow], 'day-flow font-semibold') : d === today ? 'bg-ink text-bg' : flow === 0 ? 'bg-well text-ink' : future ? 'text-ink-2/70' : 'text-ink',
                 !l && predicted.has(d) && 'bg-accent-soft text-accent outline-[1.5px] -outline-offset-[1.5px] outline-flow-3 outline-dashed',
                 d.slice(0, 7) !== month.slice(0, 7) && 'opacity-30',
-                d === today && 'font-extrabold ring-2 ring-ink ring-inset',
+                // Aujourd'hui : pastille pleine (encre) s'il n'y a pas de flux noté, toujours cerclée.
+                d === today && 'today font-extrabold',
                 open && d === selected && 'ring-2 ring-accent ring-inset',
               )}
             >
@@ -101,7 +105,8 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
         <span className="inline-flex items-center gap-1.5"><i className="size-1.5 rounded-full bg-ink" /> Douleur</span>
       </div>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={selected ? formatLong(selected) : ''}>
+      <Sheet open={open} onClose={onClose} title={selected ? formatLong(selected) : ''}>
+        {selected === today && todayTop}
         {selected && (
           <DayEditor
             key={selected}
@@ -110,7 +115,7 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete }:
             onSave={onSave}
             onDelete={(d) => {
               onDelete(d)
-              setOpen(false)
+              onClose()
             }}
             authorName={sel?.updated_by ? names[sel.updated_by] : undefined}
           />
