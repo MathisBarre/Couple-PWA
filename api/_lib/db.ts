@@ -1,5 +1,5 @@
 // Base SQLite hébergée (Turso / libSQL). En local : fichier SQLite (file:local.db).
-import { createClient, type Client } from '@libsql/client'
+import type { Client } from '@libsql/client'
 
 let client: Client | null = null
 let ready: Promise<void> | null = null
@@ -76,6 +76,12 @@ const SCHEMA = [
 export async function db(): Promise<Client> {
   if (!client) {
     const url = process.env.TURSO_DATABASE_URL ?? process.env.TURSO_URL ?? process.env.DATABASE_URL ?? 'file:local.db'
+    // Turso : client « web » (HTTP pur). Le client Node complet charge au démarrage un module natif
+    // de ~9 Mo (inutile pour une base distante), ce qui alourdit chaque démarrage à froid des fonctions.
+    // Le nom du module complet est dans une variable pour qu'il ne soit pas embarqué sur Vercel :
+    // il ne sert qu'en local (fichier SQLite).
+    const local = '@libsql/client'
+    const { createClient } = (url.startsWith('file:') ? await import(local) : await import('@libsql/client/web')) as typeof import('@libsql/client/web')
     client = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN })
   }
   if (!ready) ready = client.batch(SCHEMA, 'write').then(() => undefined)
