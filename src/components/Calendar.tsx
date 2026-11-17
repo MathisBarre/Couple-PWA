@@ -5,7 +5,7 @@ import { haptic } from '../lib/haptics'
 import { turnPage } from '../lib/motion'
 import { DayEditor } from './DayEditor'
 import { Chevron } from './icons'
-import { DayInk, InkBolt, InkPredicted, InkScribble, InkToday } from './ink'
+import { DayInk, InkBolt, InkPredicted, InkFlow, InkToday } from './ink'
 import { cx, flowText, Sheet } from './ui'
 
 interface Props {
@@ -108,10 +108,10 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
 
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 px-1 text-xs text-ink-2">
         <Legend label="Traces">
-          <InkScribble day="legende-1" level={1} />
+          <InkFlow day="legende-1" level={1} />
         </Legend>
         <Legend label="Règles">
-          <InkScribble day="legende-3" level={3} />
+          <InkFlow day="legende-3" level={3} />
         </Legend>
         <Legend label="Prévu">
           <InkPredicted day="legende-p" />
@@ -222,10 +222,10 @@ function MonthPage({
                 d === picked && 'sk-day-picked',
               )}
             >
-              {/* Tout ce qui est écrit à la main sur la case : coloriage au feutre (flux), petit
+              {/* Tout ce qui est noté sur la case : rectangle de couleur (flux), petit
                   trait (« rien »), pointillés (prévu), éclair (douleur), cercle d'encre (aujourd'hui). */}
               <DayInk key={tracing ? drawn.n : 0} tracing={tracing}>
-                {flow != null && <InkScribble day={d} level={flow} />}
+                {flow != null && <InkFlow day={d} level={flow} />}
                 {!l && predicted.has(d) && <InkPredicted day={d} />}
                 {pain && <InkBolt />}
                 {d === today && <InkToday still={still} />}

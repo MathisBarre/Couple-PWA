@@ -894,9 +894,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  /* Flux : colorié au feutre (couleur et largeur de pointe posées par niveau). */
-  .sk-ink-fill {
-    opacity: 0.94;
+  /* Flux : un rectangle plein, couleur posée par niveau. */
+  .sk-ink-block {
+    stroke: none;
+    transform-box: fill-box;
+    transform-origin: center;
   }
   /* « Rien » : un petit trait de crayon gris sous le chiffre. */
   .sk-ink-none {
@@ -924,8 +926,10 @@
     stroke-dasharray: 1;
     animation: sk-trace 0.4s 0.18s cubic-bezier(0.4, 0, 0.3, 1) backwards;
   }
-  /* Ce qu'on vient de noter se trace : le feutre colorie, puis l'éclair. */
-  .sk-ink[data-tracing] .sk-ink-fill,
+  /* Ce qu'on vient de noter apparaît : le rectangle se pose, le trait et l'éclair se tracent. */
+  .sk-ink[data-tracing] .sk-ink-block {
+    animation: sk-block-in 0.26s var(--ease-snap) backwards;
+  }
   .sk-ink[data-tracing] .sk-ink-none,
   .sk-ink[data-tracing] .sk-ink-bolt {
     stroke-dasharray: 1;
@@ -1201,6 +1205,12 @@
   }
 
   /* ───────── Mouvements ───────── */
+  @keyframes sk-block-in {
+    from {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+  }
   @keyframes sk-trace {
     from {
       stroke-dashoffset: 1;
