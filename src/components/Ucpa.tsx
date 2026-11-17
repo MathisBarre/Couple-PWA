@@ -713,7 +713,9 @@ function Planner({ ucpa, other, date, active, onReconnect }: { ucpa: Ucpa; other
       ? 'Session UCPA expirée. Reconnectez-vous pour réserver.'
       : readError
 
-  const recovery = pending && (
+  // Le marqueur est posé avant l'envoi (il doit survivre à une coupure), mais tant que la
+  // requête est en cours le résultat n'est pas incertain : la séance affiche « Envoi… », sans alerte.
+  const recovery = pending && !ucpa.writing && (
     <Card className="flex flex-col items-start gap-2 bg-warn!">
       <p role="status" className="text-sm font-medium text-on-soon">
         {pending.action === 'cancel' ? 'Annulation' : 'Réservation'} de {pending.name}
@@ -907,7 +909,7 @@ function PlanRow({
       className={cx(
         'px-4 py-3',
         reserved && !uncertain && 'bg-[color-mix(in_srgb,var(--color-flow-1),transparent_50%)]',
-        (sending || uncertain) && 'bg-[color-mix(in_srgb,var(--color-warn),transparent_30%)]',
+        uncertain && 'bg-[color-mix(in_srgb,var(--color-warn),transparent_30%)]',
       )}
     >
       <div className="flex items-center gap-3">
@@ -1032,7 +1034,7 @@ export function UcpaSettings({ ucpa, other }: { ucpa: Ucpa; other: string }) {
                 Se déconnecter d’UCPA
               </Button>
             </div>
-            {ucpa.pending && <p className="mt-2 text-sm text-ink-2">Une opération reste à vérifier dans « Réserver » avant de se déconnecter.</p>}
+            {ucpa.pending && !ucpa.writing && <p className="mt-2 text-sm text-ink-2">Une opération reste à vérifier dans « Réserver » avant de se déconnecter.</p>}
             {msg && <p className="mt-2 text-sm text-ink-2">{msg}</p>}
           </Group>
         ) : (
