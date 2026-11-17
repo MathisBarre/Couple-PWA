@@ -1,4 +1,4 @@
-// Ce qui est écrit à la main sur le calendrier : coloriage au feutre, pointillés au crayon, éclair,
+// Ce qui est noté sur le calendrier : rectangle de couleur (flux), pointillés au crayon, éclair,
 // cercle d'encre. Chaque tracé est légèrement irrégulier, et différent d'un jour à l'autre : il est
 // tiré d'un hasard dont la graine est la date (toujours le même dessin pour un même jour).
 // Tout est dessiné dans une case de 44 × 44 (voir .sk-ink dans src/skeuo.css).
@@ -18,27 +18,6 @@ function rng(key: string) {
   }
 }
 const r1 = (n: number) => Math.round(n * 10) / 10
-
-/** Feutre plus ou moins appuyé : nombre d'allers-retours et largeur de la pointe, par niveau de flux. */
-const PASSES = [0, 6, 8, 9, 10, 11]
-const TIP = [0, 4, 4.4, 4.8, 5.4, 6]
-/** Rayon de la zone coloriée, pointe comprise : le coloriage ne déborde pas sur l'éclair ni sur le cercle d'aujourd'hui. */
-const R = [0, 14.5, 15.5, 16, 16.5, 16.5]
-
-/** Coloriage en zigzag, de haut en bas, dans un rond approximatif. */
-function scribblePath(key: string, level: number) {
-  const rand = rng(key)
-  const n = PASSES[level]
-  const r = R[level] - TIP[level] / 2
-  let d = ''
-  for (let i = 0; i < n; i++) {
-    const y = -r + ((i + 0.5) / n) * 2 * r + (rand() - 0.5) * 1.4
-    const half = Math.max(4, Math.sqrt(Math.max(0, r * r - y * y)) * (0.9 + rand() * 0.16))
-    const x = (i % 2 ? half : -half) + (rand() - 0.5) * 1.2
-    d += `${i ? 'L' : 'M'}${r1(C + x)} ${r1(C + y)}`
-  }
-  return { d, angle: Math.round(-22 + rand() * 14) }
-}
 
 /** Boucle fermée irrégulière (cercle tracé à la main), lissée par des courbes. */
 function loopPath(key: string, radius: number, wobble: number) {
@@ -64,23 +43,13 @@ export function DayInk({ tracing, children }: { tracing?: boolean; children: Rea
   )
 }
 
-/** Flux du jour : colorié au feutre, de quelques hachures pâles (traces) au plein foncé (très abondant). Niveau 0 (« rien ») : un simple trait de crayon sous le chiffre. */
-export function InkScribble({ day, level }: { day: string; level: number }) {
+/** Flux du jour : un rectangle plein, du rose pâle (traces) au foncé (très abondant). Niveau 0 (« rien ») : un simple trait de crayon sous le chiffre. */
+export function InkFlow({ day, level }: { day: string; level: number }) {
   if (level === 0) {
     const rand = rng(day)
     return <path className="sk-ink-none" pathLength={1} d={`M15 ${r1(34.5 + rand())}q${r1(6 + rand() * 2)} ${r1(-1.6 + rand())} 14 ${r1(rand() - 0.5)}`} />
   }
-  const { d, angle } = scribblePath(day, level)
-  return (
-    <path
-      className="sk-ink-fill"
-      pathLength={1}
-      d={d}
-      transform={`rotate(${angle} ${C} ${C})`}
-      stroke={`var(--color-flow-${level})`}
-      strokeWidth={TIP[level]}
-    />
-  )
+  return <rect className="sk-ink-block" x={7.5} y={7.5} width={29} height={29} rx={6.5} fill={`var(--color-flow-${level})`} />
 }
 
 /** Règles prévues : un rond en pointillés, au crayon de couleur. */
