@@ -19,7 +19,7 @@ import { cx } from './components/ui'
 import { cyclesOf, fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { clearInvite } from './lib/invite'
-import { useGroceries } from './lib/groceries'
+import { useGroceries, type ListId } from './lib/groceries'
 import { useCalendar } from './lib/calendar'
 import { useUcpa } from './lib/ucpa'
 import { slideTabs } from './lib/motion'
@@ -111,7 +111,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const enabled = useMemo(() => enabledModules(modulesKey === '*' ? null : modulesKey.split(',')), [modulesKey])
   const { bar: BAR, overflow: OVERFLOW } = useMemo(() => navFor(enabled), [enabled])
   // À l'ouverture (et depuis une notification) : directement le premier espace (la saisie du jour).
-  // « ?open=groceries » (notification des courses) ouvre directement cet onglet.
+  // « ?open=groceries » (notification des courses ou des choses à faire) ouvre directement cet onglet.
   // Un espace rangé dans « Plus » s'ouvre par-dessus « Plus ».
   const openParam = new URLSearchParams(location.search).get('open')
   const [tab, setTab] = useState<View>(() => BAR.find((i) => i.id === openParam)?.id ?? (OVERFLOW.some((m) => m.id === openParam) ? 'more' : BAR[0].id))
@@ -147,7 +147,12 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     return m ? { more: [m.id] } : {}
   })
   // Onglet affiché en haut de chaque espace.
-  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; sport: UcpaTab }>({ cycle: 'today', sport: 'seances' })
+  // « ?list=todo » (notification des choses à faire) : l'onglet « À faire » des Listes.
+  const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; sport: UcpaTab; groceries: ListId }>(() => ({
+    cycle: 'today',
+    sport: 'seances',
+    groceries: new URLSearchParams(location.search).get('list') === 'todo' ? 'todo' : 'courses',
+  }))
   const setSubTab =
     <K extends keyof typeof subTabs>(id: K) =>
     (t: (typeof subTabs)[K]) =>
@@ -155,21 +160,22 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(cycle.id, cycles.map((c) => c.id), profile.id)
-  const groceries = useGroceries(couple.id, profile.id, view === 'groceries')
+  const groceries = useGroceries(couple.id, profile.id, view === 'groceries' && subTabs.groceries === 'courses')
+  const todos = useGroceries(couple.id, profile.id, view === 'groceries' && subTabs.groceries === 'todo', 'todo')
   // Comme l'app UCPA d'origine : billets et 14 prochains jours se chargent dès l'ouverture,
   // quel que soit l'onglet, pour que l'espace UCPA s'ouvre déjà à jour.
   const ucpa = useUcpa(true)
   const calendarOn = enabled.some((m) => m.id === 'calendar')
   const calendar = useCalendar(couple.id, profile.id, calendarOn && view === 'calendar', calendarOn)
-  const pending = pendingLogs + groceries.pending + calendar.pending
+  const pending = pendingLogs + groceries.pending + todos.pending + calendar.pending
   const partner = members.find((m) => m.id !== profile.id)
   const other = partner?.display_name || 'votre partenaire'
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
   const stackRefs = useRef<Partial<Record<View, StackHandle | null>>>({})
   const tabEls = useRef<Partial<Record<View, HTMLElement | null>>>({})
 
-  // Petite pastille sur l'icône d'un espace (ex. nombre d'articles à acheter).
-  const badges: Partial<Record<View, number>> = { groceries: groceries.items.filter((i) => !i.done).length }
+  // Petite pastille sur l'icône d'un espace (ex. nombre d'articles à acheter et de choses à faire).
+  const badges: Partial<Record<View, number>> = { groceries: [...groceries.items, ...todos.items].filter((i) => !i.done).length }
 
   useEffect(() => {
     if (location.search) history.replaceState(null, '', '/')
@@ -279,7 +285,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
               ? subTabs.cycle
               : t === 'sport'
                 ? subTabs.sport
-                : sections[0]?.id
+                : t === 'groceries'
+                  ? subTabs.groceries
+                  : sections[0]?.id
             : null
     return sections.map((s) => ({ key: s.id, label: s.label, icon: s.icon, current: current === s.id }))
   }
@@ -304,6 +312,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       if (stacks[t]?.length) stackRefs.current[t]?.pop(stacks[t]!.length)
       if (t === 'cycle') setSubTab('cycle')(key as CycleTab)
       if (t === 'sport') setSubTab('sport')(key as UcpaTab)
+      if (t === 'groceries') setSubTab('groceries')(key as ListId)
     }
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
@@ -333,30 +342,34 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       case 'groceries':
         return (
           <SpaceTabs
-            title="Courses"
+            title="Listes"
             onSettings={() => openSpaceSettings('groceries')}
-            tab="list"
-            onTab={() => {}}
-            tabs={[
-              {
-                id: 'list',
-                label: 'Liste',
-                node: (
-                  <Groceries
-                    items={groceries.items}
-                    names={names}
-                    waiting={groceries.waiting}
-                    loading={groceries.status === 'loading' && !groceries.items.length}
-                    failed={groceries.status === 'failed' && !groceries.items.length}
-                    onRetry={groceries.refresh}
-                    onAdd={groceries.add}
-                    onToggle={groceries.toggle}
-                    onRemove={groceries.remove}
-                    onClearDone={groceries.clearDone}
-                  />
-                ),
-              },
-            ]}
+            tab={subTabs.groceries}
+            onTab={setSubTab('groceries')}
+            tabs={(
+              [
+                { id: 'courses', label: 'Courses', list: groceries },
+                { id: 'todo', label: 'À faire', list: todos },
+              ] as const
+            ).map(({ id, label, list }) => ({
+              id,
+              label,
+              node: (
+                <Groceries
+                  kind={id}
+                  items={list.items}
+                  names={names}
+                  waiting={list.waiting}
+                  loading={list.status === 'loading' && !list.items.length}
+                  failed={list.status === 'failed' && !list.items.length}
+                  onRetry={list.refresh}
+                  onAdd={list.add}
+                  onToggle={list.toggle}
+                  onRemove={list.remove}
+                  onClearDone={list.clearDone}
+                />
+              ),
+            }))}
           />
         )
       case 'sport':
@@ -373,8 +386,13 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
       case 'groceries:settings':
         return (
           <>
-            <ScreenHeader title="Réglages des courses" />
-            <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />
+            <ScreenHeader title="Réglages des listes" />
+            <NotificationSwitches
+              items={[
+                { kind: 'groceries', label: `Quand ${other} modifie les courses` },
+                { kind: 'todo', label: `Quand ${other} modifie les choses à faire` },
+              ]}
+            />
           </>
         )
       case 'calendar':

@@ -1,12 +1,14 @@
 import { Checkbox } from '@base-ui/react/checkbox'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { GroceryItem } from '../lib/groceries'
+import type { GroceryItem, ListId } from '../lib/groceries'
 import { haptic } from '../lib/haptics'
 import { reducedMotion, slideFrom } from '../lib/motion'
 import { Cross, Glyph } from './icons'
 import { Button, cx, Notice, SectionTitle } from './ui'
 
 interface Props {
+  /** Quelle liste : les courses, ou les choses à faire (même bloc-notes, autres mots). */
+  kind?: ListId
   items: GroceryItem[]
   names: Record<string, string>
   /** Articles dont la modification n'est pas encore partie (hors ligne). */
@@ -50,6 +52,34 @@ function without<T>(map: Record<string, T>, id: string) {
   return next
 }
 
+/** Les mots de chaque liste. */
+const COPY = {
+  courses: {
+    placeholder: 'Ajouter… (lait, pain, œufs)',
+    label: 'Article à ajouter',
+    // Plusieurs articles d'un coup : « lait, œufs, pain »
+    split: /[,;\n]/,
+    empty: 'La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.',
+    icon: '🛒',
+    todo: 'À acheter',
+    done: 'Dans le panier',
+    clear: 'Vider',
+    hint: 'Toucher un article coché le remet dans la liste.',
+  },
+  todo: {
+    placeholder: 'Ajouter une chose à faire…',
+    label: 'Chose à faire',
+    // Une tâche peut contenir des virgules (« Appeler le garage, pour le pneu ») : une par ligne seulement.
+    split: /\n/,
+    empty: 'Rien à faire pour l’instant. Ce que l’un ajoute apparaît aussi chez l’autre.',
+    icon: '✅',
+    todo: 'À faire',
+    done: 'Fait',
+    clear: 'Effacer',
+    hint: 'Toucher une chose faite la remet à faire.',
+  },
+} as const
+
 const CHECK_MS = 400
 const UNCHECK_MS = 280
 const TEAR_MS = 330
@@ -62,7 +92,8 @@ const TEAR_MS = 330
  * retirer = la ligne se déchire. L'action part tout de suite (`onToggle`, `onRemove`) ; seul
  * l'affichage s'attarde le temps du geste.
  */
-export function Groceries({ items, names, waiting, loading, failed, onRetry, onAdd, onToggle, onRemove, onClearDone }: Props) {
+export function Groceries({ kind = 'courses', items, names, waiting, loading, failed, onRetry, onAdd, onToggle, onRemove, onClearDone }: Props) {
+  const copy = COPY[kind]
   const [text, setText] = useState('')
   const input = useRef<HTMLInputElement>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -95,8 +126,7 @@ export function Groceries({ items, names, waiting, loading, failed, onRetry, onA
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     wroteAt.current = performance.now()
-    // Plusieurs articles d'un coup : « lait, œufs, pain »
-    for (const part of text.split(/[,;\n]/)) onAdd(part)
+    for (const part of text.split(copy.split)) onAdd(part)
     setText('')
     input.current?.focus()
   }
@@ -190,8 +220,8 @@ export function Groceries({ items, names, waiting, loading, failed, onRetry, onA
             ref={input}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Ajouter… (lait, pain, œufs)"
-            aria-label="Article à ajouter"
+            placeholder={copy.placeholder}
+            aria-label={copy.label}
             enterKeyHint="done"
             autoComplete="off"
             autoCapitalize="sentences"
@@ -217,15 +247,15 @@ export function Groceries({ items, names, waiting, loading, failed, onRetry, onA
           !torn.length &&
           !failed && (
             <div className="border-t border-line px-6 py-8 text-center text-ink-2">
-              <Glyph icon="🛒" className="mx-auto size-9 opacity-70" />
-              <p className="mt-2 text-sm">La liste est vide. Ce que l’un ajoute apparaît aussi chez l’autre.</p>
+              <Glyph icon={copy.icon} className="mx-auto size-9 opacity-70" />
+              <p className="mt-2 text-sm">{copy.empty}</p>
             </div>
           )
         )}
 
         {(todo.length > 0 || tornIn('todo').length > 0) && (
           <section className="border-t border-line pb-1.5">
-            <SectionTitle className="mb-0 px-5 pt-4 pb-1">À acheter · {todo.length}</SectionTitle>
+            <SectionTitle className="mb-0 px-5 pt-4 pb-1">{copy.todo} · {todo.length}</SectionTitle>
             <ul className="sk-rows relative">
               {todo.map((i) => (
                 <Row key={i.id} item={i} by={i.added_by ? names[i.added_by] : undefined} waiting={waiting?.has(i.id)} linger={linger[i.id]} onToggle={toggle} onRemove={remove} />
@@ -241,9 +271,9 @@ export function Groceries({ items, names, waiting, loading, failed, onRetry, onA
       {(done.length > 0 || tornIn('done').length > 0) && (
         <section data-flip="s:done">
           <div className="flex items-center justify-between px-1.5">
-            <SectionTitle className="mb-0">Dans le panier · {done.length}</SectionTitle>
+            <SectionTitle className="mb-0">{copy.done} · {done.length}</SectionTitle>
             <Button variant="link" onClick={clearDone} disabled={!done.length} className="text-sm">
-              Vider
+              {copy.clear}
             </Button>
           </div>
           <ul className="sk-card sk-rows relative py-0.5">
@@ -254,7 +284,7 @@ export function Groceries({ items, names, waiting, loading, failed, onRetry, onA
               <TornRow key={t.item.id} piece={t} />
             ))}
           </ul>
-          <p className="mt-3 px-1.5 text-xs text-ink-2">Toucher un article coché le remet dans la liste.</p>
+          <p className="mt-3 px-1.5 text-xs text-ink-2">{copy.hint}</p>
         </section>
       )}
     </div>

@@ -18,8 +18,11 @@ export type GroceryOp =
   | { op: 'check'; id: string; done: boolean }
   | { op: 'delete'; id: string }
 
-const cacheKey = (coupleId: string) => `groceries:${coupleId}`
-const queueKey = (coupleId: string) => `groceries-queue:${coupleId}`
+/** Les listes de l'espace « Listes » : les courses, et les choses à faire. */
+export type ListId = 'courses' | 'todo'
+// Les courses gardent leurs clés d'avant la todo (cache des téléphones toujours valable).
+const prefix = (list: ListId) => (list === 'courses' ? 'groceries' : 'todo')
+const endpoint = (list: ListId) => (list === 'courses' ? 'groceries' : 'groceries?list=todo')
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -61,7 +64,9 @@ export const normalize = (s: string) =>
     .replace(/\p{Diacritic}/gu, '')
     .replace(/\s+/g, ' ')
 
-export function useGroceries(coupleId: string, userId: string, active: boolean) {
+export function useGroceries(coupleId: string, userId: string, active: boolean, list: ListId = 'courses') {
+  const cacheKey = useCallback((id: string) => `${prefix(list)}:${id}`, [list])
+  const queueKey = useCallback((id: string) => `${prefix(list)}-queue:${id}`, [list])
   const [items, setItems] = useState<GroceryItem[]>(() => applyOps(read(cacheKey(coupleId), []), read(queueKey(coupleId), []), userId))
   // File d'attente : ce qui n'est pas encore parti (hors ligne). On en tire le compte et les articles concernés.
   const [queued, setQueued] = useState(() => read<GroceryOp[]>(queueKey(coupleId), []))
@@ -82,7 +87,7 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
       setQueued(queue)
       setStatus('ready')
     },
-    [coupleId, userId],
+    [coupleId, userId, cacheKey, queueKey],
   )
 
   const sync = useCallback(async () => {
@@ -90,16 +95,16 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
     setStatus((s) => (s === 'failed' ? 'loading' : s))
     try {
       if (queue.length && navigator.onLine) {
-        const server = await api<GroceryItem[]>('groceries', { method: 'POST', body: { ops: queue } })
+        const server = await api<GroceryItem[]>(endpoint(list), { method: 'POST', body: { ops: queue } })
         // Ne retire que ce qui a été envoyé (une modification a pu arriver entre-temps).
         write(queueKey(coupleId), read<GroceryOp[]>(queueKey(coupleId), []).slice(queue.length))
         adopt(server)
-      } else adopt(await api<GroceryItem[]>('groceries'))
+      } else adopt(await api<GroceryItem[]>(endpoint(list)))
     } catch {
       /* hors ligne : on garde le cache local et la file d'attente (sans cache, on le dit) */
       setStatus((s) => (s === 'loading' ? 'failed' : s))
     }
-  }, [coupleId, adopt])
+  }, [coupleId, adopt, list, queueKey])
 
   useEffect(() => {
     sync()
@@ -127,7 +132,7 @@ export function useGroceries(coupleId: string, userId: string, active: boolean) 
       setStatus('ready')
       sync()
     },
-    [coupleId, userId, sync],
+    [coupleId, userId, sync, queueKey],
   )
 
   /** Ajoute un article ; s'il est déjà dans la liste (même coché), on le remet simplement à acheter. */
