@@ -120,6 +120,23 @@ const SCHEMA = [
     kind text not null,
     primary key (cycle_id, day)
   )`,
+  // Calendrier commun de l'espace (dates et heures de Paris, voir shared/calendar.ts).
+  `create table if not exists calendar_events (
+    id text primary key,
+    couple_id text not null references couples(id) on delete cascade,
+    title text not null,
+    start_day text not null,
+    end_day text not null,
+    start_time text,
+    end_time text,
+    location text,
+    note text,
+    created_by text,
+    updated_by text,
+    created_at text not null default (datetime('now')),
+    updated_at text not null default (datetime('now'))
+  )`,
+  `create index if not exists calendar_events_couple on calendar_events (couple_id, start_day)`,
   `create table if not exists migrations (name text primary key, done_at text not null default (datetime('now')))`,
 ]
 
@@ -145,6 +162,8 @@ const MIGRATIONS = [
 const COLUMNS: [table: string, column: string, type: string][] = [
   // Espaces (modules) activés : liste JSON d'ids ; null = tous (espaces créés avant le choix).
   ['couples', 'modules', 'text'],
+  // Jeton secret du flux d'abonnement au calendrier commun (webcal), créé à la première demande.
+  ['couples', 'calendar_token', 'text'],
 ]
 
 async function migrate(conn: Client) {

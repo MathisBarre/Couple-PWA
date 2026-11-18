@@ -12,6 +12,10 @@
       "destination": "/api/join"
     },
     {
+      "source": "/cal/:file",
+      "destination": "/api/calendar?feed=:file"
+    },
+    {
       "source": "/((?!api/|assets/|splash/|.*\\.).*)",
       "destination": "/index.html"
     }
@@ -32,6 +36,9 @@
       "maxDuration": 60
     },
     "api/groceries.ts": {
+      "maxDuration": 60
+    },
+    "api/calendar.ts": {
       "maxDuration": 60
     },
     "api/ucpa.ts": {
