@@ -164,6 +164,8 @@ const COLUMNS: [table: string, column: string, type: string][] = [
   ['couples', 'modules', 'text'],
   // Jeton secret du flux d'abonnement au calendrier commun (webcal), créé à la première demande.
   ['couples', 'calendar_token', 'text'],
+  // Liste d'un article de l'espace « Listes » : 'courses' (liste de courses) ou 'todo' (choses à faire).
+  ['grocery_items', 'list', "text not null default 'courses'"],
 ]
 
 async function migrate(conn: Client) {

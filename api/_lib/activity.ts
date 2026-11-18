@@ -49,6 +49,7 @@ export interface CalendarActivity {
 type Activity =
   | { kind: 'cycle'; data: CycleActivity }
   | { kind: 'groceries'; data: GroceryActivity }
+  | { kind: 'todo'; data: GroceryActivity }
   | { kind: 'sport'; data: SportActivity }
   | { kind: 'calendar'; data: CalendarActivity }
 
@@ -91,7 +92,9 @@ async function record(user: User & { couple_id: string }, { kind, data }: Activi
         ? sportMessage(name, payloads)
         : kind === 'calendar'
           ? calendarMessage(name, payloads)
-          : groceryMessage(name, payloads)
+          : kind === 'todo'
+            ? todoMessage(name, payloads)
+            : groceryMessage(name, payloads)
   if (message) {
     await sendToUsers(
       others.rows.map((r) => String(r.id)),
@@ -125,6 +128,21 @@ export function groceryMessage(name: string, payloads: GroceryActivity[]): Omit<
   }
   if (checked) return { title: `🛒 ${name} fait les courses`, body: others.join(' · ').replace(/^./, (c) => c.toUpperCase()), url }
   if (removed) return { title: `🛒 ${name} a modifié la liste de courses`, body: `${plural(removed, 'article')} retiré${removed > 1 ? 's' : ''}`, url }
+  return null
+}
+
+export function todoMessage(name: string, payloads: GroceryActivity[]): Omit<Payload, 'kind'> | null {
+  const added = [...new Set(payloads.flatMap((p) => p.added ?? []))]
+  const checked = payloads.reduce((n, p) => n + (p.checked ?? 0), 0)
+  const removed = payloads.reduce((n, p) => n + (p.removed ?? 0), 0)
+  const others = [checked && `${checked} faite${checked > 1 ? 's' : ''}`, removed && `${removed} retirée${removed > 1 ? 's' : ''}`].filter(Boolean) as string[]
+  const url = '/?open=groceries&list=todo'
+  if (added.length) {
+    const body = [list(added), ...others].join(' · ')
+    return { title: `✅ ${name} a ajouté ${added.length > 1 ? `${added.length} choses à faire` : 'une chose à faire'}`, body: body[0].toUpperCase() + body.slice(1), url }
+  }
+  if (checked) return { title: `✅ ${name} a fait ${checked > 1 ? `${checked} choses de la liste` : 'une chose de la liste'}`, body: others.join(' · ').replace(/^./, (c) => c.toUpperCase()), url }
+  if (removed) return { title: `✅ ${name} a modifié les choses à faire`, body: `${removed} retirée${removed > 1 ? 's' : ''}`, url }
   return null
 }
 

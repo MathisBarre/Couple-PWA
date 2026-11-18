@@ -15,6 +15,13 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M9 11V7.5a3 3 0 0 1 6 0V11" />
     </>
   ),
+  // Case cochée (choses à faire)
+  '✅': (
+    <>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="3.5" />
+      <path d="m8.5 12.2 2.4 2.4 4.8-5.2" />
+    </>
+  ),
   // Billet d'entrée (espace UCPA)
   '🎟️': (
     <>

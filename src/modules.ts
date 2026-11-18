@@ -29,14 +29,16 @@ export const MODULES = [
     ],
   },
   {
+    // Id historique « groceries » (gardé pour les espaces déjà créés) : courses + choses à faire.
     id: 'groceries',
-    label: 'Courses',
-    icon: '🛒',
-    description: 'La liste de courses commune',
+    label: 'Listes',
+    icon: '📝',
+    description: 'Les courses et les choses à faire, en commun',
     theme: 'verdure',
-    settings: 'Notifications des courses',
+    settings: 'Notifications des courses et des choses à faire',
     sections: [
-      { id: 'list', label: 'Liste', icon: '📝' },
+      { id: 'courses', label: 'Courses', icon: '🛒' },
+      { id: 'todo', label: 'À faire', icon: '✅' },
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },

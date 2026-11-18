@@ -1,5 +1,5 @@
-// GET  /api/groceries                -> la liste de courses du couple
-// POST /api/groceries { ops: [...] } -> applique des modifications (ajout, coche, suppression)
+// GET  /api/groceries[?list=todo]                -> la liste de courses du couple (ou ses choses à faire)
+// POST /api/groceries[?list=todo] { ops: [...] } -> applique des modifications (ajout, coche, suppression)
 //      puis renvoie la liste à jour. Les opérations sont rejouables sans risque :
 //      l'app les met en file d'attente hors ligne et les renvoie au retour du réseau.
 import { requireCouple } from './_lib/auth.js'
@@ -15,10 +15,18 @@ export type GroceryOp =
 const ID = /^[\w-]{8,64}$/
 const MAX_NAME = 120
 
-async function list(coupleId: string) {
+/** Les listes de l'espace « Listes » (même table, même fonction : on est à la limite de fonctions Vercel). */
+export type ListId = 'courses' | 'todo'
+/** Sans paramètre : les courses (ce qu'appellent les anciennes versions de l'app). */
+const listOf = (req: Request): ListId | null => {
+  const v = new URL(req.url).searchParams.get('list') ?? 'courses'
+  return v === 'courses' || v === 'todo' ? v : null
+}
+
+async function list(coupleId: string, which: ListId) {
   const { rows } = await (await db()).execute({
-    sql: 'select id, name, done, added_by, created_at from grocery_items where couple_id = ? order by created_at, rowid',
-    args: [coupleId],
+    sql: 'select id, name, done, added_by, created_at from grocery_items where couple_id = ? and list = ? order by created_at, rowid',
+    args: [coupleId, which],
   })
   return rows.map((r) => ({ id: r.id, name: r.name, done: Boolean(r.done), added_by: r.added_by, created_at: r.created_at }))
 }
@@ -26,12 +34,16 @@ async function list(coupleId: string) {
 export async function GET(req: Request) {
   const user = await requireCouple(req)
   if (user instanceof Response) return user
-  return json(await list(user.couple_id))
+  const which = listOf(req)
+  if (!which) return error('Liste inconnue')
+  return json(await list(user.couple_id, which))
 }
 
 export async function POST(req: Request) {
   const user = await requireCouple(req)
   if (user instanceof Response) return user
+  const which = listOf(req)
+  if (!which) return error('Liste inconnue')
   const { ops } = await body<{ ops?: GroceryOp[] }>(req)
   if (!Array.isArray(ops) || !ops.length || ops.length > 500) return error('Données invalides')
   const statements = []
@@ -43,18 +55,18 @@ export async function POST(req: Request) {
       if (!name) return error('Nom d’article vide')
       statements.push({
         // « or ignore » : renvoyer deux fois le même ajout ne crée pas de doublon.
-        sql: 'insert or ignore into grocery_items (id, couple_id, name, added_by) values (?, ?, ?, ?)',
-        args: [o.id, user.couple_id, name, user.id],
+        sql: 'insert or ignore into grocery_items (id, couple_id, list, name, added_by) values (?, ?, ?, ?, ?)',
+        args: [o.id, user.couple_id, which, name, user.id],
       })
     } else if (o.op === 'check') {
       statements.push({
         // Un article supprimé entre-temps par l'autre n'est pas recréé.
         // « done != ? » : recocher un article déjà coché (opération rejouée) ne compte pas comme un changement.
-        sql: "update grocery_items set done = ?, updated_at = datetime('now') where id = ? and couple_id = ? and done != ?",
-        args: [o.done ? 1 : 0, o.id, user.couple_id, o.done ? 1 : 0],
+        sql: "update grocery_items set done = ?, updated_at = datetime('now') where id = ? and couple_id = ? and list = ? and done != ?",
+        args: [o.done ? 1 : 0, o.id, user.couple_id, which, o.done ? 1 : 0],
       })
     } else if (o.op === 'delete') {
-      statements.push({ sql: 'delete from grocery_items where id = ? and couple_id = ?', args: [o.id, user.couple_id] })
+      statements.push({ sql: 'delete from grocery_items where id = ? and couple_id = ? and list = ?', args: [o.id, user.couple_id, which] })
     } else return error('Opération inconnue')
     valid.push(o)
   }
@@ -68,6 +80,6 @@ export async function POST(req: Request) {
     else if (o.op === 'check' && o.done) activity.checked++
     else if (o.op === 'delete') activity.removed++
   })
-  if (activity.added.length || activity.checked || activity.removed) notifyActivity(user, { kind: 'groceries', data: activity })
-  return json(await list(user.couple_id))
+  if (activity.added.length || activity.checked || activity.removed) notifyActivity(user, { kind: which === 'todo' ? 'todo' : 'groceries', data: activity })
+  return json(await list(user.couple_id, which))
 }
