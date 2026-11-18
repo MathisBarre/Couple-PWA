@@ -8,8 +8,8 @@ declare const self: ServiceWorkerGlobalScope
 // Cache hors ligne de l'app (HTML, JS, CSS, icônes).
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
-// Toute navigation sert l'app en cache (hors ligne compris), sauf les routes de l'API.
-registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//] }))
+// Toute navigation sert l'app en cache (hors ligne compris), sauf les routes de l'API et le flux du calendrier.
+registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//, /^\/cal\//] }))
 
 // Une nouvelle version attend que la page l'active (voir src/lib/update.ts), pour ne jamais
 // recharger l'app en pleine saisie. Elle prend ensuite le contrôle de la page tout de suite.

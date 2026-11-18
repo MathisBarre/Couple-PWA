@@ -39,6 +39,14 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M4 10h16M8.5 3.5v3.5m7-3.5v3.5" />
     </>
   ),
+  // Calendrier commun : la page avec deux rendez-vous
+  '📆': (
+    <>
+      <rect x="4" y="5.5" width="16" height="14.5" rx="3" />
+      <path d="M4 10h16M8.5 3.5v3.5m7-3.5v3.5" />
+      <path d="M8.2 13.8h.01m3.8 0h.01m3.8 0h.01M8.2 17h.01m3.8 0h.01" strokeWidth={2.4} />
+    </>
+  ),
   // Graphique en barres
   '📊': <path d="M6 20v-6m6 6V5m6 15v-9.5" strokeWidth={2.2} />,
   // Liste

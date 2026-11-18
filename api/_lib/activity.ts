@@ -7,6 +7,7 @@
 // dans les WINDOW_MIN dernières minutes (« Léa a ajouté 3 articles »). Son tag remplace la
 // notification précédente du même auteur au lieu d'en empiler une nouvelle.
 import { waitUntil } from '@vercel/functions'
+import type { CalEvent } from '../../shared/calendar.js'
 import { FLOW_LABELS, PAIN_LABELS, todayIn } from '../../shared/cycles.js'
 import type { User } from './auth.js'
 import { db } from './db.js'
@@ -38,7 +39,18 @@ export interface SportActivity {
   booked?: SportSlot[]
   cancelled?: SportSlot[]
 }
-type Activity = { kind: 'cycle'; data: CycleActivity } | { kind: 'groceries'; data: GroceryActivity } | { kind: 'sport'; data: SportActivity }
+/** Un événement du calendrier commun, tel qu'il était au moment du geste (titre et date). */
+export type CalendarItem = Pick<CalEvent, 'id' | 'title' | 'start_day' | 'end_day' | 'start_time'>
+export interface CalendarActivity {
+  added?: CalendarItem[]
+  updated?: CalendarItem[]
+  deleted?: CalendarItem[]
+}
+type Activity =
+  | { kind: 'cycle'; data: CycleActivity }
+  | { kind: 'groceries'; data: GroceryActivity }
+  | { kind: 'sport'; data: SportActivity }
+  | { kind: 'calendar'; data: CalendarActivity }
 
 /** À appeler après une saisie réussie ; ne bloque pas la réponse. */
 export function notifyActivity(user: User & { couple_id: string }, activity: Activity) {
@@ -73,7 +85,13 @@ async function record(user: User & { couple_id: string }, { kind, data }: Activi
   const payloads = rows.map((r) => JSON.parse(String(r.payload)))
   const name = user.display_name.trim() || 'Votre partenaire'
   const message =
-    kind === 'cycle' ? await cycleMessage(user.couple_id, name, payloads) : kind === 'sport' ? sportMessage(name, payloads) : groceryMessage(name, payloads)
+    kind === 'cycle'
+      ? await cycleMessage(user.couple_id, name, payloads)
+      : kind === 'sport'
+        ? sportMessage(name, payloads)
+        : kind === 'calendar'
+          ? calendarMessage(name, payloads)
+          : groceryMessage(name, payloads)
   if (message) {
     await sendToUsers(
       others.rows.map((r) => String(r.id)),
@@ -212,4 +230,52 @@ export function sportMessage(name: string, payloads: SportActivity[], now = Date
   if (cancelled.length === 1) return { title: `🏸 ${name} a annulé ${cancelled[0].name}`, body: slotWhen(cancelled[0], now), url }
   if (cancelled.length) return { title: `🏸 ${name} a annulé ${plural(cancelled.length, 'séance')}`, body: list(cancelled.map((s) => s.name), 3), url }
   return null
+}
+
+/** « Samedi 21 nov. · 20:30 », « Demain », « Du 24 au 28 déc. » */
+export function eventWhen(e: CalendarItem, today = todayIn(TIME_ZONE)) {
+  const tomorrow = new Date(`${today}T12:00:00Z`)
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+  const dayName = (d: string) =>
+    d === today
+      ? 'Aujourd’hui'
+      : d === tomorrow.toISOString().slice(0, 10)
+        ? 'Demain'
+        : new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'short' }).format(Date.parse(`${d}T12:00:00Z`)).replace(/^./, (c) => c.toUpperCase())
+  if (e.end_day !== e.start_day && !e.start_time) return `Du ${dateFr(e.start_day)} au ${dateFr(e.end_day)}`
+  return e.start_time ? `${dayName(e.start_day)} · ${e.start_time.replace(':', 'h')}` : dayName(e.start_day)
+}
+
+export function calendarMessage(name: string, payloads: CalendarActivity[], today = todayIn(TIME_ZONE)): Omit<Payload, 'kind'> | null {
+  // Le dernier geste sur un événement l'emporte ; ajouté puis modifié = ajouté ; ajouté puis supprimé = rien.
+  const last = new Map<string, { item: CalendarItem; action: 'added' | 'updated' | 'deleted' }>()
+  for (const p of payloads)
+    for (const action of ['added', 'updated', 'deleted'] as const)
+      for (const item of p[action] ?? []) {
+        const before = last.get(item.id)
+        if (action === 'deleted' && before?.action === 'added') last.delete(item.id)
+        else last.set(item.id, { item, action: action === 'updated' && before?.action === 'added' ? 'added' : action })
+      }
+  const entries = [...last.values()]
+  const of = (a: 'added' | 'updated' | 'deleted') => entries.filter((e) => e.action === a).map((e) => e.item)
+  const added = of('added')
+  const updated = of('updated')
+  const deleted = of('deleted')
+  const url = '/?open=calendar'
+  if (entries.length === 1) {
+    const { item, action } = entries[0]
+    const verb = action === 'added' ? 'a ajouté' : action === 'updated' ? 'a modifié' : 'a supprimé'
+    return { title: `📆 ${name} ${verb} « ${item.title} »`, body: eventWhen(item, today), url }
+  }
+  if (!entries.length) return null
+  const counts = [
+    added.length && `${added.length} ajouté${added.length > 1 ? 's' : ''}`,
+    updated.length && `${updated.length} modifié${updated.length > 1 ? 's' : ''}`,
+    deleted.length && `${deleted.length} supprimé${deleted.length > 1 ? 's' : ''}`,
+  ].filter(Boolean)
+  return {
+    title: `📆 ${name} a mis à jour le calendrier`,
+    body: `${list(counts as string[])} : ${list(entries.map((e) => e.item.title), 3)}`.replace(/^./, (c) => c.toUpperCase()),
+    url,
+  }
 }

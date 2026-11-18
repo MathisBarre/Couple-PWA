@@ -235,6 +235,65 @@
   --knob: linear-gradient(#46425a, #2f2c3e);
 }
 
+/* Encre (Calendrier commun) : blanc cassé à peine bleuté, papier d'agenda, reliure bleu encre. */
+[data-theme='encre'] {
+  --color-bg: #eff2f5;
+  --color-surface: #fdfeff;
+  --color-surface-2: #e2e7ed;
+  --color-ink: #1a2230;
+  --color-ink-2: #687384;
+  --color-line: #dfe4ea;
+  --color-accent: #2c5d9c;
+  --color-on-accent: #ffffff;
+  --color-btn: #2f62a6;
+  --color-on-btn: #ffffff;
+  --color-signal: #2f62a6;
+  --color-chrome: #eff2f5;
+  --color-soon: #fbefc4;
+  --color-on-soon: #6a4a05;
+  --color-warn: #fbefc4;
+  --color-flow-1: #d3e0f2;
+  --color-flow-2: #a9c2e6;
+  --color-flow-3: #6f97d2;
+  --color-flow-4: #2f62a6;
+  --color-flow-5: #1d4278;
+  --color-on-flow: #ffffff;
+  --shade: 36 46 66;
+  --lift: 1;
+  --paper-tex: var(--tex-leaf);
+  --hi: rgb(255 255 255 / 0.9);
+  --knob: linear-gradient(#ffffff, #eaedf1);
+}
+[data-scheme='dark'] [data-theme='encre'],
+[data-scheme='dark'][data-theme='encre'] {
+  --color-bg: #10131a;
+  --color-surface: #1b2029;
+  --color-surface-2: #0a0c11;
+  --color-ink: #e9eef6;
+  --color-ink-2: #97a1b1;
+  --color-line: #2a313d;
+  --color-accent: #8fb6f0;
+  --color-on-accent: #0d1a2e;
+  --color-btn: #3a72c0;
+  --color-on-btn: #ffffff;
+  --color-signal: #5b90de;
+  --color-chrome: #10131a;
+  --color-soon: #3d3212;
+  --color-on-soon: #ffd699;
+  --color-warn: #3a2f14;
+  --color-flow-1: #263a5a;
+  --color-flow-2: #31507f;
+  --color-flow-3: #4069a8;
+  --color-flow-4: #5b90de;
+  --color-flow-5: #9cc0f5;
+  --color-on-flow: #0d1a2e;
+  --shade: 0 0 0;
+  --lift: 3.2;
+  --paper-tex: var(--tex-leaf-dark);
+  --hi: rgb(255 255 255 / 0.07);
+  --knob: linear-gradient(#414a59, #2b313c);
+}
+
 /* Neutre (réglages, « Plus », connexion) : gris chaud mat, graphite, un seul voyant orange. */
 [data-theme='neutre'] {
   --color-bg: #f0efec;

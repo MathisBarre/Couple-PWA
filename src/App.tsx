@@ -2,11 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Auth, CenterLayout, Logo } from './components/Auth'
 import { Cycle, type CycleTab } from './components/Cycle'
 import { Groceries } from './components/Groceries'
+import { CalendarFeedReset, SharedCalendar } from './components/SharedCalendar'
 import { UcpaSettings, UcpaSpace, type UcpaTab } from './components/Ucpa'
 import { More } from './components/More'
 import { NotificationSwitches } from './components/NotificationSwitches'
 import { CycleSettings } from './components/CycleSettings'
-import { ScreenHeader } from './components/ScreenHeader'
+import { GearIcon, HeaderButton, ScreenHeader } from './components/ScreenHeader'
 import { SpaceTabs } from './components/SpaceTabs'
 import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
@@ -19,6 +20,7 @@ import { cyclesOf, fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
 import { clearInvite } from './lib/invite'
 import { useGroceries } from './lib/groceries'
+import { useCalendar } from './lib/calendar'
 import { useUcpa } from './lib/ucpa'
 import { slideTabs } from './lib/motion'
 import { useDayLogs } from './lib/store'
@@ -110,10 +112,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const { bar: BAR, overflow: OVERFLOW } = useMemo(() => navFor(enabled), [enabled])
   // À l'ouverture (et depuis une notification) : directement le premier espace (la saisie du jour).
   // « ?open=groceries » (notification des courses) ouvre directement cet onglet.
-  const [tab, setTab] = useState<View>(() => {
-    const open = new URLSearchParams(location.search).get('open')
-    return BAR.find((i) => i.id === open)?.id ?? BAR[0].id
-  })
+  // Un espace rangé dans « Plus » s'ouvre par-dessus « Plus ».
+  const openParam = new URLSearchParams(location.search).get('open')
+  const [tab, setTab] = useState<View>(() => BAR.find((i) => i.id === openParam)?.id ?? (OVERFLOW.some((m) => m.id === openParam) ? 'more' : BAR[0].id))
   // Espace désactivé alors qu'il était affiché : retour au premier.
   const tabGone = !BAR.some((b) => b.id === tab)
   useEffect(() => {
@@ -141,7 +142,10 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
     }
   }
   // Écrans empilés dans chaque onglet (ex. un espace ouvert depuis « Plus »), gardés quand on change d'onglet.
-  const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>({})
+  const [stacks, setStacks] = useState<Partial<Record<View, View[]>>>(() => {
+    const m = OVERFLOW.find((x) => x.id === openParam)
+    return m ? { more: [m.id] } : {}
+  })
   // Onglet affiché en haut de chaque espace.
   const [subTabs, setSubTabs] = useState<{ cycle: CycleTab; sport: UcpaTab }>({ cycle: 'today', sport: 'seances' })
   const setSubTab =
@@ -155,7 +159,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   // Comme l'app UCPA d'origine : billets et 14 prochains jours se chargent dès l'ouverture,
   // quel que soit l'onglet, pour que l'espace UCPA s'ouvre déjà à jour.
   const ucpa = useUcpa(true)
-  const pending = pendingLogs + groceries.pending
+  const calendarOn = enabled.some((m) => m.id === 'calendar')
+  const calendar = useCalendar(couple.id, profile.id, calendarOn && view === 'calendar', calendarOn)
+  const pending = pendingLogs + groceries.pending + calendar.pending
   const partner = members.find((m) => m.id !== profile.id)
   const other = partner?.display_name || 'votre partenaire'
   const names = Object.fromEntries(members.map((m) => [m.id, m.id === profile.id ? 'vous' : m.display_name]))
@@ -369,6 +375,34 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           <>
             <ScreenHeader title="Réglages des courses" />
             <NotificationSwitches items={[{ kind: 'groceries', label: `Quand ${other} modifie les courses` }]} />
+          </>
+        )
+      case 'calendar':
+        return (
+          <>
+            <ScreenHeader
+              title="Calendrier"
+              action={
+                <HeaderButton label="Réglages : Calendrier" onClick={() => openSpaceSettings('calendar')}>
+                  <GearIcon />
+                </HeaderButton>
+              }
+            />
+            <SharedCalendar
+              calendar={calendar}
+              today={today}
+              names={names}
+              loading={calendar.status === 'loading' && !calendar.events.length}
+              failed={calendar.status === 'failed' && !calendar.events.length}
+            />
+          </>
+        )
+      case 'calendar:settings':
+        return (
+          <>
+            <ScreenHeader title="Réglages du calendrier" />
+            <NotificationSwitches items={[{ kind: 'calendar', label: `Quand ${other} ajoute, modifie ou supprime un événement` }]} />
+            <CalendarFeedReset calendar={calendar} />
           </>
         )
       case 'settings':

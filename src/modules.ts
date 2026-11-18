@@ -53,6 +53,18 @@ export const MODULES = [
       { id: 'settings', label: 'Réglages', icon: '⚙️' },
     ],
   },
+  {
+    id: 'calendar',
+    label: 'Calendrier',
+    icon: '📆',
+    description: 'Le calendrier commun, synchronisé avec votre téléphone',
+    theme: 'encre',
+    settings: 'Notifications, lien d’abonnement',
+    sections: [
+      { id: 'events', label: 'Calendrier', icon: '📆' },
+      { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    ],
+  },
 ] as const satisfies readonly {
   /** Doit figurer dans shared/modules.ts. */
   id: SharedModuleId
@@ -82,7 +94,7 @@ export const SETTINGS_SECTIONS: Section[] = [
 ]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
-export type Theme = 'rose' | 'verdure' | 'ucpa' | 'neutre'
+export type Theme = 'rose' | 'verdure' | 'ucpa' | 'encre' | 'neutre'
 
 export type ModuleId = (typeof MODULES)[number]['id']
 export type Module = (typeof MODULES)[number]

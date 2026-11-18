@@ -46,7 +46,7 @@ export async function sendTestPush() {
 }
 
 /** Types de notifications reçus (réglage du compte, valable sur tous ses appareils). */
-export type NotificationPrefs = Record<'reminders' | 'cycle' | 'groceries' | 'sport', boolean>
+export type NotificationPrefs = Record<'reminders' | 'cycle' | 'groceries' | 'sport' | 'calendar', boolean>
 
 export const fetchNotificationPrefs = () => api<NotificationPrefs>('push')
 

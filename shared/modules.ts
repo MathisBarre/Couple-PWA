@@ -1,6 +1,6 @@
 // Ids des espaces (modules) de l'app, connus du serveur pour valider ce qu'un espace active.
 // Le détail de chaque espace (nom, icône, couleur…) est dans src/modules.ts.
-export const MODULE_IDS = ['cycle', 'groceries', 'sport'] as const
+export const MODULE_IDS = ['cycle', 'groceries', 'sport', 'calendar'] as const
 export type ModuleId = (typeof MODULE_IDS)[number]
 
 /** Espaces activés, lus en base : null (espace créé avant le choix) = tous. */
