@@ -382,7 +382,6 @@ function EventEditor({
         <input
           className={inputClass}
           value={title}
-          autoFocus={isNew}
           enterKeyHint="done"
           maxLength={120}
           placeholder="Ex. dîner chez Paul, train pour Lyon…"

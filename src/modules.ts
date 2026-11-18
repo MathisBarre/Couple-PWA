@@ -9,7 +9,7 @@ import type { ModuleId as SharedModuleId } from '../shared/modules'
 // Chaque espace (le couple, la famille…) choisit à la création les espaces qu'il veut (onboarding),
 // modifiable ensuite dans Réglages : seuls ceux-là apparaissent dans la barre.
 // Ajouter aussi son id à shared/modules.ts (le serveur valide les choix).
-// La barre du bas s'adapte toute seule : au-delà de 3 espaces, les suivants
+// La barre du bas s'adapte toute seule : au-delà de 4 espaces, les suivants
 // passent dans « Plus », avec les réglages.
 // `sections` : ses onglets du haut, proposés aussi en restant appuyé sur son onglet
 // dans la barre du bas (garder les mêmes id que dans son écran).
@@ -104,8 +104,8 @@ export type View = ModuleId | 'settings' | 'more' | SpaceSettingsView
 export const spaceSettings = (id: ModuleId): SpaceSettingsView => `${id}:settings`
 const spaceOf = (view: View) => view.split(':')[0]
 
-/** Nombre d'espaces affichés directement dans la barre du bas (le dernier emplacement sert à Réglages ou Plus). */
-const IN_BAR = 3
+/** Nombre d'espaces affichés directement dans la barre du bas (5 onglets au plus, comme sur iOS) (le dernier emplacement sert à Réglages ou Plus). */
+const IN_BAR = 4
 
 export interface NavItem {
   id: View
@@ -121,7 +121,7 @@ export const enabledModules = (ids: readonly string[] | null | undefined): Modul
   ids ? MODULES.filter((m) => ids.includes(m.id)) : [...MODULES]
 
 /**
- * Barre du bas pour ces espaces : jusqu'à 3 espaces + Réglages ; au-delà, 3 + « Plus ».
+ * Barre du bas pour ces espaces : jusqu'à 4 espaces + Réglages ; au-delà, 4 + « Plus ».
  * `overflow` : espaces accessibles seulement depuis « Plus ».
  */
 export function navFor(modules: readonly Module[]): { bar: NavItem[]; overflow: Module[] } {
