@@ -90,13 +90,6 @@ export function Settings({ couple, enabled, profile, members, onChange, onOpenSp
       <div className="flex flex-col gap-5">
       {embedded && <h2 className="sk-h2">Réglages</h2>}
 
-      <section id="reglages-modules" className="sk-group scroll-mt-4">
-        <SectionTitle>Espaces affichés</SectionTitle>
-        <ModulePicker value={shownModules} onChange={saveModules} disabled={modules != null} />
-        <p className="mt-2 px-1.5 text-sm text-ink-2">Pour vous deux. Un espace coupé disparaît de la barre. Ses données sont gardées si vous le rallumez.</p>
-        {modulesError && <Notice className="mt-2">{modulesError}</Notice>}
-      </section>
-
       {spacesWithSettings.length > 0 && (
         <section id="reglages-espaces" className="sk-group scroll-mt-4">
           <SectionTitle>Réglages des espaces</SectionTitle>
@@ -193,6 +186,13 @@ export function Settings({ couple, enabled, profile, members, onChange, onOpenSp
       <div id="reglages-app" className="scroll-mt-4">
         <AppUpdate />
       </div>
+
+      <section id="reglages-modules" className="sk-group scroll-mt-4">
+        <SectionTitle>Espaces affichés</SectionTitle>
+        <ModulePicker value={shownModules} onChange={saveModules} disabled={modules != null} />
+        <p className="mt-2 px-1.5 text-sm text-ink-2">Pour vous deux. Un espace coupé disparaît de la barre. Ses données sont gardées si vous le rallumez.</p>
+        {modulesError && <Notice className="mt-2">{modulesError}</Notice>}
+      </section>
 
       <Button variant="secondary" onClick={() => logout().then(onChange)}>
         Se déconnecter

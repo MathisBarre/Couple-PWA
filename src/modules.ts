@@ -85,12 +85,12 @@ export interface Section {
 
 /** Rubriques des réglages globaux : chacune porte l'id `reglages-<id>` (src/components/Settings.tsx). */
 export const SETTINGS_SECTIONS: Section[] = [
-  { id: 'modules', label: 'Espaces affichés', icon: '🧩' },
   { id: 'espaces', label: 'Réglages des espaces', icon: '⚙️' },
   { id: 'apparence', label: 'Apparence', icon: '🎨' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'couple', label: 'Couple', icon: '💞' },
   { id: 'app', label: 'Application', icon: '📲' },
+  { id: 'modules', label: 'Espaces affichés', icon: '🧩' },
 ]
 
 /** Thèmes de couleur définis dans src/index.css (« rose » = thème par défaut, « neutre » = réglages). */
