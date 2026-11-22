@@ -1476,4 +1476,99 @@
     color: var(--color-ink);
     font-weight: 650;
   }
+
+  /* ───────── Ordinateur (souris, trackpad) ─────────
+     Rien ici ne s'applique au téléphone : uniquement avec un pointeur précis qui survole.
+     Le survol éclaire légèrement la pièce, comme si on approchait le doigt de la lampe. */
+  @media (hover: hover) and (pointer: fine) {
+    .sk-navbtn,
+    .sk-round,
+    .sk-btn,
+    .sk-key,
+    .sk-day,
+    .sk-chip,
+    .sk-seg-item,
+    .sk-tab {
+      transition-property: transform, box-shadow, background-color, color, filter, opacity;
+      transition-duration: 0.12s, 0.12s, 0.15s, 0.15s, 0.15s, 0.15s;
+    }
+    .sk-navbtn:hover,
+    .sk-round:hover,
+    .sk-btn-secondary:hover:not(:disabled),
+    .sk-btn-outline:hover:not(:disabled),
+    .sk-key:hover:not([data-pressed]) {
+      filter: brightness(1.04);
+      box-shadow:
+        var(--sh-key),
+        0 4px 10px -4px rgb(var(--shade) / calc(0.22 * var(--lift))),
+        inset 0 1px 0 var(--hi);
+    }
+    [data-scheme='dark'] .sk-navbtn:hover,
+    [data-scheme='dark'] .sk-round:hover,
+    [data-scheme='dark'] .sk-btn-secondary:hover:not(:disabled),
+    [data-scheme='dark'] .sk-btn-outline:hover:not(:disabled),
+    [data-scheme='dark'] .sk-key:hover:not([data-pressed]) {
+      filter: brightness(1.18);
+    }
+    .sk-btn-primary:hover:not(:disabled) {
+      filter: brightness(1.07);
+    }
+    .sk-btn-link:hover,
+    .sk-btn-ghost:hover,
+    .sk-back:hover {
+      opacity: 0.72;
+    }
+    .sk-seg-item:hover:not([data-pressed]),
+    .sk-tab:hover:not([data-active]) {
+      color: var(--color-ink);
+    }
+    .sk-tabbar-item:hover:not([aria-current='page']) {
+      color: var(--color-ink);
+    }
+    .sk-tabbar-item:hover:not([aria-current='page'])::before {
+      opacity: 0.45;
+      transform: scale(0.96);
+    }
+    .sk-day:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--color-ink), transparent 95%);
+    }
+    .sk-chip:hover:not([data-pressed]) {
+      filter: brightness(0.97);
+    }
+    .sk-row label,
+    .sk-checkbox,
+    [role='switch'],
+    [role='tab'],
+    [role='radio'],
+    [role='menuitem'],
+    summary,
+    select {
+      cursor: pointer;
+    }
+    .sk-row:hover .sk-checkbox:not([data-checked]) {
+      box-shadow:
+        var(--sh-well),
+        0 0 0 1.5px color-mix(in srgb, var(--color-accent), transparent 55%);
+    }
+    /* Barres de défilement fines et à la couleur du papier (Windows les affiche en gris sinon). */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--color-ink-2), transparent 60%) transparent;
+    }
+  }
+
+  /* Grand écran : la feuille de saisie flotte au-dessus du bureau, coins arrondis partout,
+     au lieu de coller au bas de l'écran comme sur téléphone. */
+  @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+    .sk-sheet {
+      border-radius: 28px;
+      box-shadow:
+        0 0.5px 0 rgb(var(--shade) / calc(0.12 * var(--lift))),
+        0 24px 60px rgb(0 0 0 / 0.28),
+        inset 0 1px 0 var(--hi);
+    }
+    .sk-sheet .sk-grabber {
+      display: none;
+    }
+  }
 }

@@ -1,7 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
 import { haptic } from '../lib/haptics'
+import { isTyping } from '../lib/keys'
 import { turnPage } from '../lib/motion'
 import { DayEditor } from './DayEditor'
 import { Chevron } from './icons'
@@ -57,6 +58,24 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
     setFlip({ from: month, dir: n, id: ++flipId.current })
     setMonth(d.toISOString().slice(0, 10))
   }
+
+  // Clavier (ordinateur) : ← et → tournent les pages, quand ce calendrier est celui qu'on voit.
+  const shiftRef = useRef(shift)
+  useLayoutEffect(() => {
+    shiftRef.current = shift
+  })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      const el = pageRef.current
+      if (!el || isTyping(e.target) || document.querySelector('[role="dialog"], [role="alertdialog"]')) return
+      if (el.closest('[inert]') || !el.checkVisibility?.({ visibilityProperty: true })) return
+      e.preventDefault()
+      shiftRef.current(e.key === 'ArrowLeft' ? -1 : 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useLayoutEffect(() => {
     if (!flip || !pageRef.current || !ghostRef.current) return

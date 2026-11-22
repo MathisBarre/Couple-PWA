@@ -233,7 +233,7 @@ export function Sheet({
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-black opacity-[calc(0.32*(1-var(--drawer-swipe-progress)))] transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0" />
         <Drawer.Viewport className="fixed inset-0 z-40 flex items-end justify-center">
-          <Drawer.Popup className="sk-body sk-sheet -mb-12 max-h-[calc(88dvh+3rem)] w-full max-w-xl overflow-y-auto overscroll-contain px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none">
+          <Drawer.Popup className="sk-body sk-sheet -mb-12 max-h-[calc(88dvh+3rem)] w-full max-w-xl overflow-y-auto overscroll-contain px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom)+3rem)] text-ink outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-swiping:select-none desk:pt-5 desk:mb-6 desk:max-h-[min(88dvh,calc(100dvh-48px))] desk:pb-6 desk:data-ending-style:[transform:translateY(calc(100%+32px))] desk:data-starting-style:[transform:translateY(calc(100%+32px))]">
             <div className="sk-grabber mx-auto mb-3 h-1.5 w-12 rounded-full" />
             <Drawer.Content>
               <div className="mb-3 flex items-center justify-between">

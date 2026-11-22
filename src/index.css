@@ -2,6 +2,9 @@
 @import './textures.css';
 @import './skeuo.css';
 
+/* Ordinateur : souris ou trackpad sur un écran large. Le téléphone (et la tablette au doigt) n'est jamais concerné. */
+@custom-variant desk (@media (hover: hover) and (pointer: fine) and (min-width: 768px));
+
 /* Linéale embarquée (l'app marche hors ligne) : Geist, en police variable, latin seulement. */
 @font-face {
   font-family: 'Geist Variable';
