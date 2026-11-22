@@ -28,7 +28,7 @@ import { Chevron } from './icons'
 import { NotificationSwitches } from './NotificationSwitches'
 import { GearIcon, HeaderButton, ScreenHeader } from './ScreenHeader'
 import { SpaceTabs } from './SpaceTabs'
-import { Blank, Button, Card, cx, Group, inputClass, Notice, SectionTitle } from './ui'
+import { Blank, Button, Card, cx, Group, inputClass, Notice, PasswordInput, SectionTitle } from './ui'
 
 export type UcpaTab = 'seances' | 'reserver'
 
@@ -226,9 +226,8 @@ function Connect({ ucpa, compact, onDone }: { ucpa: Ucpa; compact?: boolean; onD
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">Mot de passe UCPA</span>
-            <input
-              className={inputClass}
-              type="password"
+            <PasswordInput
+              className={cx(inputClass, 'w-full')}
               autoComplete="current-password"
               maxLength={1024}
               required

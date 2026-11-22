@@ -8,12 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types scripts/test-cycles.ts && npm run test:spaces && npm run test:ucpa && npm run test:calendar && npm run test:lists",
+    "test": "node --experimental-strip-types scripts/test-cycles.ts && npm run test:spaces && npm run test:ucpa && npm run test:calendar && npm run test:lists && npm run test:password",
     "test:spaces": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-spaces.ts",
     "test:ucpa": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-ucpa.ts",
     "icons": "pwa-assets-generator && pwa-assets-generator --config pwa-assets.full-bleed.config.ts",
     "test:calendar": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-calendar.ts",
-    "test:lists": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-lists.ts"
+    "test:lists": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-lists.ts",
+    "test:password": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs --test scripts/test-password-reset.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

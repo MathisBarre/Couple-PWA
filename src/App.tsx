@@ -79,10 +79,10 @@ export default function App() {
 
   // Session expirée en cours d'utilisation (une requête a répondu 401) : retour à la connexion,
   // avec un mot d'explication. Ce qui était en attente d'envoi reste sur le téléphone.
-  const [expired, setExpired] = useState(false)
+  const [expired, setExpired] = useState<false | 'expired' | 'password_reset'>(false)
   useEffect(() => {
-    const onExpired = () => {
-      setExpired(true)
+    const onExpired = (e: Event) => {
+      setExpired((e as CustomEvent<string | undefined>).detail === 'password_reset' ? 'password_reset' : 'expired')
       reload()
     }
     window.addEventListener(SESSION_EXPIRED, onExpired)
@@ -93,7 +93,13 @@ export default function App() {
   if (!me)
     return (
       <Auth
-        notice={expired ? 'Votre session a expiré. Reconnectez-vous pour retrouver votre espace : rien de ce que vous aviez noté n’est perdu.' : undefined}
+        notice={
+          expired === 'password_reset'
+            ? 'Votre mot de passe a été réinitialisé. Entrez votre e-mail puis « Se connecter » pour en choisir un nouveau : rien de ce que vous aviez noté n’est perdu.'
+            : expired
+              ? 'Votre session a expiré. Reconnectez-vous pour retrouver votre espace : rien de ce que vous aviez noté n’est perdu.'
+              : undefined
+        }
         onDone={() => {
           setExpired(false)
           return reload()

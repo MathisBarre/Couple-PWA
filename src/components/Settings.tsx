@@ -8,7 +8,7 @@ import { ScreenHeader } from './ScreenHeader'
 import { InviteLink } from './InviteLink'
 import { SchemePicker } from './SchemePicker'
 import { Chevron, Glyph } from './icons'
-import { Button, cx, Group, inputClass, Notice, SectionTitle, Switch } from './ui'
+import { Button, ConfirmDialog, cx, Group, inputClass, Notice, SectionTitle, Switch } from './ui'
 
 interface Props {
   couple: Couple
@@ -45,6 +45,39 @@ export function Settings({ couple, enabled, profile, members, onChange, onOpenSp
   const [nameError, setNameError] = useState('')
   const [savingName, setSavingName] = useState(false)
   const partner = members.find((m) => m.id !== profile.id)
+  const others = members.filter((m) => m.id !== profile.id)
+
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  const doLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      await onChange()
+    } catch (e) {
+      setConfirmLogout(false)
+      setLogoutError(`La déconnexion n’a pas abouti. ${(e as Error).message}`)
+    }
+    setLoggingOut(false)
+  }
+
+  // Réinitialiser le mot de passe d'un autre membre (oublié) : il le choisira à sa prochaine connexion.
+  const [resetting, setResetting] = useState<Member | null>(null)
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetMsg, setResetMsg] = useState('')
+  const doReset = async () => {
+    if (!resetting) return
+    setResetBusy(true)
+    try {
+      await api('auth', { method: 'POST', body: { action: 'reset_member', member_id: resetting.id } })
+      setResetMsg(`Mot de passe de ${resetting.display_name} réinitialisé. À sa prochaine connexion, son e-mail suffira pour en choisir un nouveau.`)
+    } catch (e) {
+      setResetMsg(`La réinitialisation n’a pas abouti. ${(e as Error).message}`)
+    }
+    setResetBusy(false)
+    setResetting(null)
+  }
 
   // Le prénom s'enregistre en quittant le champ. En cas d'échec, la saisie reste et on peut réessayer.
   const saveName = async () => {
@@ -181,7 +214,24 @@ export function Settings({ couple, enabled, profile, members, onChange, onOpenSp
         ) : (
           <InviteLink code={couple.invite_code} from={profile.display_name} />
         )}
+        {others.map((m) => (
+          <Button key={m.id} variant="link" className="mt-1" onClick={() => (setResetMsg(''), setResetting(m))}>
+            {others.length > 1 ? `Réinitialiser le mot de passe de ${m.display_name}` : `${m.display_name} a oublié son mot de passe ?`}
+          </Button>
+        ))}
+        {resetMsg && <p className="mt-2 text-sm text-ink-2">{resetMsg}</p>}
       </Group>
+      <ConfirmDialog
+        open={resetting != null}
+        onClose={() => setResetting(null)}
+        title={`Réinitialiser le mot de passe de ${resetting?.display_name ?? ''} ?`}
+        confirm="Réinitialiser"
+        onConfirm={doReset}
+        busy={resetBusy}
+      >
+        {resetting?.display_name} sera déconnecté·e de ses appareils. À sa prochaine connexion, son e-mail suffira : l’app lui demandera de choisir un nouveau
+        mot de passe. Ses données ne bougent pas.
+      </ConfirmDialog>
 
       <div id="reglages-app" className="scroll-mt-4">
         <AppUpdate />
@@ -194,9 +244,13 @@ export function Settings({ couple, enabled, profile, members, onChange, onOpenSp
         {modulesError && <Notice className="mt-2">{modulesError}</Notice>}
       </section>
 
-      <Button variant="secondary" onClick={() => logout().then(onChange)}>
+      {logoutError && <Notice>{logoutError}</Notice>}
+      <Button variant="secondary" onClick={() => (setLogoutError(''), setConfirmLogout(true))}>
         Se déconnecter
       </Button>
+      <ConfirmDialog open={confirmLogout} onClose={() => setConfirmLogout(false)} title="Se déconnecter ?" confirm="Se déconnecter" onConfirm={doLogout} busy={loggingOut}>
+        Il faudra votre e-mail et votre mot de passe pour revenir sur ce téléphone.
+      </ConfirmDialog>
       </div>
     </>
   )

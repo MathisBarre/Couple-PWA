@@ -49,7 +49,10 @@ export class ApiError extends Error {
   }
 }
 
-/** Émis sur `window` quand le serveur ne reconnaît plus la session en cours d'utilisation (cookie expiré). */
+/**
+ * Émis sur `window` quand le serveur ne reconnaît plus la session en cours d'utilisation (cookie expiré).
+ * `detail` : 'password_reset' si l'autre membre vient de réinitialiser le mot de passe.
+ */
 export const SESSION_EXPIRED = 'session-expired'
 
 export async function api<T = unknown>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -71,7 +74,7 @@ export async function api<T = unknown>(path: string, init: { method?: string; bo
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     // Session perdue en cours de route (ailleurs que sur l'écran de connexion) : l'app renvoie à la connexion.
-    if (res.status === 401 && path !== 'auth') window.dispatchEvent(new Event(SESSION_EXPIRED))
+    if (res.status === 401 && path !== 'auth') window.dispatchEvent(new CustomEvent(SESSION_EXPIRED, { detail: (data as { code?: string }).code }))
     const fallback = res.status >= 500 ? 'Le serveur a rencontré un problème. Réessayez dans un instant.' : `Erreur ${res.status}`
     throw new ApiError((data as { error?: string }).error ?? fallback, res.status)
   }

@@ -4,7 +4,7 @@ import { clearInvite, pendingInvite } from '../lib/invite'
 import { Brand, CenterLayout, FieldGroup, Logo } from './Auth'
 import type { ModuleId } from '../modules'
 import { ModulePicker } from './ModulePicker'
-import { Button, Notice } from './ui'
+import { Button, ConfirmDialog, Notice } from './ui'
 
 export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
   const [code, setCode] = useState(() => pendingInvite() ?? '')
@@ -12,6 +12,7 @@ export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
   const [joining, setJoining] = useState(() => Boolean(pendingInvite()))
   // Demande en cours : un seul envoi à la fois, le bouton concerné reste enfoncé.
   const [busy, setBusy] = useState<'create' | 'join' | 'logout' | null>(null)
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   // Création : on choisit d'abord les espaces voulus (modifiable ensuite dans Réglages).
   const [choosing, setChoosing] = useState(false)
@@ -121,16 +122,29 @@ export function Setup({ onDone }: { onDone: () => void | Promise<void> }) {
         variant="link"
         className="min-h-11 !self-center"
         disabled={busy != null}
-        onClick={() => {
-          setBusy('logout')
-          logout()
-            .then(onDone)
-            .catch((e: Error) => setMsg(e.message))
-            .finally(() => setBusy(null))
-        }}
+        onClick={() => setConfirmLogout(true)}
       >
         Se déconnecter
       </Button>
+      <ConfirmDialog
+        open={confirmLogout}
+        onClose={() => setConfirmLogout(false)}
+        title="Se déconnecter ?"
+        confirm="Se déconnecter"
+        busy={busy === 'logout'}
+        onConfirm={() => {
+          setBusy('logout')
+          logout()
+            .then(onDone)
+            .catch((e: Error) => {
+              setConfirmLogout(false)
+              setMsg(e.message)
+            })
+            .finally(() => setBusy(null))
+        }}
+      >
+        Il faudra votre e-mail et votre mot de passe pour revenir sur ce téléphone.
+      </ConfirmDialog>
     </CenterLayout>
   )
 }
