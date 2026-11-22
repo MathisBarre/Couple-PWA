@@ -1,5 +1,6 @@
 import { Tabs } from '@base-ui/react/tabs'
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useDesktop } from '../lib/desktop'
 import { slideTabs } from '../lib/motion'
 import { GearIcon, HeaderButton, ScreenHeader } from './ScreenHeader'
 
@@ -22,13 +23,17 @@ export function SpaceTabs<T extends string>({
   tab,
   onTab,
   onSettings,
+  split,
 }: {
   title: string
   tabs: SpaceTab<T>[]
   tab: T
   onTab: (t: T) => void
   onSettings?: () => void
+  /** Ordinateur : tous les onglets côte à côte, chacun sous son titre (ex. Courses | À faire). */
+  split?: boolean
 }) {
+  const desktop = useDesktop()
   const panels = useRef<Partial<Record<T, HTMLElement | null>>>({})
 
   // Les panneaux restent montés (saisie en cours conservée) et glissent l'un vers l'autre.
@@ -52,6 +57,22 @@ export function SpaceTabs<T extends string>({
       <GearIcon />
     </HeaderButton>
   )
+  // Ordinateur, côte à côte : plus d'onglets, chaque liste a sa colonne.
+  if (desktop && split && tabs.length > 1)
+    return (
+      <>
+        <ScreenHeader title={title} />
+        <div className="grid items-start gap-6" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          {tabs.map(({ id, label, node }) => (
+            <section key={id} aria-label={label} className="min-w-0">
+              <h2 className="sk-h2 mb-3">{label}</h2>
+              {node}
+            </section>
+          ))}
+        </div>
+      </>
+    )
+
   if (tabs.length === 1)
     return (
       <>
@@ -79,7 +100,8 @@ export function SpaceTabs<T extends string>({
         action={action}
         sticky={
           <>
-            {list}
+            {/* Ordinateur : on change d'onglet depuis la barre latérale. */}
+            {!desktop && list}
             {tabs.find((t) => t.id === tab)?.bar}
           </>
         }

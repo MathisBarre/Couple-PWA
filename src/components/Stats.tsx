@@ -45,7 +45,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn, showIud = true
         <h2 className="sk-h2">Analyse</h2>
         {load === 'loading' && !logs.length ? (
           // Premier chargement : les fiches sont là, encore vierges.
-          <div className="grid grid-cols-2 gap-2.5" role="status" aria-label="Chargement des analyses">
+          <div className="grid grid-cols-2 gap-2.5 desk:grid-cols-3" role="status" aria-label="Chargement des analyses">
             {[0, 1, 2, 3, 4, 5].map((k) => (
               <Card key={k} className="p-4">
                 <Blank className="w-3/4 text-xs" />
@@ -70,7 +70,7 @@ export function Stats({ today, logs, defaultCycle, iudInsertedOn, showIud = true
   return (
     <div className="flex flex-col gap-4">
       <h2 className="sk-h2">Analyse</h2>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 desk:grid-cols-3">
         <Tile label="Cycle (médiane)" value={s.medianCycle ? `${s.medianCycle} j` : '—'} hint={s.minCycle ? `de ${s.minCycle} à ${s.maxCycle} j` : 'il faut 2 cycles'} />
         <Tile label="Durée des règles" value={s.medianPeriod ? `${s.medianPeriod} j` : '—'} hint="médiane" />
         <Tile

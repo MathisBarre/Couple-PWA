@@ -687,6 +687,71 @@
     box-shadow: 0 0 0 2px var(--color-surface-2);
   }
 
+  /* Ordinateur : barre latérale, le même plateau mat que la barre du bas, en hauteur.
+     Page affichée : enfoncée dans le plateau, à la couleur de son espace. */
+  .sk-sidebar {
+    padding: 10px;
+    border-radius: 24px;
+    background-color: var(--color-surface);
+    box-shadow:
+      0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 2px 4px rgb(var(--shade) / calc(0.06 * var(--lift))),
+      0 12px 24px -8px rgb(var(--shade) / calc(0.16 * var(--lift))),
+      inset 0 1px 0 var(--hi);
+    scrollbar-width: none;
+  }
+  .sk-side-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 550;
+    color: var(--color-ink);
+    text-align: left;
+    outline: none;
+    transition:
+      background-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .sk-side-item > span {
+    color: var(--color-ink-2);
+  }
+  .sk-side-item:hover:not([aria-current='page']) {
+    background: color-mix(in srgb, var(--color-ink), transparent 95%);
+  }
+  .sk-side-item:active {
+    transform: translateY(1px);
+  }
+  .sk-side-item[aria-current='page'] {
+    background: var(--color-surface-2);
+    box-shadow: var(--sh-well);
+    color: var(--color-accent);
+    font-weight: 650;
+  }
+  .sk-side-item[aria-current='page'] > span {
+    color: var(--color-accent);
+  }
+  .sk-side-item:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+  .sk-side-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--color-signal);
+    color: #fff;
+    font-size: 0.66rem;
+    line-height: 18px;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
   /* Icônes au trait. */
   .sk-glyph {
     display: block;
@@ -766,6 +831,17 @@
     box-shadow:
       0 -0.5px 0 rgb(var(--shade) / calc(0.12 * var(--lift))),
       0 -12px 40px rgb(0 0 0 / 0.22),
+      inset 0 1px 0 var(--hi);
+  }
+  /* Ordinateur : la même feuille de papier vergé, posée à côté du calendrier au lieu de monter du bas. */
+  .sk-panel {
+    border-radius: 24px;
+    background-color: color-mix(in srgb, var(--color-bg), var(--color-surface) 45%);
+    background-image: var(--tex-sheet);
+    box-shadow:
+      0 0 0 0.5px rgb(var(--shade) / calc(0.1 * var(--lift))),
+      0 2px 4px rgb(var(--shade) / calc(0.06 * var(--lift))),
+      0 16px 32px -12px rgb(var(--shade) / calc(0.22 * var(--lift))),
       inset 0 1px 0 var(--hi);
   }
   .sk-grabber {
@@ -1285,6 +1361,7 @@
     --paper: color-mix(in srgb, var(--color-surface), #000 12%);
     --tex: var(--tex-ephem-dark);
   }
+  [data-scheme='dark'] .sk-panel,
   [data-scheme='dark'] .sk-sheet {
     background-image: var(--tex-sheet-dark);
   }
@@ -1559,7 +1636,7 @@
 
   /* Grand écran : la feuille de saisie flotte au-dessus du bureau, coins arrondis partout,
      au lieu de coller au bas de l'écran comme sur téléphone. */
-  @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
     .sk-sheet {
       border-radius: 28px;
       box-shadow:
@@ -1569,6 +1646,10 @@
     }
     .sk-sheet .sk-grabber {
       display: none;
+    }
+    /* Cases un peu moins hautes : le mois entier tient sur un écran 16:9. */
+    .sk-day {
+      aspect-ratio: 1 / 0.84;
     }
   }
 }

@@ -3,6 +3,7 @@ import { addDay, eventSpan, type CalEvent, type StoredEvent } from '../../shared
 import { toDate } from '../../shared/cycles'
 import { addToPhoneLink, feedUrl, googleSubscribeUrl, newEventId, webcalUrl, type Calendar } from '../lib/calendar'
 import { formatLong, formatMonth } from '../lib/dates'
+import { useDesktop } from '../lib/desktop'
 import { haptic } from '../lib/haptics'
 import { turnPage } from '../lib/motion'
 import { isIOS } from '../lib/push'
@@ -57,6 +58,7 @@ interface Props {
  */
 export function SharedCalendar({ calendar, today, names, loading, failed }: Props) {
   const { events } = calendar
+  const desktop = useDesktop()
   const [month, setMonth] = useState(today.slice(0, 7) + '-01')
   const [selected, setSelected] = useState(today)
   const [editing, setEditing] = useState<CalEvent | null>(null)
@@ -112,35 +114,33 @@ export function SharedCalendar({ calendar, today, names, loading, failed }: Prop
   )
   const dayEvents = byDay.get(selected) ?? []
 
-  return (
-    <div className="flex flex-col gap-5 pt-1">
-      {failed && <Notice action="Réessayer" onAction={calendar.refresh}>Le calendrier n’a pas pu être chargé. Vérifiez la connexion.</Notice>}
-      {calendar.error && <Notice>Une modification a été refusée : {calendar.error}</Notice>}
-
-      <div className="sk-block" aria-busy={loading || undefined}>
-        <div className="sk-pages">
-          {flip && (
-            <div key={flip.id} ref={ghostRef} aria-hidden inert className="sk-page sk-page-ghost" data-dir={flip.dir}>
-              {page(flip.from, true)}
-              <div data-shade className="sk-page-shade" />
-            </div>
-          )}
-          <div ref={pageRef} className="sk-page">
-            {page(month, false)}
+  const monthBlock = (
+    <div className="sk-block" aria-busy={loading || undefined}>
+      <div className="sk-pages">
+        {flip && (
+          <div key={flip.id} ref={ghostRef} aria-hidden inert className="sk-page sk-page-ghost" data-dir={flip.dir}>
+            {page(flip.from, true)}
             <div data-shade className="sk-page-shade" />
           </div>
-        </div>
-        <div data-binding-shade aria-hidden className="sk-binding-shade" />
-        <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
-          <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
-            <Chevron dir="left" />
-          </button>
-          <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
-            <Chevron />
-          </button>
+        )}
+        <div ref={pageRef} className="sk-page">
+          {page(month, false)}
+          <div data-shade className="sk-page-shade" />
         </div>
       </div>
-
+      <div data-binding-shade aria-hidden className="sk-binding-shade" />
+      <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
+        <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
+          <Chevron dir="left" />
+        </button>
+        <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
+          <Chevron />
+        </button>
+      </div>
+    </div>
+  )
+  const dayPanels = (
+    <>
       <section aria-live="polite">
         <div className="mb-2 flex items-end justify-between gap-3">
           <SectionTitle className="mb-0">{dayTitle(selected, today)}</SectionTitle>
@@ -185,6 +185,26 @@ export function SharedCalendar({ calendar, today, names, loading, failed }: Prop
       </section>
 
       <Subscribe token={calendar.feed} />
+    </>
+  )
+
+  return (
+    <div className="flex flex-col gap-5 pt-1">
+      {failed && <Notice action="Réessayer" onAction={calendar.refresh}>Le calendrier n’a pas pu être chargé. Vérifiez la connexion.</Notice>}
+      {calendar.error && <Notice>Une modification a été refusée : {calendar.error}</Notice>}
+
+      {desktop ? (
+        // Ordinateur : le calendrier à gauche, le jour choisi et ce qui arrive à droite.
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(320px,380px)] items-start gap-6">
+          <div className="sticky top-[calc(env(safe-area-inset-top)+64px)]">{monthBlock}</div>
+          <div className="flex flex-col gap-5">{dayPanels}</div>
+        </div>
+      ) : (
+        <>
+          {monthBlock}
+          {dayPanels}
+        </>
+      )}
 
       <Sheet open={editing !== null} onClose={() => setEditing(null)} title={isNew ? 'Nouvel événement' : 'Événement'}>
         {editing && (
