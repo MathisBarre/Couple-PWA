@@ -1,12 +1,13 @@
 // Petites briques d'interface : Base UI pour le comportement, Tailwind pour la mise en page,
 // et les classes « sk-… » de src/skeuo.css pour les matières (papier, pièces posées, creux…).
+import { AlertDialog } from '@base-ui/react/alert-dialog'
 import { Button as BaseButton } from '@base-ui/react/button'
 import { Drawer } from '@base-ui/react/drawer'
 import { Select as BaseSelect } from '@base-ui/react/select'
 import { Switch as BaseSwitch } from '@base-ui/react/switch'
 import { Toggle } from '@base-ui/react/toggle'
 import { ToggleGroup } from '@base-ui/react/toggle-group'
-import type { ComponentProps, CSSProperties, ReactNode } from 'react'
+import { useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react'
 import { haptic } from '../lib/haptics'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
@@ -249,6 +250,73 @@ export function Sheet({
         </Drawer.Viewport>
       </Drawer.Portal>
     </Drawer.Root>
+  )
+}
+
+/**
+ * Demande de confirmation avant un geste lourd (déconnexion, réinitialisation…) : une fiche posée
+ * au milieu de l'écran, « Annuler » et le geste lui-même. Reste ouverte pendant l'envoi.
+ */
+export function ConfirmDialog({
+  open,
+  onClose,
+  title,
+  children,
+  confirm,
+  onConfirm,
+  busy,
+}: {
+  open: boolean
+  onClose: () => void
+  title: ReactNode
+  children?: ReactNode
+  confirm: string
+  onConfirm: () => void
+  busy?: boolean
+}) {
+  return (
+    <AlertDialog.Root open={open} onOpenChange={(o) => !o && !busy && onClose()}>
+      <AlertDialog.Portal>
+        <AlertDialog.Backdrop className="fixed inset-0 z-50 min-h-dvh bg-black/35 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <AlertDialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <AlertDialog.Popup className="sk-dialog w-full max-w-sm p-5 text-center text-ink outline-none transition-[opacity,transform] duration-200 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <AlertDialog.Title className="text-[1.2rem] font-semibold tracking-tight">{title}</AlertDialog.Title>
+            {children && <AlertDialog.Description className="mt-2 text-[0.95rem] leading-snug text-ink-2">{children}</AlertDialog.Description>}
+            <div className="mt-5 flex flex-col gap-2.5">
+              <Button busy={busy} onClick={onConfirm}>
+                {confirm}
+              </Button>
+              <AlertDialog.Close render={<Button variant="secondary" disabled={busy} />}>Annuler</AlertDialog.Close>
+            </div>
+          </AlertDialog.Popup>
+        </AlertDialog.Viewport>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+  )
+}
+
+/** Champ de mot de passe avec un œil pour le montrer ou le cacher (`className` : celui du champ). */
+export function PasswordInput({ className, ...props }: Omit<ComponentProps<'input'>, 'type'>) {
+  const [shown, setShown] = useState(false)
+  return (
+    <div className="relative">
+      <input {...props} type={shown ? 'text' : 'password'} autoCapitalize="off" autoCorrect="off" spellCheck={false} className={cx(className, 'pr-12')} />
+      <button
+        type="button"
+        className="sk-eye absolute inset-y-0 right-0 flex w-12 items-center justify-center text-ink-2 outline-none"
+        aria-label={shown ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+        aria-pressed={shown}
+        // Le clavier reste ouvert et le curseur dans le champ.
+        onPointerDown={(e) => e.preventDefault()}
+        onClick={() => setShown(!shown)}
+      >
+        <svg aria-hidden viewBox="0 0 24 24" className="size-[1.3rem]" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+          <circle cx="12" cy="12" r="2.8" />
+          {shown || <path d="M4 20 20 4" />}
+        </svg>
+      </button>
+    </div>
   )
 }
 

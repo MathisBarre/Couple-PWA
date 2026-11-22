@@ -166,6 +166,12 @@ const COLUMNS: [table: string, column: string, type: string][] = [
   ['couples', 'calendar_token', 'text'],
   // Liste d'un article de l'espace « Listes » : 'courses' (liste de courses) ou 'todo' (choses à faire).
   ['grocery_items', 'list', "text not null default 'courses'"],
+  // Mot de passe réinitialisé par un autre membre : à la prochaine connexion, on en choisit un nouveau.
+  ['users', 'password_reset', 'integer not null default 0'],
+  // Prénom de qui l'a réinitialisé, pour le dire à l'écran de connexion.
+  ['users', 'password_reset_by', 'text'],
+  // Sessions ouvertes avant cet instant (secondes Unix) refusées : réinitialisation, nouveau mot de passe.
+  ['users', 'sessions_since', 'integer'],
 ]
 
 async function migrate(conn: Client) {

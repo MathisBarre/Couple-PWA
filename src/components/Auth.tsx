@@ -3,12 +3,14 @@ import { api } from '../lib/api'
 import { pendingInvite } from '../lib/invite'
 import { MODULES } from '../modules'
 import { Glyph } from './icons'
-import { Button, cx, Notice } from './ui'
+import { Button, cx, Notice, PasswordInput } from './ui'
 
 export function Auth({ onDone, notice }: { onDone: () => void | Promise<void>; notice?: string }) {
   const invited = pendingInvite()
   // Arrivé par un lien d'invitation : le plus probable est de créer son compte.
-  const [mode, setMode] = useState<'login' | 'signup'>(invited ? 'signup' : 'login')
+  // 'reset' : mot de passe réinitialisé par l'autre membre, on en choisit un nouveau.
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(invited ? 'signup' : 'login')
+  const [resetBy, setResetBy] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -22,7 +24,18 @@ export function Auth({ onDone, notice }: { onDone: () => void | Promise<void>; n
     setBusy(true)
     setMsg('')
     try {
-      await api('auth', { method: 'POST', body: { action: mode, email, password, name } })
+      const res = await api<{ reset?: boolean; by?: string | null }>('auth', {
+        method: 'POST',
+        body: { action: mode === 'reset' ? 'set_password' : mode, email, password, name },
+      })
+      if (res.reset) {
+        // L'ancien mot de passe ne compte plus : on demande le nouveau, l'e-mail reste.
+        setResetBy(res.by ?? null)
+        setPassword('')
+        setMode('reset')
+        setBusy(false)
+        return
+      }
       // Le bouton reste « en cours » jusqu'à l'arrivée dans l'app.
       await onDone()
     } catch (err) {
@@ -43,26 +56,42 @@ export function Auth({ onDone, notice }: { onDone: () => void | Promise<void>; n
           </p>
         </div>
       )}
-      {notice && !msg && <Notice>{notice}</Notice>}
+      {mode === 'reset' ? (
+        <div className="sk-invite-card w-full">
+          <p className="sk-section-title mb-1">Nouveau mot de passe</p>
+          <p className="text-[0.95rem] leading-snug">
+            {resetBy ? `${resetBy} a réinitialisé votre mot de passe.` : 'Votre mot de passe a été réinitialisé.'} Choisissez-en un nouveau pour retrouver votre espace :
+            rien de ce que vous aviez noté n’est perdu.
+          </p>
+        </div>
+      ) : (
+        notice && !msg && <Notice>{notice}</Notice>
+      )}
       <form onSubmit={submit} className="flex w-full flex-col gap-3.5">
         <FieldGroup>
           {mode === 'signup' && <input className="sk-field" placeholder="Prénom" autoComplete="given-name" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} required />}
-          <input className="sk-field" type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input
+          {mode === 'reset' ? (
+            // Gardé pour le trousseau du téléphone, qui associe le nouveau mot de passe au bon compte.
+            <input className="sk-field text-ink-2" type="email" autoComplete="username" value={email} readOnly aria-label="E-mail" />
+          ) : (
+            <input className="sk-field" type="email" placeholder="E-mail" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          )}
+          <PasswordInput
             className="sk-field"
-            type="password"
-            placeholder="Mot de passe"
+            placeholder={mode === 'reset' ? 'Nouveau mot de passe' : 'Mot de passe'}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            minLength={mode === 'signup' ? 8 : undefined}
+            minLength={mode === 'login' ? undefined : 8}
+            autoFocus={mode === 'reset'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            // Connexion : vide accepté, pour qui vient d'être réinitialisé (le serveur le redemande sinon).
+            required={mode !== 'login'}
           />
         </FieldGroup>
-        {mode === 'signup' && <p className="-mt-1.5 px-1 text-left text-xs text-ink-2">Mot de passe : 8 caractères minimum.</p>}
+        {mode !== 'login' && <p className="-mt-1.5 px-1 text-left text-xs text-ink-2">Mot de passe : 8 caractères minimum.</p>}
         {msg && <Notice>{msg}</Notice>}
         <Button type="submit" busy={busy}>
-          {mode === 'login' ? 'Se connecter' : 'Créer le compte'}
+          {mode === 'login' ? 'Se connecter' : mode === 'signup' ? 'Créer le compte' : 'Enregistrer et me connecter'}
         </Button>
       </form>
       <Button
@@ -71,10 +100,11 @@ export function Auth({ onDone, notice }: { onDone: () => void | Promise<void>; n
         disabled={busy}
         onClick={() => {
           setMsg('')
-          setMode(mode === 'login' ? 'signup' : 'login')
+          setPassword('')
+          setMode(mode === 'signup' ? 'login' : mode === 'reset' ? 'login' : 'signup')
         }}
       >
-        {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
+        {mode === 'login' ? 'Pas encore de compte ? Créer un compte' : mode === 'signup' ? 'Déjà un compte ? Se connecter' : 'Ce n’est pas mon compte'}
       </Button>
     </CenterLayout>
   )

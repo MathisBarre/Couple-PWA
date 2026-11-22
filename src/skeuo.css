@@ -738,6 +738,25 @@
     background: var(--color-surface-2);
   }
 
+  /* Fiche de confirmation, posée au milieu : le papier de la feuille du bas, en carte. */
+  .sk-dialog {
+    border-radius: 24px;
+    background-color: color-mix(in srgb, var(--color-bg), var(--color-surface) 45%);
+    background-image: var(--tex-sheet);
+    box-shadow:
+      0 0 0 0.5px rgb(var(--shade) / calc(0.14 * var(--lift))),
+      0 12px 24px -8px rgb(0 0 0 / 0.2),
+      0 32px 64px -20px rgb(0 0 0 / 0.35),
+      inset 0 1px 0 var(--hi);
+  }
+  [data-scheme='dark'] .sk-dialog {
+    background-image: var(--tex-sheet-dark);
+  }
+  .sk-eye:focus-visible,
+  .sk-eye:active {
+    color: var(--color-ink);
+  }
+
   /* Feuille qui monte du bas. */
   .sk-sheet {
     /* Une feuille de papier vergé, un ton plus clair que le plan de travail. */

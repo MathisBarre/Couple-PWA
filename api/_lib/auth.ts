@@ -1,7 +1,7 @@
 // Authentification minimale : mot de passe haché (scrypt) + cookie de session signé (HMAC).
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { db } from './db.js'
-import { error } from './http.js'
+import { error, json } from './http.js'
 
 const COOKIE = 'session'
 const MAX_AGE = 60 * 60 * 24 * 365 // 1 an : on reste connecté sur son téléphone
@@ -34,7 +34,10 @@ export function sessionCookie(userId: string) {
 
 export const clearCookie = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
 
-function userIdFrom(req: Request): string | null {
+/** Code d'erreur (401) quand le mot de passe du compte a été réinitialisé par un autre membre. */
+export const PASSWORD_RESET = 'password_reset'
+
+function sessionFrom(req: Request): { id: string; issued: number } | null {
   const raw = req.headers
     .get('cookie')
     ?.split(/;\s*/)
@@ -46,7 +49,8 @@ function userIdFrom(req: Request): string | null {
   const expected = sign(`${id}.${exp}`)
   if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null
   if (Number(exp) < Date.now() / 1000) return null
-  return id
+  // Le cookie dure MAX_AGE : son heure de création s'en déduit (pas besoin de changer son format).
+  return { id, issued: Number(exp) - MAX_AGE }
 }
 
 export interface User {
@@ -58,11 +62,17 @@ export interface User {
 
 /** Utilisateur connecté, ou une réponse 401 à renvoyer telle quelle. */
 export async function requireUser(req: Request): Promise<User | Response> {
-  const id = userIdFrom(req)
-  if (!id) return error('Non connecté', 401)
-  const { rows } = await (await db()).execute({ sql: 'select id, email, display_name, couple_id from users where id = ?', args: [id] })
-  if (!rows[0]) return error('Non connecté', 401)
-  return rows[0] as unknown as User
+  const session = sessionFrom(req)
+  if (!session) return error('Non connecté', 401)
+  const { rows } = await (await db()).execute({
+    sql: 'select id, email, display_name, couple_id, password_reset, sessions_since from users where id = ?',
+    args: [session.id],
+  })
+  const row = rows[0]
+  if (!row) return error('Non connecté', 401)
+  if (Number(row.password_reset)) return json({ error: 'Votre mot de passe a été réinitialisé', code: PASSWORD_RESET }, 401)
+  if (row.sessions_since != null && session.issued < Number(row.sessions_since)) return error('Non connecté', 401)
+  return { id: String(row.id), email: String(row.email), display_name: String(row.display_name), couple_id: (row.couple_id as string | null) ?? null }
 }
 
 /** Même chose, mais exige aussi d'appartenir à un couple. */
