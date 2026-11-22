@@ -8,6 +8,7 @@ import { More } from './components/More'
 import { NotificationSwitches } from './components/NotificationSwitches'
 import { CycleSettings } from './components/CycleSettings'
 import { GearIcon, HeaderButton, ScreenHeader } from './components/ScreenHeader'
+import { Sidebar, type SidebarGroup } from './components/Sidebar'
 import { SpaceTabs } from './components/SpaceTabs'
 import { SyncIndicator } from './components/SyncIndicator'
 import { Settings } from './components/Settings'
@@ -18,6 +19,7 @@ import { Glyph } from './components/icons'
 import { cx } from './components/ui'
 import { cyclesOf, fetchMe, SESSION_EXPIRED, type Me } from './lib/api'
 import { localToday } from './lib/dates'
+import { useDesktop } from './lib/desktop'
 import { clearInvite } from './lib/invite'
 import { useGroceries, type ListId } from './lib/groceries'
 import { useCalendar } from './lib/calendar'
@@ -30,6 +32,7 @@ import {
   labelFor,
   MODULES,
   navFor,
+  SETTINGS_ITEM,
   SETTINGS_SECTIONS,
   spaceSettings,
   themeFor,
@@ -115,7 +118,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   // Seuls les espaces choisis par l'espace (onboarding, puis Réglages) sont dans la barre.
   const modulesKey = couple.modules?.join(',') ?? '*'
   const enabled = useMemo(() => enabledModules(modulesKey === '*' ? null : modulesKey.split(',')), [modulesKey])
-  const { bar: BAR, overflow: OVERFLOW } = useMemo(() => navFor(enabled), [enabled])
+  // Ordinateur : tous les espaces dans la barre latérale (pas de « Plus »).
+  const desktop = useDesktop()
+  const { bar: BAR, overflow: OVERFLOW } = useMemo(() => (desktop ? { bar: [...enabled, SETTINGS_ITEM], overflow: [] } : navFor(enabled)), [enabled, desktop])
   // À l'ouverture (et depuis une notification) : directement le premier espace (la saisie du jour).
   // « ?open=groceries » (notification des courses ou des choses à faire) ouvre directement cet onglet.
   // Un espace rangé dans « Plus » s'ouvre par-dessus « Plus ».
@@ -166,8 +171,9 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   const [today, setToday] = useState(localToday())
   const view = stacks[tab]?.at(-1) ?? tab
   const { logs, save, remove, pending: pendingLogs, status: logsStatus, refresh: refreshLogs } = useDayLogs(cycle.id, cycles.map((c) => c.id), profile.id)
-  const groceries = useGroceries(couple.id, profile.id, view === 'groceries' && subTabs.groceries === 'courses')
-  const todos = useGroceries(couple.id, profile.id, view === 'groceries' && subTabs.groceries === 'todo', 'todo')
+  // Ordinateur : les deux listes sont affichées côte à côte, donc suivies toutes les deux.
+  const groceries = useGroceries(couple.id, profile.id, view === 'groceries' && (desktop || subTabs.groceries === 'courses'))
+  const todos = useGroceries(couple.id, profile.id, view === 'groceries' && (desktop || subTabs.groceries === 'todo'), 'todo')
   // Comme l'app UCPA d'origine : billets et 14 prochains jours se chargent dès l'ouverture,
   // quel que soit l'onglet, pour que l'espace UCPA s'ouvre déjà à jour.
   const ucpa = useUcpa(true)
@@ -323,6 +329,27 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   }
   const tabMenu = useTabMenu(menuItems, pickMenu)
 
+  // Ordinateur : groupes de la barre latérale, un par espace, avec ses pages.
+  const sidebarGroups = (): SidebarGroup[] =>
+    BAR.map(({ id, label, icon }) => {
+      const mod = MODULES.find((m) => m.id === id)
+      let pages = mod ? menuItems(id) : []
+      // Listes : courses et choses à faire sont côte à côte, une seule page.
+      if (id === 'groceries')
+        pages = pages
+          .filter((p) => p.key !== 'todo')
+          .map((p) => (p.key === 'courses' ? { ...p, label: 'Courses et à faire', icon: '📝', current: tab === id && view === id } : p))
+      return {
+        id,
+        label,
+        icon,
+        theme: themeFor(id),
+        badge: badges[id],
+        current: tab === id,
+        pages: pages.map((p) => ({ key: p.key, label: p.label, icon: p.icon ?? '', current: p.current })),
+      }
+    })
+
   const settings = <Settings couple={couple} enabled={enabled} profile={profile} members={members} onChange={reload} onOpenSpace={openSpaceSettings} />
 
   const render = (v: View): ReactNode => {
@@ -349,6 +376,7 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
         return (
           <SpaceTabs
             title="Listes"
+            split
             onSettings={() => openSpaceSettings('groceries')}
             tab={subTabs.groceries}
             onTab={setSubTab('groceries')}
@@ -443,7 +471,8 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <SyncIndicator pending={pending} />
-      <div className="relative flex-1 overflow-hidden">
+      {desktop && <Sidebar groups={sidebarGroups()} onPage={pickMenu} onOpen={openTab} />}
+      <div className={cx('relative flex-1 overflow-hidden', desktop && 'ml-[244px]')}>
         {BAR.map(({ id }) => (
           <div
             key={id}
@@ -457,12 +486,13 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
               ref={(h) => {
                 stackRefs.current[id] = h
               }}
-              screens={[id, ...(stacks[id] ?? [])].map((v) => ({ key: v, theme: themeFor(v), title: labelFor(v), node: render(v) }))}
+              screens={[id, ...(stacks[id] ?? [])].map((v) => ({ key: v, theme: themeFor(v), title: labelFor(v), node: render(v), wide: WIDE.has(v) }))}
               onPop={popped(id)}
             />
           </div>
         ))}
       </div>
+      {!desktop && (
       <nav aria-label="Navigation principale" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]">
         <div aria-hidden className="sk-tabbar-fade absolute inset-x-0 -top-7 bottom-0" />
         <div className="sk-tabbar pointer-events-auto relative mx-auto max-w-md">
@@ -488,10 +518,14 @@ function Main({ me, reload }: { me: Me & { couple: NonNullable<Me['couple']> }; 
           })}
         </div>
       </nav>
+      )}
       {tabMenu.menu}
     </div>
   )
 }
+
+/** Ordinateur : écrans qui prennent toute la largeur (les autres, comme les réglages, restent en colonne). */
+const WIDE = new Set<View>(['cycle', 'groceries', 'calendar'])
 
 function Splash() {
   return (

@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
+import { useDesktop } from '../lib/desktop'
 import { Chevron } from './icons'
 
 /** Fourni par la pile d'écrans (Stack) à un écran empilé : de quoi afficher « ‹ Précédent ». */
@@ -20,6 +21,8 @@ export const BackContext = createContext<{ label: string; onBack: () => void } |
  */
 export function ScreenHeader({ title, action, sticky }: { title: string; action?: ReactNode; sticky?: ReactNode }) {
   const back = useContext(BackContext)
+  // Ordinateur : les réglages de chaque espace sont dans la barre latérale, pas derrière ⚙️.
+  if (useDesktop()) action = undefined
   return (
     <>
       <div className="sk-chrome sticky top-0 z-20 -mx-4 -mt-[calc(env(safe-area-inset-top)+12px)] px-4 pt-[calc(env(safe-area-inset-top)+8px)]">

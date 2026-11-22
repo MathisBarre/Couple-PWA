@@ -11,6 +11,8 @@ export interface StackScreen {
   theme: Theme
   title: string
   node: ReactNode
+  /** Ordinateur : l'écran prend la largeur disponible (sinon une colonne de lecture). */
+  wide?: boolean
 }
 
 export interface StackHandle {
@@ -180,7 +182,14 @@ export function Stack({ screens, onPop, ref }: { screens: StackScreen[]; onPop: 
             )}
           >
             <div data-scroll className="h-full overflow-x-hidden overflow-y-auto overscroll-contain">
-              <main className="sk-body mx-auto flex min-h-full w-full max-w-xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+104px)]">
+              <main
+                className={cx(
+                  'sk-body mx-auto flex min-h-full w-full max-w-xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+104px)]',
+                  // Ordinateur : pas de barre du bas à laisser libre ; plus de place sur les côtés.
+                  s.wide ? 'desk:max-w-[1120px]' : 'desk:max-w-2xl',
+                  'desk:px-8 desk:pb-12',
+                )}
+              >
                 {/* Un écran empilé affiche « ‹ Précédent » dans son en-tête (ScreenHeader). */}
                 <BackContext value={i > 0 ? { label: screens[i - 1].title, onBack: () => pop() } : null}>{s.node}</BackContext>
               </main>

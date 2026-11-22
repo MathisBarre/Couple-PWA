@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addDays, detectPeriods, predict, toDate, type DayLog } from '../../shared/cycles'
 import { formatLong, formatMonth } from '../lib/dates'
+import { useDesktop } from '../lib/desktop'
 import { haptic } from '../lib/haptics'
 import { isTyping } from '../lib/keys'
 import { turnPage } from '../lib/motion'
@@ -36,6 +37,9 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
   const pageRef = useRef<HTMLDivElement>(null)
   const ghostRef = useRef<HTMLDivElement>(null)
   const byDay = useMemo(() => new Map(logs.map((l) => [l.day, l])), [logs])
+  // Ordinateur : la saisie est à côté du calendrier, toujours ouverte (aujourd'hui par défaut).
+  const desktop = useDesktop()
+  const day = desktop ? (selected ?? today) : selected
 
   const predicted = useMemo(() => {
     const p = predict(detectPeriods(logs.filter((l) => l.day <= today)), defaultCycle)
@@ -83,66 +87,100 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
     return turnPage(pageRef.current, ghostRef.current, flip.dir, () => setFlip((f) => (f?.id === id ? null : f)))
   }, [flip])
 
-  const sel = selected ? byDay.get(selected) : undefined
+  const sel = day ? byDay.get(day) : undefined
   const page = (m: string, ghost: boolean) => (
     <MonthPage
       month={m}
       today={today}
       byDay={byDay}
       predicted={predicted}
-      picked={open && !ghost ? selected : null}
+      picked={(open || desktop) && !ghost ? day : null}
       drawn={ghost ? null : drawn}
       still={ghost || loading}
       onPick={(d) => {
         setSelected(d)
-        setOpen(true)
+        if (!desktop) setOpen(true)
       }}
     />
   )
 
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="sk-block" aria-busy={loading || undefined}>
-        <div className="sk-pages">
-          {flip && (
-            <div key={flip.id} ref={ghostRef} aria-hidden inert className="sk-page sk-page-ghost" data-dir={flip.dir}>
-              {page(flip.from, true)}
+  const pageEl = (
+    <>
+        <div className="sk-block" aria-busy={loading || undefined}>
+          <div className="sk-pages">
+            {flip && (
+              <div key={flip.id} ref={ghostRef} aria-hidden inert className="sk-page sk-page-ghost" data-dir={flip.dir}>
+                {page(flip.from, true)}
+                <div data-shade className="sk-page-shade" />
+              </div>
+            )}
+            <div ref={pageRef} className="sk-page">
+              {page(month, false)}
               <div data-shade className="sk-page-shade" />
             </div>
-          )}
-          <div ref={pageRef} className="sk-page">
-            {page(month, false)}
-            <div data-shade className="sk-page-shade" />
+          </div>
+          <div data-binding-shade aria-hidden className="sk-binding-shade" />
+          <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
+            <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
+              <Chevron dir="left" />
+            </button>
+            <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
+              <Chevron />
+            </button>
           </div>
         </div>
-        <div data-binding-shade aria-hidden className="sk-binding-shade" />
-        <div className="absolute top-[26px] right-4 z-[4] flex gap-2">
-          <button type="button" className="sk-round" onClick={() => shift(-1)} aria-label="Mois précédent">
-            <Chevron dir="left" />
-          </button>
-          <button type="button" className="sk-round" onClick={() => shift(1)} aria-label="Mois suivant">
-            <Chevron />
-          </button>
+
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 px-1 text-xs text-ink-2">
+          <Legend label="Traces">
+            <InkFlow day="legende-1" level={1} />
+          </Legend>
+          <Legend label="Règles">
+            <InkFlow day="legende-3" level={3} />
+          </Legend>
+          <Legend label="Prévu">
+            <InkPredicted day="legende-p" />
+          </Legend>
+          <Legend label="Douleur">
+            <g transform="translate(22 22) scale(1.7) translate(-39.2 -5.7)">
+              <InkBolt />
+            </g>
+          </Legend>
         </div>
-      </div>
+    </>
+  )
 
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 px-1 text-xs text-ink-2">
-        <Legend label="Traces">
-          <InkFlow day="legende-1" level={1} />
-        </Legend>
-        <Legend label="Règles">
-          <InkFlow day="legende-3" level={3} />
-        </Legend>
-        <Legend label="Prévu">
-          <InkPredicted day="legende-p" />
-        </Legend>
-        <Legend label="Douleur">
-          <g transform="translate(22 22) scale(1.7) translate(-39.2 -5.7)">
-            <InkBolt />
-          </g>
-        </Legend>
-      </div>
+  const editor = day && (
+    <DayEditor
+      key={day}
+      day={day}
+      log={sel}
+      onSave={(log) => {
+        if (log.flow !== sel?.flow || (log.pain ?? 0) >= 2 !== (sel?.pain ?? 0) >= 2) setDrawn((d) => ({ day: log.day, n: (d?.n ?? 0) + 1 }))
+        onSave(log)
+      }}
+      onDelete={(d) => {
+        onDelete(d)
+        setOpen(false)
+      }}
+      authorName={sel?.updated_by ? names[sel.updated_by] : undefined}
+    />
+  )
 
+  if (desktop)
+    return (
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,400px)] items-start gap-6">
+        <div className="flex flex-col gap-5">{pageEl}</div>
+        <aside aria-label="Saisie du jour" className="sk-panel sticky top-[calc(env(safe-area-inset-top)+64px)] p-5">
+          <h2 className="mb-3 text-[1.35rem] font-semibold tracking-tight first-letter:uppercase">{day && formatLong(day)}</h2>
+          {day === today && todayExtra}
+          {editor}
+        </aside>
+      </div>
+    )
+
+  return (
+    <div className="flex flex-col gap-5">
+      {pageEl}
       <Sheet
         open={open}
         onClose={() => {
@@ -150,25 +188,10 @@ export function Calendar({ today, logs, defaultCycle, names, onSave, onDelete, t
           // La feuille de saisie cachait le calendrier : on retrace ce qui vient d'y être noté.
           setDrawn((d) => (d && d.day === selected ? { day: d.day, n: d.n + 1 } : d))
         }}
-        title={selected ? formatLong(selected) : ''}
+        title={day ? formatLong(day) : ''}
       >
-        {selected === today && todayExtra}
-        {selected && (
-          <DayEditor
-            key={selected}
-            day={selected}
-            log={sel}
-            onSave={(log) => {
-              if (log.flow !== sel?.flow || (log.pain ?? 0) >= 2 !== (sel?.pain ?? 0) >= 2) setDrawn((d) => ({ day: log.day, n: (d?.n ?? 0) + 1 }))
-              onSave(log)
-            }}
-            onDelete={(d) => {
-              onDelete(d)
-              setOpen(false)
-            }}
-            authorName={sel?.updated_by ? names[sel.updated_by] : undefined}
-          />
-        )}
+        {day === today && todayExtra}
+        {editor}
       </Sheet>
     </div>
   )
