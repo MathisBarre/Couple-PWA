@@ -739,6 +739,31 @@
     outline: 2px solid var(--color-accent);
     outline-offset: -2px;
   }
+  /* Un groupe par espace, séparé du précédent par un filet. */
+  .sk-side-group {
+    padding: 12px 0;
+  }
+  .sk-side-group + .sk-side-group {
+    border-top: 0.5px solid var(--color-line);
+  }
+  .sk-side-pages {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-left: 22px;
+    padding-left: 10px;
+    border-left: 1.5px solid color-mix(in srgb, var(--color-accent), transparent 75%);
+  }
+  .sk-side-pages .sk-side-item {
+    min-height: 34px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-ink-2);
+  }
+  .sk-side-pages .sk-side-item[aria-current='page'] {
+    color: var(--color-accent);
+    font-weight: 650;
+  }
   .sk-side-badge {
     min-width: 18px;
     height: 18px;
