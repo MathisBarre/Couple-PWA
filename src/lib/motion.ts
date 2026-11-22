@@ -1,6 +1,7 @@
 // Animations « comme une app native » : glissement entre onglets, empilement façon iOS.
 // Tout passe par la Web Animations API sur `transform` / `opacity`, que le téléphone
 // anime sur la carte graphique : ça reste fluide même pendant un rendu React.
+import { DESKTOP_QUERY } from './desktop'
 
 /** Courbe des transitions iOS (démarrage vif, arrivée tout en douceur). */
 export const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)'
@@ -25,7 +26,8 @@ type Cleanup = () => void
  * Renvoie une fonction qui termine tout de suite l'animation (nouveau changement d'onglet entre-temps).
  */
 export function slideTabs(from: HTMLElement, to: HTMLElement, dir: 1 | -1, { inFlow = false } = {}): Cleanup {
-  const reduce = reducedMotion()
+  // Ordinateur : pas de glissement d'écran (geste de téléphone), un fondu rapide.
+  const reduce = reducedMotion() || isDesktop()
   const restore = reveal(from, inFlow)
   const opts: KeyframeAnimationOptions = { duration: reduce ? FADE_MS : TAB_MS, easing: reduce ? 'ease-out' : EASE, fill: 'forwards' }
   const anims = reduce
@@ -98,7 +100,8 @@ export function animateStack(
   toP: number,
   { velocity = 0, beforeCleanup }: { velocity?: number; beforeCleanup?: () => void } = {},
 ): Cleanup {
-  const reduce = reducedMotion()
+  // Ordinateur : l'écran empilé apparaît en fondu au lieu d'arriver par la droite.
+  const reduce = reducedMotion() || isDesktop()
   const w = top.clientWidth
   const restore = reveal(under, false)
   const distance = Math.abs(toP - fromP)
@@ -296,4 +299,9 @@ export function turnPage(page: HTMLElement, ghost: HTMLElement, dir: 1 | -1, don
 export function slideFrom(el: HTMLElement, dy: number, { duration = 260, delay = 0 } = {}) {
   if (!dy || reducedMotion()) return
   el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration, delay, easing: EASE, fill: 'backwards' })
+}
+
+/** Ordinateur (même règle que useDesktop) : les transitions d'écran se font en fondu. */
+function isDesktop() {
+  return typeof matchMedia !== 'undefined' && matchMedia(DESKTOP_QUERY).matches
 }
