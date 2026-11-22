@@ -25,24 +25,23 @@ export function Sidebar({ groups, onPage, onOpen }: { groups: SidebarGroup[]; on
         <Logo size="size-8" />
         <span className="text-[1.15rem] font-semibold tracking-tight">À deux</span>
       </div>
-      <div className="flex flex-1 flex-col gap-4">
+      <div className="flex flex-1 flex-col">
         {groups.map((g) =>
           g.pages.length ? (
-            <section key={g.id} data-theme={g.theme} aria-label={g.label}>
-              <h2 className="flex items-center gap-2 px-2.5 pb-1 text-[0.68rem] font-semibold tracking-[0.08em] text-ink-2 uppercase">
-                <span aria-hidden className="text-accent [&_.sk-glyph]:size-4">
+            <section key={g.id} data-theme={g.theme} aria-label={g.label} className="sk-side-group">
+              {/* En-tête du groupe : l'icône de l'espace, à sa couleur, et son nom. */}
+              <h2 className="flex items-center gap-2.5 px-1.5 pb-1.5">
+                <span aria-hidden className="sk-app-icon size-7 shrink-0 [&_.sk-glyph]:size-4">
                   <Glyph icon={g.icon} />
                 </span>
-                {g.label}
+                <span className="text-[1rem] font-semibold tracking-tight">{g.label}</span>
                 {!!g.badge && <span className="sk-side-badge ml-auto">{g.badge > 99 ? '99+' : g.badge}</span>}
               </h2>
-              <ul className="flex flex-col gap-0.5">
+              {/* Ses pages, en retrait sous l'en-tête, reliées par un filet à la couleur de l'espace. */}
+              <ul className="sk-side-pages">
                 {g.pages.map((p) => (
                   <li key={p.key}>
                     <button type="button" onClick={() => onPage(g.id, p.key)} aria-current={p.current ? 'page' : undefined} className="sk-side-item">
-                      <span aria-hidden className="[&_.sk-glyph]:size-[18px]">
-                        <Glyph icon={p.icon} />
-                      </span>
                       {p.label}
                     </button>
                   </li>
