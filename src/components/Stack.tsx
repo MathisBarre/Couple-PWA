@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type ReactNode, type Ref } from 'react'
 import { flushSync } from 'react-dom'
+import { isTyping } from '../lib/keys'
 import { animateStack, setStackProgress } from '../lib/motion'
 import type { Theme } from '../modules'
 import { BackContext } from './ScreenHeader'
@@ -145,6 +146,18 @@ export function Stack({ screens, onPop, ref }: { screens: StackScreen[]; onPop: 
       root.removeEventListener('touchend', end)
       root.removeEventListener('touchcancel', end)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Clavier (ordinateur) : Échap revient à l'écran précédent, sauf si une feuille ou un champ a la main.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || latest.current.screens.length < 2) return
+      if (isTyping(e.target) || document.querySelector('[role="dialog"], [role="alertdialog"]')) return
+      pop()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
